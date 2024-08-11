@@ -59,4 +59,11 @@ git submodule update --init --recursive
 
 ## License
 
-- [Details about the licensing of the project, if applicable.]
+- [Details about the licensing of the project]
+
+## About [Eiger](https://www.eiger.co)
+
+We are engineers. We contribute to various ecosystems by building low level implementations and core components. We work on several Axelar and Solana projects and believe that connecting these two is a very important goal to achieve cross-chain execution.
+
+Contact us at hello@eiger.co
+Follow us on [X/Twitter](https://x.com/eiger_co)
