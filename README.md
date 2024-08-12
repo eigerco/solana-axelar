@@ -1,10 +1,9 @@
 # Solana-Axelar Interoperability
 
-Welcome to the **Solana-Axelar Interoperability** monorepo. This repository houses all the code and components necessary to enable interoperability between the Solana blockchain and the Axelar network, facilitating cross-chain communication and transactions.
+This repository contains the under-development integration work between Solana and Axelar, enabling seamless cross-chain communication. The project includes General Message Passing (GMP) contracts and off-chain services for event monitoring and transaction broadcasting.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
 - [Repository contents](#repository-contents)
   - [EVM Smart Contracts](#evm-smart-contracts)
   - [Solana contracts](#solana-contracts)
@@ -16,9 +15,6 @@ Welcome to the **Solana-Axelar Interoperability** monorepo. This repository hous
 - [Contributing](#contributing)
 - [License](#license)
 
-## Introduction
-
-This repository contains the under-development integration work between Solana and Axelar, enabling seamless cross-chain communication through smart contracts and off-chain microservices. The project includes the development of General Message Passing (GMP) contracts, additional service contracts, and microservices for event monitoring and transaction broadcasting.
 
 ## Repository contents
 
