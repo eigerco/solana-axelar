@@ -49,7 +49,7 @@ jobs:
         run: docker build ./../../target/release --file Dockerfile --tag $IMAGE_NAME --tag latest
 
       - name: Login to Azure Container Registry
-        uses: azure/docker-login@v1
+        uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_REGISTRY_NAME }}.azurecr.io
           username: ${{ secrets.AZ_SP_CLIENT_ID }}
