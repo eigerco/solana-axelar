@@ -13,5 +13,5 @@
         shallow = true
 [submodule "axelar-amplifier"]
 	path = axelar-amplifier
-	url = git@github.com:eigerco/axelar-amplifier.git
+	url = https://github.com/eigerco/axelar-amplifier.git
 	branch = solana
