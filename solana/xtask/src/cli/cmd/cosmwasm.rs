@@ -114,6 +114,7 @@ pub(crate) async fn init_solana_voting_verifier(
         .voting_verifier_code_id
         .ok_or_eyre("voting verifier code id not present. Was it deployed?")?;
     let instantiate_msg = InstantiateMsg {
+        address_format: axelar_wasm_std::address::AddressFormat::Base58Solana,
         service_registry_address: solana_deployment_root
             .axelar_configuration
             .axelar_chain
@@ -135,7 +136,8 @@ pub(crate) async fn init_solana_voting_verifier(
         voting_threshold: majority_threshold(&solana_deployment_root.axelar_configuration),
         block_expiry: solana_deployment_root
             .axelar_configuration
-            .voting_verifier_block_expiry,
+            .voting_verifier_block_expiry
+            .try_into()?,
         confirmation_height: solana_deployment_root
             .axelar_configuration
             .voting_verifier_confirmation_height,
@@ -150,7 +152,8 @@ pub(crate) async fn init_solana_voting_verifier(
             .contracts
             .rewards
             .address
-            .to_string(),
+            .to_string()
+            .try_into()?,
         governance_address: solana_deployment_root
             .axelar_configuration
             .axelar_chain

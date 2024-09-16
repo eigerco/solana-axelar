@@ -65,9 +65,7 @@ pub(crate) async fn check_voting_verifier_status(
     cosmwasm_signer: &SigningClient,
     voting_verifier: cosmrs::AccountId,
 ) -> eyre::Result<()> {
-    let vv_msg = voting_verifier::msg::QueryMsg::GetMessagesStatus {
-        messages: vec![message.clone()],
-    };
+    let vv_msg = voting_verifier::msg::QueryMsg::MessagesStatus(vec![message.clone()]);
     let res = cosmwasm_signer
         .query::<serde_json::Value>(voting_verifier, serde_json::to_vec(&vv_msg).unwrap())
         .await?;

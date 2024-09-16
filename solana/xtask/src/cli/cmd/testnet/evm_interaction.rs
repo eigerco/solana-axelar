@@ -26,10 +26,11 @@ pub(crate) fn create_axelar_message_from_evm_log(
 
     let encoded_id = &hex::encode(tx.transaction_hash.to_fixed_bytes());
     let message = router_api::Message {
-        cc_id: CrossChainId {
-            chain: ChainName::from_str(source_chain.name.as_str()).unwrap(),
-            id: format!("0x{encoded_id}-{log_index}").parse().unwrap(),
-        },
+        cc_id: CrossChainId::new(
+            source_chain.name.as_str(),
+            format!("0x{encoded_id}-{log_index}"),
+        )
+        .unwrap(),
         source_address: Address::from_str(
             format!("0x{}", hex::encode(log.sender.to_fixed_bytes())).as_str(),
         )
@@ -52,8 +53,8 @@ pub(crate) async fn call_execute_on_destination_evm_contract(
         destination_evm_signer.signer.clone(),
     );
 
-    let source_chain = message.cc_id.chain.to_string();
-    let message_id = message.cc_id.id.clone().to_string();
+    let source_chain = message.cc_id.source_chain.to_string();
+    let message_id = message.cc_id.message_id.clone().to_string();
     let source_address = message.source_address.to_string();
     tracing::info!(
         source_chain,
