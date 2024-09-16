@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use axelar_message_primitives::DataPayload;
-use axelar_wasm_std::nonempty;
 use eyre::OptionExt;
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::events::ArchivedGatewayEvent;
