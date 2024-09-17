@@ -227,8 +227,8 @@ impl Cli {
             &axelar_deployment_root.axelar,
             cmd::solana::defaults::rpc_url()?.to_string(),
         )?;
-        match self {
-            Cli::Solana { command } => handle_solana(command, &mut solana_deployment_root).await?,
+        let res = match self {
+            Cli::Solana { command } => handle_solana(command, &mut solana_deployment_root).await,
             Cli::Evm {
                 source_evm_chain,
                 admin_private_key,
@@ -241,10 +241,10 @@ impl Cli {
                     &axelar_deployment_root,
                     &mut solana_deployment_root,
                 )
-                .await?;
+                .await
             }
             Cli::Cosmwasm { command } => {
-                handle_cosmwasm(command, &mut solana_deployment_root).await?;
+                handle_cosmwasm(command, &mut solana_deployment_root).await
             }
             Cli::Testnet { command } => {
                 handle_testnet(
@@ -252,11 +252,12 @@ impl Cli {
                     &axelar_deployment_root,
                     &mut solana_deployment_root,
                 )
-                .await?;
+                .await
             }
-            Cli::GenerateEvm => handle_generating_evm_wallet(&axelar_deployment_root)?,
+            Cli::GenerateEvm => handle_generating_evm_wallet(&axelar_deployment_root),
         };
         solana_deployment_root.save()?;
+        res?;
         Ok(())
     }
 }
