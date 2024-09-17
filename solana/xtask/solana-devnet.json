@@ -84,19 +84,6 @@
         },
         "VotingVerifier": {
           "codeId": 626,
-          "eth-sepolia": {
-            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-            "serviceName": "validators",
-            "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-            "votingThreshold": [
-              "6",
-              "10"
-            ],
-            "blockExpiry": 10,
-            "confirmationHeight": 1,
-            "msgIdFormat": "hex_tx_hash_and_event_index",
-            "address": "axelar16swl5eh3vspnyzddwltuf93hc65nwju7498u0zyq33u4cj8rxy4sgxx30m"
-          },
           "avalanche-fuji": {
             "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
             "serviceName": "validators",
@@ -109,6 +96,19 @@
             "confirmationHeight": 1,
             "msgIdFormat": "hex_tx_hash_and_event_index",
             "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
+          },
+          "eth-sepolia": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "serviceName": "validators",
+            "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
+            "votingThreshold": [
+              "6",
+              "10"
+            ],
+            "blockExpiry": 10,
+            "confirmationHeight": 1,
+            "msgIdFormat": "hex_tx_hash_and_event_index",
+            "address": "axelar16swl5eh3vspnyzddwltuf93hc65nwju7498u0zyq33u4cj8rxy4sgxx30m"
           },
           "optimism-sepolia": {
             "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -126,11 +126,11 @@
         },
         "Gateway": {
           "codeId": 616,
-          "eth-sepolia": {
-            "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
-          },
           "avalanche-fuji": {
             "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
+          },
+          "eth-sepolia": {
+            "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
           },
           "optimism-sepolia": {
             "address": "axelar16wd6350f575t5cts9sduqmt7nsw9kc822ltf6dcn46rvejmmg8cqrq4ara"
@@ -138,21 +138,6 @@
         },
         "MultisigProver": {
           "codeId": 618,
-          "optimism-sepolia": {
-            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-            "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-            "destinationChainID": "11155420",
-            "signingThreshold": [
-              "6",
-              "10"
-            ],
-            "serviceName": "validators",
-            "verifierSetDiffThreshold": 1,
-            "encoder": "abi",
-            "keyType": "ecdsa",
-            "domainSeparator": "0xf865bf16595139bf568a034d575ffdbdd524dd2dbf8cce1de2ddaf7b964bf8e6",
-            "address": "axelar1p0yyfy7f70zdc0ludh6kffjzs8mvun5prdf7nh7s2cgq74g67nmsjcw7t4"
-          },
           "avalanche-fuji": {
             "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
             "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -182,6 +167,21 @@
             "keyType": "ecdsa",
             "domainSeparator": "0xc04aba7c8ccda4059d622ac3e17bb4ef1c1e2358f25bfea5902a44d3a34d616a",
             "address": "axelar15ra7d5uvnmc6ety6sqxsvsfz4t34ud6lc5gmt39res0c5thkqp2qdwj4af"
+          },
+          "optimism-sepolia": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "destinationChainID": "11155420",
+            "signingThreshold": [
+              "6",
+              "10"
+            ],
+            "serviceName": "validators",
+            "verifierSetDiffThreshold": 1,
+            "encoder": "abi",
+            "keyType": "ecdsa",
+            "domainSeparator": "0xf865bf16595139bf568a034d575ffdbdd524dd2dbf8cce1de2ddaf7b964bf8e6",
+            "address": "axelar1p0yyfy7f70zdc0ludh6kffjzs8mvun5prdf7nh7s2cgq74g67nmsjcw7t4"
           }
         }
       },

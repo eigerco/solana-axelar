@@ -279,8 +279,8 @@ pub(crate) async fn init_solana_multisig_prover(
     use crate::cli::cmd::testnet::multisig_prover_api::InstantiateMsg;
     let code_id = solana_deployment_root
         .axelar_configuration
-        .gateway_code_id
-        .ok_or_eyre("gateway code id not present")?;
+        .multisig_prover_code_id
+        .ok_or_eyre("multisig prover code id not present")?;
 
     let instantiate_msg = InstantiateMsg {
         admin_address: client.signer_account_id()?.to_string(),
