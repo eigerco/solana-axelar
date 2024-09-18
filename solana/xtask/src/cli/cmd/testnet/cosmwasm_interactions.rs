@@ -10,6 +10,7 @@ use crate::cli::cmd::deployments::AxelarConfiguration;
 use crate::cli::cmd::testnet::multisig_prover_api;
 
 #[allow(clippy::too_many_arguments)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn wire_cosmwasm_contracts(
     source_chain_id: &str,
     destination_chain_id: &str,
@@ -60,6 +61,7 @@ pub(crate) async fn wire_cosmwasm_contracts(
     Ok(execute_data)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn check_voting_verifier_status(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,
@@ -73,6 +75,7 @@ pub(crate) async fn check_voting_verifier_status(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
     message: &router_api::Message,
     destination_multisig_prover: &cosmrs::AccountId,
@@ -125,6 +128,7 @@ pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
     Ok(execute_data)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn axelar_source_gateway_route_messages(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,
@@ -146,6 +150,7 @@ pub(crate) async fn axelar_source_gateway_route_messages(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn axelar_source_gateway_verify_messages(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,

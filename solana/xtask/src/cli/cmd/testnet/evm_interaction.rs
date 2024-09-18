@@ -5,6 +5,7 @@ use ethers::abi::RawLog;
 use ethers::contract::EthEvent;
 use ethers::providers::Middleware;
 use ethers::types::{Address as EvmAddress, TransactionRequest};
+use ethers::utils::to_checksum;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo;
 use evm_contracts_test_suite::{ContractMiddleware, EvmSigner};
@@ -25,16 +26,14 @@ pub(crate) fn create_axelar_message_from_evm_log(
     tracing::info!(?log, "evm memo log decoded");
 
     let encoded_id = &hex::encode(tx.transaction_hash.to_fixed_bytes());
+    let source_address = to_checksum(&log.sender, None);
     let message = router_api::Message {
         cc_id: CrossChainId::new(
-            source_chain.name.as_str(),
+            source_chain.axelar_id.as_str(),
             format!("0x{encoded_id}-{log_index}"),
         )
         .unwrap(),
-        source_address: Address::from_str(
-            format!("0x{}", hex::encode(log.sender.to_fixed_bytes())).as_str(),
-        )
-        .unwrap(),
+        source_address: Address::from_str(source_address.as_str()).unwrap(),
         destination_chain: ChainName::from_str(log.destination_chain.as_str()).unwrap(),
         destination_address: Address::from_str(log.destination_contract_address.as_str()).unwrap(),
         payload_hash: log.payload_hash,
