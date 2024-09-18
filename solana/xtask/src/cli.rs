@@ -227,6 +227,7 @@ impl Cli {
             &axelar_deployment_root.axelar,
             cmd::solana::defaults::rpc_url()?.to_string(),
         )?;
+
         let res = match self {
             Cli::Solana { command } => handle_solana(command, &mut solana_deployment_root).await,
             Cli::Evm {
