@@ -83,9 +83,8 @@ pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
     config: &AxelarConfiguration,
 ) -> eyre::Result<String> {
     tracing::info!("Axelar destination multisig_prover.construct_proof()");
-    let msg = multisig_prover_api::MultisigProverExecuteMsg::ConstructProof {
-        message_ids: vec![message.cc_id.clone()],
-    };
+    let msg =
+        multisig_prover_api::MultisigProverExecuteMsg::ConstructProof(vec![message.cc_id.clone()]);
     let execute = MsgExecuteContract {
         sender: cosmwasm_signer.signer_account_id()?,
         msg: serde_json::to_vec(&msg)?,
@@ -109,7 +108,7 @@ pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
         let res = cosmwasm_signer
             .query::<multisig_prover_api::GetProofResponse>(
                 destination_multisig_prover.clone(),
-                serde_json::to_vec(&multisig_prover_api::QueryMsg::GetProof {
+                serde_json::to_vec(&multisig_prover_api::QueryMsg::Proof {
                     multisig_session_id: Uint64::try_from(id)?,
                 })?,
             )
