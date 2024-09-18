@@ -581,7 +581,7 @@ async fn handle_cosmwasm(
             }
         }
         Cosmwasm::AmpdSetup => {
-            cmd::cosmwasm::ampd::setup_ampd(&solana_deployment_root).await?;
+            cmd::cosmwasm::ampd::setup_ampd(solana_deployment_root).await?;
         }
         Cosmwasm::AmpdAndTofndRun => cmd::cosmwasm::ampd::start_with_tofnd().await?,
         Cosmwasm::RedeployAndInitAll {

@@ -454,7 +454,7 @@ pub(crate) mod ampd {
 
     use super::path::axelar_amplifier_dir;
     use crate::cli::cmd::cosmwasm::path::{self, ampd_home_dir};
-    use crate::cli::cmd::deployments::{SolanaConfiguration, SolanaDeploymentRoot};
+    use crate::cli::cmd::deployments::SolanaDeploymentRoot;
     use crate::cli::cmd::path::{workspace_root_dir, xtask_crate_root_dir};
 
     pub(crate) async fn setup_ampd(deployment_root: &SolanaDeploymentRoot) -> eyre::Result<()> {
