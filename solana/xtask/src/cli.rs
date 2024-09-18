@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -407,13 +408,15 @@ async fn handle_testnet(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 async fn maybe_deploy_evm_memo_contract(
     evm_signer: &evm_contracts_test_suite::EvmSigner,
     chain: &EvmChain,
     our_evm_deployment: &mut CustomEvmChainDeployments,
 ) -> Result<ethers::types::H160, eyre::Error> {
     if let Some(addr) = our_evm_deployment.memo_program_address.as_ref() {
-        return Ok(ethers::types::H160::decode_hex(addr)?);
+        tracing::info!(?addr, "memo addr");
+        return Ok(ethers::types::H160::from_str(addr)?);
     }
 
     tracing::info!(chain = ?chain.id, "memo contract not present, deploying");

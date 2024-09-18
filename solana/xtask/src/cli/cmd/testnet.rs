@@ -317,7 +317,7 @@ pub(crate) async fn evm_to_evm(
         &destination_evm_signer,
     )
     .await?;
-    let destination_memo_contract = H160::decode_hex(
+    let destination_memo_contract = H160::from_str(
         destination_chain_tracker
             .memo_program_address
             .as_ref()

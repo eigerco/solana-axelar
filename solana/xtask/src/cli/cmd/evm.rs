@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use ethers::abi::AbiDecode;
 use ethers::types::{Address, TransactionReceipt, H160};
 use ethers::utils::hex::ToHexExt;
@@ -39,7 +41,7 @@ pub(crate) async fn send_memo_to_solana(
     solana_chain_name_on_axelar: &str,
     our_evm_deployment_tracker: &CustomEvmChainDeployments,
 ) -> eyre::Result<TransactionReceipt> {
-    let memo_contract_address = H160::decode_hex(
+    let memo_contract_address = H160::from_str(
         our_evm_deployment_tracker
             .memo_program_address
             .as_ref()
@@ -82,7 +84,7 @@ pub(crate) async fn send_memo_from_evm_to_evm(
     our_destination_evm_deployment_tracker: &CustomEvmChainDeployments,
     our_source_evm_deployment_tracker: &CustomEvmChainDeployments,
 ) -> eyre::Result<TransactionReceipt> {
-    let our_memo_contract_address = H160::decode_hex(
+    let our_memo_contract_address = H160::from_str(
         our_source_evm_deployment_tracker
             .memo_program_address
             .as_ref()
