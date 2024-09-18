@@ -571,46 +571,65 @@ pub(crate) mod ampd {
         build_ampd()?;
 
         tracing::info!("starting tofnd");
+        let expected_import_file = workspace_root_dir().join("tofnd").join("import");
+        if !expected_import_file.try_exists()? {
+            eyre::bail!("create a new `tofnd/import` file that would contain the tofnd root seed!")
+        }
+
         let tofnd_process = thread::spawn(move || {
-            // Run the docker ps command with filtering by the container name
             let container_name = "tofnd-solana";
             let sh = Shell::new()?;
+            // Check if the container exists (running or not)
             let output = sh
                 .cmd("docker")
                 .args([
                     "ps",
+                    "-a",
                     "--filter",
                     format!("name={container_name}").as_str(),
                     "--format",
-                    "{{.Names}}",
+                    "{{.Names}} {{.Status}}",
                 ])
                 .read()
                 .expect("Failed to execute command");
             tracing::info!(output, "docker tofnd check output");
 
-            // Check if the output contains the container name
-            if output.contains(container_name) {
-                println!("Container {container_name} is running");
-                return Ok(());
-            }
-            let _ws = sh.push_dir(workspace_root_dir());
+            if output.trim().is_empty() {
+                // Container does not exist, create and start it
+                let _ws = sh.push_dir(workspace_root_dir());
 
-            let tofnd = sh.cmd("docker").args([
-                "run",
-                "-d",
-                "--name",
-                container_name,
-                "-p",
-                "50051:50051",
-                "--env",
-                "MNEMONIC_CMD=auto",
-                "--env",
-                "NOPASSWORD=true",
-                "-v",
-                "./tofnd:/.tofnd",
-                "haiyizxx/tofnd:latest",
-            ]);
-            tofnd.run()?;
+                let tofnd = sh.cmd("docker").args([
+                    "run",
+                    "-d",
+                    "--name",
+                    container_name,
+                    "-p",
+                    "50051:50051",
+                    "--env",
+                    "MNEMONIC_CMD=auto",
+                    "--env",
+                    "NOPASSWORD=true",
+                    "-v",
+                    "./tofnd:/.tofnd",
+                    "haiyizxx/tofnd:latest",
+                ]);
+                tofnd.run()?;
+                tracing::info!("Created and started container {}", container_name);
+            } else {
+                // Container exists
+                let status_line = output.trim();
+                if status_line.contains("Up") {
+                    // Container is running, attach to it
+                    tracing::info!("Container {} is already running", container_name);
+                    let attach = sh.cmd("docker").args(["attach", container_name]);
+                    attach.run()?;
+                } else {
+                    // Container is not running, start it
+                    let start = sh.cmd("docker").args(["start", container_name]);
+                    start.run()?;
+                    tracing::info!("Started container {}", container_name);
+                }
+            }
             Ok::<_, eyre::Error>(())
         });
 
