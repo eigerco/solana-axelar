@@ -158,6 +158,16 @@ pub(crate) fn init_memo_program(
 
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
     let counter = axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
+    let account = rpc_client.get_account(&counter.0);
+    if account.is_ok() {
+        solana_deployment_root.solana_memo_program = Some(SolanaMemoProgram {
+            solana_gateway_root_config_pda: gateway_root_pda,
+            program_id: axelar_solana_memo_program::id(),
+            counter_pda: counter.0,
+        });
+        tracing::warn!("counter PDA alradey initialized");
+        return Ok(());
+    }
     let ix = axelar_solana_memo_program::instruction::initialize(
         &payer_kp.pubkey(),
         &gateway_root_pda,
