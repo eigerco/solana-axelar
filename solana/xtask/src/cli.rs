@@ -108,17 +108,17 @@ pub(crate) enum Cosmwasm {
     /// Deploy
     Deploy {
         #[arg(short, long)]
-        private_key_hex: String,
+        axelar_private_key_hex: String,
     },
     Init {
         #[arg(short, long)]
-        private_key_hex: String,
+        axelar_private_key_hex: String,
         #[command(subcommand)]
         command: CosmwasmInit,
     },
     RedeployAndInitAll {
         #[arg(short, long)]
-        private_key_hex: String,
+        axelar_private_key_hex: String,
     },
     /// Generate a new Axelar wallet, outputs the Axelar bech32 key and the hex
     /// private key
@@ -139,6 +139,8 @@ pub(crate) enum CosmwasmInit {
     Gateway {},
     // Initialize an already deployed multisig prover contract.
     SolanaMultisigProver {},
+    // Steup Multisig porver initial signers (post Axelar-governance approval)
+    SolanaMultisigProverInitialSigners {},
 }
 /// The contracts are pre-built as ensured by the `evm-contracts-rs` crate in
 /// our workspace. On EVM we don't differentiate deployment from initialization
@@ -535,7 +537,9 @@ async fn handle_cosmwasm(
         Cosmwasm::Build => {
             cmd::cosmwasm::build().await?;
         }
-        Cosmwasm::Deploy { private_key_hex } => {
+        Cosmwasm::Deploy {
+            axelar_private_key_hex: private_key_hex,
+        } => {
             let cosmwasm_signer = create_axelar_cosmsos_signer(
                 private_key_hex,
                 &solana_deployment_root.axelar_configuration,
@@ -549,7 +553,7 @@ async fn handle_cosmwasm(
         Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
         Cosmwasm::Init {
             command,
-            private_key_hex,
+            axelar_private_key_hex: private_key_hex,
         } => {
             let client = create_axelar_cosmsos_signer(
                 private_key_hex,
@@ -567,13 +571,22 @@ async fn handle_cosmwasm(
                     cmd::cosmwasm::init_solana_multisig_prover(&client, solana_deployment_root)
                         .await?;
                 }
+                CosmwasmInit::SolanaMultisigProverInitialSigners {} => {
+                    cmd::cosmwasm::update_verifier_set_multisig_prover(
+                        &client,
+                        solana_deployment_root,
+                    )
+                    .await?;
+                }
             }
         }
         Cosmwasm::AmpdSetup => {
             cmd::cosmwasm::ampd::setup_ampd(&solana_deployment_root.solana_configuration).await?;
         }
         Cosmwasm::AmpdAndTofndRun => cmd::cosmwasm::ampd::start_with_tofnd().await?,
-        Cosmwasm::RedeployAndInitAll { private_key_hex } => {
+        Cosmwasm::RedeployAndInitAll {
+            axelar_private_key_hex: private_key_hex,
+        } => {
             let client = create_axelar_cosmsos_signer(
                 private_key_hex,
                 &solana_deployment_root.axelar_configuration,

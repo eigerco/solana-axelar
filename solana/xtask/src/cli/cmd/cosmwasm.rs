@@ -372,7 +372,6 @@ pub(crate) async fn init_solana_multisig_prover(
         address: contract_address.clone(),
     });
 
-    update_verifier_set_multisig_prover(client, solana_deployment_root).await?;
     Ok(contract_address)
 }
 
