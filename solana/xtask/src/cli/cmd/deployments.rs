@@ -122,7 +122,7 @@ impl AxelarConfiguration {
             verifier_key_type: KeyType::Ecdsa,
             axelar_chain: axelar,
             axelar_account_prefix: "axelar".to_string(),
-            service_name: "verifiers".to_string(),
+            service_name: "validators".to_string(),
             voting_verifier_majority_threshould: (1, 1),
             voting_verifier_block_expiry: 10,
             voting_verifier_confirmation_height: 1,

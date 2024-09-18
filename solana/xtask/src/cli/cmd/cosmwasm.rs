@@ -444,10 +444,10 @@ pub(crate) mod ampd {
 
     use super::path::axelar_amplifier_dir;
     use crate::cli::cmd::cosmwasm::path::{self, ampd_home_dir};
-    use crate::cli::cmd::deployments::SolanaConfiguration;
+    use crate::cli::cmd::deployments::{SolanaConfiguration, SolanaDeploymentRoot};
     use crate::cli::cmd::path::{workspace_root_dir, xtask_crate_root_dir};
 
-    pub(crate) async fn setup_ampd(solana_config: &SolanaConfiguration) -> eyre::Result<()> {
+    pub(crate) async fn setup_ampd(deployment_root: &SolanaDeploymentRoot) -> eyre::Result<()> {
         if !Confirm::new("Welcome to ampd-setup ! This will perform/guide you through the verifier onboarding process described here https://docs.axelar.dev/validator/amplifier/verifier-onboarding (devnet-amplifier chain).
 
         It will overwrite your $HOME/.ampd/config.toml if it exist.
@@ -507,20 +507,32 @@ pub(crate) mod ampd {
 
         info!("Bonding ampd verifier ...");
         sh.cmd(&ampd_build_path)
-            .args(vec!["bond-verifier", "validators", "100", "uamplifier"])
+            .args(vec![
+                "bond-verifier",
+                deployment_root.axelar_configuration.service_name.as_str(),
+                "100",
+                "uamplifier",
+            ])
             .run()?;
 
         info!("Registering ampd public key ...");
-        sh.cmd(&ampd_build_path)
+        let _err = sh
+            .cmd(&ampd_build_path)
             .args(vec!["register-public-key", "ecdsa"])
-            .run()?;
+            .run()
+            .inspect_err(|err| {
+                tracing::error!(?err, "error in registering the public key");
+            });
 
         info!("Registering support for Solana blockchain ...");
         sh.cmd(&ampd_build_path)
             .args(vec![
                 "register-chain-support",
-                "validators",
-                solana_config.chain_name_on_axelar_chain.as_str(),
+                deployment_root.axelar_configuration.service_name.as_str(),
+                deployment_root
+                    .solana_configuration
+                    .chain_name_on_axelar_chain
+                    .as_str(),
             ])
             .run()?;
 
