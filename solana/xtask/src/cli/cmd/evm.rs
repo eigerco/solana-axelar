@@ -6,7 +6,7 @@ use ethers::utils::hex::ToHexExt;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::{
     axelar_amplifier_gateway, axelar_memo,
 };
-use evm_contracts_test_suite::{ContractMiddleware, EvmSigner};
+use evm_contracts_test_suite::{await_receipt, ContractMiddleware, EvmSigner};
 use eyre::OptionExt;
 
 use super::deployments::CustomEvmChainDeployments;
@@ -60,17 +60,16 @@ pub(crate) async fn send_memo_to_solana(
         is_signer: false,
         is_writable: true,
     };
-    let receipt = memo_contract
-        .send_to_solana(
-            axelar_solana_memo_program::id().to_string(),
-            solana_chain_name_on_axelar.as_bytes().to_vec().into(),
-            memo_to_send.as_bytes().to_vec().into(),
-            vec![counter_account],
-        )
-        .send()
-        .await?
-        .await?
-        .ok_or_eyre("tx receipt not available")?;
+    let pending_tx = memo_contract.send_to_solana(
+        axelar_solana_memo_program::id().to_string(),
+        solana_chain_name_on_axelar.as_bytes().to_vec().into(),
+        memo_to_send.as_bytes().to_vec().into(),
+        vec![counter_account],
+    );
+    let pending_tx = pending_tx.send().await?;
+    let receipt = await_receipt(pending_tx)
+        .await
+        .map_err(|_| eyre::eyre!("tx receipt not available"))?;
 
     tracing::info!(tx_hash =? receipt.transaction_hash, "memo sent to the EVM Gateway");
 
@@ -100,21 +99,20 @@ pub(crate) async fn send_memo_from_evm_to_evm(
         our_memo_contract_address,
         signer.signer.clone(),
     );
-    let receipt = memo_contract
-        .send_to_evm(
-            destination_memo_contract_address.clone(),
-            our_destination_evm_deployment_tracker
-                .id
-                .as_bytes()
-                .to_vec()
-                .into(),
-            ethers::types::Bytes::from_iter(memo_to_send.as_bytes()),
-        )
-        .send()
-        .await?
-        .await?
-        .ok_or_eyre("tx receipt not available")?;
+    let pending_tx = memo_contract.send_to_evm(
+        destination_memo_contract_address.clone(),
+        our_destination_evm_deployment_tracker
+            .id
+            .as_bytes()
+            .to_vec()
+            .into(),
+        ethers::types::Bytes::from_iter(memo_to_send.as_bytes()),
+    );
 
+    let pending_tx = pending_tx.send().await?;
+    let receipt = await_receipt(pending_tx)
+        .await
+        .map_err(|_| eyre::eyre!("tx receipt not available"))?;
     tracing::info!(tx_hash =? receipt.transaction_hash, "memo sent to the EVM Gateway");
 
     Ok(receipt)
