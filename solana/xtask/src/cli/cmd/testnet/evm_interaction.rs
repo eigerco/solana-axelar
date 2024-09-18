@@ -41,6 +41,7 @@ pub(crate) fn create_axelar_message_from_evm_log(
     (payload, message)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn call_execute_on_destination_evm_contract(
     message: router_api::Message,
     destination_memo_contract: ethers::types::H160,
@@ -62,15 +63,16 @@ pub(crate) async fn call_execute_on_destination_evm_contract(
         ?payload,
         "sending `execute` to the destination contract"
     );
-    let _tx = memo_contract
-        .execute(source_chain, message_id, source_address, payload)
-        .send()
-        .await?
-        .await?
-        .unwrap();
+    let pending = memo_contract.execute(source_chain, message_id, source_address, payload);
+    let pending = pending.send().await?;
+
+    let _receipt = evm_contracts_test_suite::await_receipt(pending)
+        .await
+        .map_err(|_| eyre::eyre!("could not await tx"))?;
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn approve_messages_on_evm_gateway(
     destination_chain: &EvmChain,
     execute_data: Vec<u8>,
@@ -94,14 +96,15 @@ pub(crate) async fn approve_messages_on_evm_gateway(
         .to(destination_evm_gateway)
         .data(execute_data);
     tracing::info!("sending `approve_messages` tx to the destination gateway");
-    let gateway_approve_msgs = destination_evm_signer
+    let pending_gateway_approve_msgs = destination_evm_signer
         .signer
         .send_transaction(tx, None)
-        .await?
-        .await?
-        .unwrap();
-    tracing::info!(tx =? gateway_approve_msgs, "success");
+        .await?;
+    let receipt = evm_contracts_test_suite::await_receipt(pending_gateway_approve_msgs)
+        .await
+        .map_err(|_| eyre::eyre!("could not await tx"))?;
+    tracing::info!(tx =? receipt, "success");
     tracing::info!("sleeping for 30 seconds for the change to settle");
-    tokio::time::sleep(Duration::from_secs(30)).await;
+    tokio::time::sleep(Duration::from_secs(10)).await;
     Ok(())
 }
