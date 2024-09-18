@@ -52,6 +52,7 @@ impl Display for SolanaContract {
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn deploy(
     contract: SolanaContract,
     program_id: &Path,
@@ -71,6 +72,7 @@ pub(crate) fn deploy(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn init_gmp_gateway(
     cosmwasm_signer: SigningClient,
     previous_signers_retention: u128,
@@ -150,6 +152,7 @@ pub(crate) async fn init_gmp_gateway(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn init_memo_program(
     solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<()> {
@@ -183,6 +186,7 @@ pub(crate) fn init_memo_program(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn build_contracts(contracts: Option<&[PathBuf]>) -> eyre::Result<()> {
     let sh = Shell::new()?;
     if let Some(contracts) = contracts {
@@ -196,6 +200,7 @@ pub(crate) fn build_contracts(contracts: Option<&[PathBuf]>) -> eyre::Result<()>
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 fn deploy_contract(
     contract: SolanaContract,
     program_id: &Path,
@@ -226,6 +231,7 @@ fn parse_program_id(output: &str) -> eyre::Result<Pubkey> {
     Ok(Pubkey::from_str(id_part.trim())?)
 }
 
+#[tracing::instrument(skip_all, ret)]
 fn calculate_deploy_cmd_args(
     program_id: &Path,
     keypair_path: Option<&PathBuf>,

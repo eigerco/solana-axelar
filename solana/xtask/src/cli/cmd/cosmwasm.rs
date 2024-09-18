@@ -63,6 +63,7 @@ pub(crate) async fn build() -> eyre::Result<()> {
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn deploy(
     client: &SigningClient,
     config: &mut AxelarConfiguration,
@@ -103,11 +104,13 @@ async fn deploy_contract(
     Ok(code_id)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn init_solana_voting_verifier(
     client: &SigningClient,
     solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use voting_verifier::msg::InstantiateMsg;
+    tracing::info!("init voting verifier");
 
     let code_id = solana_deployment_root
         .axelar_configuration
@@ -202,11 +205,13 @@ fn majority_threshold(config: &AxelarConfiguration) -> axelar_wasm_std::Majority
         .unwrap()
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn init_gateway(
     client: &SigningClient,
     solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use gateway::msg::InstantiateMsg;
+    tracing::info!("init gateway");
 
     let code_id = solana_deployment_root
         .axelar_configuration
@@ -272,11 +277,14 @@ pub(crate) fn default_gas(config: &AxelarConfiguration) -> eyre::Result<Gas> {
     })
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn init_solana_multisig_prover(
     client: &SigningClient,
     solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use crate::cli::cmd::testnet::multisig_prover_api::InstantiateMsg;
+    tracing::info!("init multisig prover");
+
     let code_id = solana_deployment_root
         .axelar_configuration
         .multisig_prover_code_id
@@ -371,6 +379,8 @@ pub(crate) async fn init_solana_multisig_prover(
         init_params: instantiate_msg,
         address: contract_address.clone(),
     });
+
+    update_verifier_set_multisig_prover(client, solana_deployment_root).await?;
 
     Ok(contract_address)
 }

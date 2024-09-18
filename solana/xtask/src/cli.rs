@@ -593,11 +593,8 @@ async fn handle_cosmwasm(
             )?;
             cmd::cosmwasm::deploy(&client, &mut solana_deployment_root.axelar_configuration)
                 .await?;
-            tracing::info!("init voting verifier");
             cmd::cosmwasm::init_solana_voting_verifier(&client, solana_deployment_root).await?;
-            tracing::info!("init gateway");
             cmd::cosmwasm::init_gateway(&client, solana_deployment_root).await?;
-            tracing::info!("init multisig prover");
             cmd::cosmwasm::init_solana_multisig_prover(&client, solana_deployment_root).await?;
         }
     };
