@@ -42,7 +42,11 @@ impl TestFixture {
             &axelar_solana_gas_service::id(),
         )
         .await;
+        self.setup_default_gas_config(upgrade_authority)
+    }
 
+    /// Initialise a new gas config and return a utility tracker struct for it
+    pub fn setup_default_gas_config(&mut self, upgrade_authority: Keypair) -> GasServiceUtils {
         let config_authority = Keypair::new();
         let salt = keccak::hash(b"my gas service").0;
         let (config_pda, ..) = axelar_solana_gas_service::get_config_pda(

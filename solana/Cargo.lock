@@ -852,6 +852,7 @@ dependencies = [
  "axelar-solana-gateway",
  "bincode",
  "ed25519-dalek 2.1.1",
+ "futures 0.3.31",
  "gateway-event-stack",
  "libsecp256k1",
  "rand 0.7.3",

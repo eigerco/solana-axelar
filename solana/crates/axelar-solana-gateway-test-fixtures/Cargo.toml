@@ -16,6 +16,7 @@ solana-sdk.workspace = true
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
 libsecp256k1.workspace = true
 rand.workspace = true
+futures.workspace = true
 libsecp-rand.workspace = true
 gateway-event-stack.workspace = true
 axelar-solana-gas-service.workspace = true

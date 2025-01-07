@@ -1,5 +1,6 @@
 //! Module that contains the base test fixtures
 
+use std::fmt;
 use std::path::PathBuf;
 
 use axelar_solana_gateway::num_traits::SaturatingMul;
@@ -39,6 +40,27 @@ pub struct TestFixture {
     pub payer: Keypair,
     /// Recent blockhash
     pub recent_blockhash: Hash,
+}
+
+// Implement Debug for TestNodeMode
+impl fmt::Debug for TestNodeMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TestNodeMode::TestValidator(_) => f.write_str("TestNodeMode::TestValidator"),
+            TestNodeMode::ProgramTest { .. } => f.write_str("TestNodeMode::ProgramTest"),
+        }
+    }
+}
+
+// Implement Debug for TestFixture
+impl fmt::Debug for TestFixture {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TestFixture")
+            .field("test_node", &self.test_node)
+            .field("payer", &"<Keypair>")
+            .field("recent_blockhash", &self.recent_blockhash)
+            .finish()
+    }
 }
 
 impl TestFixture {

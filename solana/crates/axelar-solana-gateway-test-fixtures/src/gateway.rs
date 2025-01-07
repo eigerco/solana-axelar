@@ -502,6 +502,8 @@ pub struct SolanaAxelarIntegration {
     initial_nonce: u64,
     #[builder(default = 1)]
     previous_signers_retention: u64,
+    #[builder(default = futures::executor::block_on(TestFixture::new(ProgramTest::default())))]
+    fixture: TestFixture,
     #[builder(default)]
     /// Extra programs (besides the Solana gateway) that we need to deploy
     /// The parameters -- name of the program .so file (with the extensoin) and
@@ -516,20 +518,18 @@ pub struct SolanaAxelarIntegration {
 impl SolanaAxelarIntegration {
     /// Setup a new Axelar Solana Gateway without instaintiating the root config
     #[allow(clippy::unwrap_used)]
-    pub async fn setup_without_init_config(self) -> SolanaAxelarIntegrationMetadata {
-        // Create a new ProgramTest instance
-        let mut fixture = TestFixture::new(ProgramTest::default()).await;
+    pub async fn setup_without_init_config(mut self) -> SolanaAxelarIntegrationMetadata {
         // Generate a new keypair for the upgrade authority
         let upgrade_authority = Keypair::new();
 
         // deploy non-gateway programs
-        for (program_name, program_id) in self.programs_to_deploy {
+        for (program_name, program_id) in self.programs_to_deploy.iter() {
             let program_bytecode_path = workspace_root_dir()
                 .join("target")
                 .join("deploy")
                 .join(program_name);
             let program_bytecode = tokio::fs::read(&program_bytecode_path).await.unwrap();
-            fixture
+            self.fixture
                 .register_upgradeable_program(
                     &program_bytecode,
                     &upgrade_authority.pubkey(),
@@ -543,13 +543,21 @@ impl SolanaAxelarIntegration {
             tokio::fs::read("../../target/deploy/axelar_solana_gateway.so")
                 .await
                 .unwrap();
-        fixture
+        self.fixture
             .register_upgradeable_program(
                 &gateway_program_bytecode,
                 &upgrade_authority.pubkey(),
                 &axelar_solana_gateway::id(),
             )
             .await;
+        self.stetup_without_deployment(upgrade_authority)
+    }
+
+    /// Setup the Axelar Solana Gateway metadata without actually deploying the program on-chain
+    pub fn stetup_without_deployment(
+        self,
+        upgrade_authority: Keypair,
+    ) -> SolanaAxelarIntegrationMetadata {
         let operator = Keypair::new();
         let initial_signers = make_verifiers_with_quorum(
             &self.initial_signer_weights,
@@ -561,7 +569,7 @@ impl SolanaAxelarIntegration {
         SolanaAxelarIntegrationMetadata {
             domain_separator: self.domain_separator,
             upgrade_authority,
-            fixture,
+            fixture: self.fixture,
             signers: initial_signers,
             gateway_root_pda: axelar_solana_gateway::get_gateway_root_config_pda().0,
             operator,
