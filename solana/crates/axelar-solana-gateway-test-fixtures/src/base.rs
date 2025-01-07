@@ -2,30 +2,39 @@
 
 use std::path::PathBuf;
 
+use axelar_solana_gateway::num_traits::SaturatingMul;
 use solana_program::hash::Hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
     BanksClient, BanksClientError, BanksTransactionResultWithMetadata, ProgramTest,
     ProgramTestBanksClientExt as _, ProgramTestContext,
 };
+use solana_rpc_client::nonblocking::rpc_client::RpcClient;
+use solana_rpc_client_api::request::RpcError;
 use solana_sdk::account::{Account, AccountSharedData, WritableAccount as _};
 use solana_sdk::account_utils::StateMut as _;
 use solana_sdk::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_sdk::clock::Clock;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer as _;
 use solana_sdk::signers::Signers;
 use solana_sdk::system_instruction;
-use solana_sdk::transaction::Transaction;
+use solana_sdk::transaction::{Transaction, TransactionError};
+use solana_test_validator::TestValidator;
 
+pub enum TestNodeMode {
+    TestValidator(TestValidator),
+    ProgramTest {
+        context: ProgramTestContext,
+        banks_client: BanksClient,
+    },
+}
 /// Base test fixture wrapper that's agnostic to the Axelar Solana Gateway, it
 /// also provides useful utilities.
 pub struct TestFixture {
-    /// The base test program context
-    pub context: ProgramTestContext,
-    /// inner banks client
-    pub banks_client: BanksClient,
+    pub test_node: TestNodeMode,
     /// The account that signs all transactions by default
     pub payer: Keypair,
     /// Recent blockhash
@@ -37,34 +46,65 @@ impl TestFixture {
     pub async fn new(pt: ProgramTest) -> Self {
         let context = pt.start_with_context().await;
         Self {
-            banks_client: context.banks_client.clone(),
-            payer: context.payer.insecure_clone(),
             recent_blockhash: context.last_blockhash,
-            context,
+            payer: context.payer.insecure_clone(),
+            test_node: TestNodeMode::ProgramTest {
+                banks_client: context.banks_client.clone(),
+                context: context,
+            },
+        }
+    }
+
+    /// Create a test validator fixture
+    pub async fn new_test_validator(pt: solana_test_validator::TestValidatorGenesis) -> Self {
+        let (context, payer) = pt.start();
+        let rpc_client = context.get_async_rpc_client();
+        let recent_blockhash = rpc_client.get_latest_blockhash().await.unwrap();
+
+        Self {
+            payer: payer.insecure_clone(),
+            recent_blockhash,
+            test_node: TestNodeMode::TestValidator(context),
         }
     }
 
     /// Refresh the latest blockhash
     pub async fn refresh_blockhash(&mut self) -> Hash {
-        self.recent_blockhash = self
-            .banks_client
-            .get_new_latest_blockhash(&self.recent_blockhash)
-            .await
-            .unwrap();
+        match &mut self.test_node {
+            TestNodeMode::TestValidator(context) => {
+                let rpc_client = context.get_async_rpc_client();
+                let recent_blockhash = rpc_client.get_latest_blockhash().await.unwrap();
+                self.recent_blockhash = recent_blockhash;
+            }
+            TestNodeMode::ProgramTest { banks_client, .. } => {
+                self.recent_blockhash = banks_client
+                    .get_new_latest_blockhash(&self.recent_blockhash)
+                    .await
+                    .unwrap();
+            }
+        }
         self.recent_blockhash
     }
 
     /// Forward the time
     pub async fn forward_time(&mut self, add_time: i64) {
+        let TestNodeMode::ProgramTest {
+            context,
+            banks_client,
+        } = &mut self.test_node
+        else {
+            unimplemented!();
+        };
+
         // get clock sysvar
-        let clock_sysvar: Clock = self.banks_client.get_sysvar().await.unwrap();
+        let clock_sysvar = banks_client.get_sysvar::<Clock>().await.unwrap();
 
         // update clock
         let mut new_clock = clock_sysvar;
         new_clock.unix_timestamp = new_clock.unix_timestamp.saturating_add(add_time);
 
         // set clock
-        self.context.set_sysvar(&new_clock);
+        context.set_sysvar(&new_clock);
     }
 
     /// Send a new transaction.
@@ -83,23 +123,91 @@ impl TestFixture {
         ixs: &[Instruction],
         signing_keypairs: &T,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        // always refresh blockhash first
         let hash = self.refresh_blockhash().await;
+
+        // build the transaction
         let tx = Transaction::new_signed_with_payer(
             ixs,
             Some(&self.payer.pubkey()),
             signing_keypairs,
             hash,
         );
-        let tx = self
-            .banks_client
-            .process_transaction_with_metadata(tx)
-            .await
-            .unwrap();
 
-        if tx.result.is_ok() {
-            return Ok(tx);
+        // now branch on which node mode we are in
+        match &mut self.test_node {
+            TestNodeMode::TestValidator(test_validator) => {
+                let rpc_client = test_validator.get_async_rpc_client();
+
+                // Send the transaction via RPC
+                let send_result = rpc_client.send_transaction(&tx).await;
+                match send_result {
+                    Ok(sig) => {
+                        let confirm_res = rpc_client
+                            .confirm_transaction_with_commitment(
+                                &sig,
+                                CommitmentConfig::processed(),
+                            )
+                            .await;
+
+                        match confirm_res {
+                            Ok(_) => {
+                                // Construct a minimal success result
+                                let success_result = BanksTransactionResultWithMetadata {
+                                    result: Ok(()),
+                                    metadata: None,
+                                };
+                                Ok(success_result)
+                            }
+                            Err(e) => {
+                                use solana_rpc_client_api::client_error::ErrorKind;
+                                let err = match e.kind {
+                                    ErrorKind::TransactionError(err) => Err(err),
+                                    _ => {
+                                        dbg!(&e);
+                                        Ok(())
+                                    }
+                                };
+                                // Wrap the RPC error in a BanksClientError
+                                let fail = BanksTransactionResultWithMetadata {
+                                    result: err,
+                                    metadata: None,
+                                };
+                                Err(fail)
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        use solana_rpc_client_api::client_error::ErrorKind;
+                        let err = match e.kind {
+                            ErrorKind::TransactionError(err) => Err(err),
+                            _ => {
+                                dbg!(&e);
+                                Ok(())
+                            }
+                        };
+                        // If sending the transaction fails outright
+                        let fail = BanksTransactionResultWithMetadata {
+                            result: err,
+                            metadata: None,
+                        };
+                        Err(fail)
+                    }
+                }
+            }
+            TestNodeMode::ProgramTest { banks_client, .. } => {
+                let result = banks_client
+                    .process_transaction_with_metadata(tx)
+                    .await
+                    .unwrap();
+
+                if result.result.is_ok() {
+                    Ok(result)
+                } else {
+                    Err(result)
+                }
+            }
         }
-        Err(tx)
     }
 
     /// Go through all the steps of deploying an upgradeable solana program -
@@ -128,14 +236,8 @@ impl TestFixture {
         );
         let program_bytecode_size =
             UpgradeableLoaderState::size_of_programdata(program_bytecode.len());
-        let rent = self
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(program_bytecode_size)
-            // for some reason without this we get an error
-            .saturating_mul(2);
+
+        let rent = self.get_rent(program_bytecode_size).await;
 
         let fee_payer_signer = self.payer.insecure_clone();
 
@@ -192,6 +294,24 @@ impl TestFixture {
         program_data_pda
     }
 
+    pub async fn get_rent(&mut self, program_bytecode_size: usize) -> u64 {
+        let rent = match &mut self.test_node {
+            TestNodeMode::TestValidator(test_validator) => test_validator
+                .get_async_rpc_client()
+                .get_minimum_balance_for_rent_exemption(program_bytecode_size)
+                .await
+                .unwrap(),
+            TestNodeMode::ProgramTest { banks_client, .. } => banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(program_bytecode_size),
+        }
+        // for some reason without this we get an error
+        .saturating_mul(2);
+        rent
+    }
+
     /// Register the necessary `bpf_loader_upgradeable` PDAs for a given program
     /// bytecode to ensure that the program is upgradable.
     /// This feature is not provided by the `solana_program_test` [see this github issue](https://github.com/solana-labs/solana/issues/22950) - we could create a pr and upstream the changes
@@ -201,13 +321,16 @@ impl TestFixture {
         upgrade_authority: &Pubkey,
         program_keypair: &Pubkey,
     ) -> Pubkey {
+        let TestNodeMode::ProgramTest { context, .. } = &mut self.test_node else {
+            unimplemented!();
+        };
         let (program_data_pda, _) = Pubkey::find_program_address(
             &[program_keypair.as_ref()],
             &bpf_loader_upgradeable::id(),
         );
 
         add_upgradeable_loader_account(
-            &mut self.context,
+            context,
             program_keypair,
             &UpgradeableLoaderState::Program {
                 programdata_address: program_data_pda,
@@ -222,7 +345,7 @@ impl TestFixture {
             .saturating_add(programdata_data_offset);
 
         add_upgradeable_loader_account(
-            &mut self.context,
+            context,
             &program_data_pda,
             &UpgradeableLoaderState::ProgramData {
                 slot: 0,
@@ -263,10 +386,54 @@ impl TestFixture {
         account: &Pubkey,
         expected_owner: &Pubkey,
     ) -> Result<Option<Account>, BanksClientError> {
-        match self.banks_client.get_account(*account).await? {
-            None => Ok(None),
-            Some(account) if account.owner == *expected_owner => Ok(Some(account)),
-            Some(_) => Err(BanksClientError::ClientError("unexpected account owner")),
+        match &mut self.test_node {
+            TestNodeMode::TestValidator(tv) => {
+                let account = tv.get_async_rpc_client().get_account(account).await;
+                match account {
+                    Ok(acc) => Ok(Some(acc)),
+                    Err(err) => match err.kind {
+                        solana_rpc_client_api::client_error::ErrorKind::RpcError(
+                            RpcError::ForUser(_),
+                        ) => Ok(None),
+                        _ => Err(BanksClientError::ClientError("unexpected account owner")),
+                    },
+                }
+            }
+            TestNodeMode::ProgramTest { banks_client, .. } => {
+                match banks_client.get_account(*account).await? {
+                    None => Ok(None),
+                    Some(account) if account.owner == *expected_owner => Ok(Some(account)),
+                    Some(_) => Err(BanksClientError::ClientError("unexpected account owner")),
+                }
+            }
+        }
+    }
+
+    /// Tries to get an account without doing account ownership checks
+    pub async fn try_get_account_no_checks(
+        &mut self,
+        account: &Pubkey,
+    ) -> Result<Option<Account>, BanksClientError> {
+        match &mut self.test_node {
+            TestNodeMode::TestValidator(tv) => {
+                let account = tv.get_async_rpc_client().get_account(account).await;
+                match account {
+                    Ok(acc) => Ok(Some(acc)),
+                    Err(err) => match err.kind {
+                        solana_rpc_client_api::client_error::ErrorKind::RpcError(
+                            RpcError::ForUser(_),
+                        ) => Ok(None),
+                        _ => Err(BanksClientError::ClientError("unexpected account owner")),
+                    },
+                }
+            }
+            TestNodeMode::ProgramTest { banks_client, .. } => {
+                match banks_client.get_account(*account).await? {
+                    None => Ok(None),
+                    Some(account) => Ok(Some(account)),
+                    Some(_) => Err(BanksClientError::ClientError("unexpected account owner")),
+                }
+            }
         }
     }
 
@@ -364,8 +531,12 @@ mod tests {
             .await;
 
         // Assert - program_id gets initialised
-        let program_id_account = get_account(&mut test_fixture, program_keypair.pubkey()).await;
-        let program_id_account_2 = get_account(&mut test_fixture, program_keypair_2.pubkey()).await;
+        let program_id_account = test_fixture
+            .get_account(&program_keypair.pubkey(), &bpf_loader_upgradeable::id())
+            .await;
+        let program_id_account_2 = test_fixture
+            .get_account(&program_keypair_2.pubkey(), &bpf_loader_upgradeable::id())
+            .await;
         let loader_state =
             bincode::deserialize::<UpgradeableLoaderState>(program_id_account.data()).unwrap();
         let loader_state_2 =
@@ -385,8 +556,12 @@ mod tests {
         ));
 
         // Assert - programdata gets initialised
-        let programdata_account = get_account(&mut test_fixture, programdata_pda).await;
-        let programdata_account_2 = get_account(&mut test_fixture, programdata_pda_2).await;
+        let programdata_account = test_fixture
+            .get_account(&programdata_pda, &bpf_loader_upgradeable::id())
+            .await;
+        let programdata_account_2 = test_fixture
+            .get_account(&programdata_pda_2, &bpf_loader_upgradeable::id())
+            .await;
         let loader_state = bincode::deserialize::<UpgradeableLoaderState>(
             programdata_account
                 .data()
@@ -424,14 +599,5 @@ mod tests {
             programdata_account.data().len(),
             programdata_account_2.data().len()
         );
-    }
-
-    async fn get_account(test_fixture: &mut TestFixture, address: Pubkey) -> Account {
-        test_fixture
-            .banks_client
-            .get_account(address)
-            .await
-            .unwrap()
-            .unwrap()
     }
 }
