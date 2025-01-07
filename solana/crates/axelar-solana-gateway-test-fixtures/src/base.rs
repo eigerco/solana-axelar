@@ -79,7 +79,7 @@ impl TestFixture {
 
     /// Create a test validator fixture
     pub async fn new_test_validator(pt: solana_test_validator::TestValidatorGenesis) -> Self {
-        let (context, payer) = pt.start();
+        let (context, payer) = pt.start_async().await;
         let rpc_client = context.get_async_rpc_client();
         let recent_blockhash = rpc_client.get_latest_blockhash().await.unwrap();
 
