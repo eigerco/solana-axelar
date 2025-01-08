@@ -23,6 +23,7 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer as _;
 use solana_sdk::signers::Signers;
 use solana_sdk::system_instruction;
+use solana_sdk::sysvar::Sysvar;
 use solana_sdk::transaction::{Transaction, TransactionError};
 use solana_test_validator::TestValidator;
 
@@ -353,6 +354,15 @@ impl TestFixture {
         rent
     }
 
+    /// Returns the requested sysvar
+    pub async fn get_sysvar<T: Sysvar>(&mut self) -> T {
+        let TestNodeMode::ProgramTest { banks_client, .. } = &mut self.test_node else {
+            unimplemented!();
+        };
+
+        banks_client.get_sysvar::<T>().await.unwrap()
+    }
+
     /// Register the necessary `bpf_loader_upgradeable` PDAs for a given program
     /// bytecode to ensure that the program is upgradable.
     /// This feature is not provided by the `solana_program_test` [see this github issue](https://github.com/solana-labs/solana/issues/22950) - we could create a pr and upstream the changes
@@ -474,6 +484,16 @@ impl TestFixture {
                     Some(account) => Ok(Some(account)),
                     Some(_) => Err(BanksClientError::ClientError("unexpected account owner")),
                 }
+            }
+        }
+    }
+
+    /// Sets the account state
+    pub fn set_account_state(&mut self, account_key: &Pubkey, state: Account) {
+        match &mut self.test_node {
+            TestNodeMode::TestValidator { .. } => unimplemented!(),
+            TestNodeMode::ProgramTest { context, .. } => {
+                context.set_account(account_key, &state.into());
             }
         }
     }
