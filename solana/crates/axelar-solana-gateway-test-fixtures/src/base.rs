@@ -168,7 +168,7 @@ impl TestFixture {
                         let confirm_res = rpc_client
                             .confirm_transaction_with_commitment(
                                 &sig,
-                                CommitmentConfig::processed(),
+                                CommitmentConfig::finalized(),
                             )
                             .await;
 
