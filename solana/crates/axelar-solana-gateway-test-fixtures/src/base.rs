@@ -2,6 +2,7 @@
 
 use std::fmt;
 use std::path::PathBuf;
+use std::time::Duration;
 
 use axelar_solana_gateway::num_traits::SaturatingMul;
 use solana_program::hash::Hash;
@@ -26,7 +27,10 @@ use solana_sdk::transaction::{Transaction, TransactionError};
 use solana_test_validator::TestValidator;
 
 pub enum TestNodeMode {
-    TestValidator(TestValidator),
+    TestValidator {
+        validator: TestValidator,
+        sleep: Duration,
+    },
     ProgramTest {
         context: ProgramTestContext,
         banks_client: BanksClient,
@@ -46,7 +50,7 @@ pub struct TestFixture {
 impl fmt::Debug for TestNodeMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TestNodeMode::TestValidator(_) => f.write_str("TestNodeMode::TestValidator"),
+            TestNodeMode::TestValidator { .. } => f.write_str("TestNodeMode::TestValidator"),
             TestNodeMode::ProgramTest { .. } => f.write_str("TestNodeMode::ProgramTest"),
         }
     }
@@ -78,7 +82,10 @@ impl TestFixture {
     }
 
     /// Create a test validator fixture
-    pub async fn new_test_validator(pt: solana_test_validator::TestValidatorGenesis) -> Self {
+    pub async fn new_test_validator(
+        pt: solana_test_validator::TestValidatorGenesis,
+        sleep: Duration,
+    ) -> Self {
         let (context, payer) = pt.start_async().await;
         let rpc_client = context.get_async_rpc_client();
         let recent_blockhash = rpc_client.get_latest_blockhash().await.unwrap();
@@ -86,14 +93,19 @@ impl TestFixture {
         Self {
             payer: payer.insecure_clone(),
             recent_blockhash,
-            test_node: TestNodeMode::TestValidator(context),
+            test_node: TestNodeMode::TestValidator {
+                validator: context,
+                sleep,
+            },
         }
     }
 
     /// Refresh the latest blockhash
     pub async fn refresh_blockhash(&mut self) -> Hash {
         match &mut self.test_node {
-            TestNodeMode::TestValidator(context) => {
+            TestNodeMode::TestValidator {
+                validator: context, ..
+            } => {
                 let rpc_client = context.get_async_rpc_client();
                 let recent_blockhash = rpc_client.get_latest_blockhash().await.unwrap();
                 self.recent_blockhash = recent_blockhash;
@@ -158,7 +170,10 @@ impl TestFixture {
 
         // now branch on which node mode we are in
         match &mut self.test_node {
-            TestNodeMode::TestValidator(test_validator) => {
+            TestNodeMode::TestValidator {
+                validator: test_validator,
+                sleep,
+            } => {
                 let rpc_client = test_validator.get_async_rpc_client();
 
                 // Send the transaction via RPC
@@ -171,6 +186,7 @@ impl TestFixture {
                                 CommitmentConfig::finalized(),
                             )
                             .await;
+                        tokio::time::sleep(*sleep).await;
 
                         match confirm_res {
                             Ok(_) => {
@@ -318,7 +334,10 @@ impl TestFixture {
 
     pub async fn get_rent(&mut self, program_bytecode_size: usize) -> u64 {
         let rent = match &mut self.test_node {
-            TestNodeMode::TestValidator(test_validator) => test_validator
+            TestNodeMode::TestValidator {
+                validator: test_validator,
+                ..
+            } => test_validator
                 .get_async_rpc_client()
                 .get_minimum_balance_for_rent_exemption(program_bytecode_size)
                 .await
@@ -409,7 +428,7 @@ impl TestFixture {
         expected_owner: &Pubkey,
     ) -> Result<Option<Account>, BanksClientError> {
         match &mut self.test_node {
-            TestNodeMode::TestValidator(tv) => {
+            TestNodeMode::TestValidator { validator: tv, .. } => {
                 let account = tv.get_async_rpc_client().get_account(account).await;
                 match account {
                     Ok(acc) => Ok(Some(acc)),
@@ -437,7 +456,7 @@ impl TestFixture {
         account: &Pubkey,
     ) -> Result<Option<Account>, BanksClientError> {
         match &mut self.test_node {
-            TestNodeMode::TestValidator(tv) => {
+            TestNodeMode::TestValidator { validator: tv, .. } => {
                 let account = tv.get_async_rpc_client().get_account(account).await;
                 match account {
                     Ok(acc) => Ok(Some(acc)),
