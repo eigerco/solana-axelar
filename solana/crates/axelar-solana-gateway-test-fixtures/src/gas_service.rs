@@ -242,7 +242,7 @@ impl TestFixture {
             .unwrap()
             .unwrap();
 
-        spl_token_2022::state::Account::unpack(res.data()).unwrap()
+        spl_token_2022::state::Account::unpack_from_slice(&res.data).unwrap()
     }
 
     /// get the gas service config pda state
