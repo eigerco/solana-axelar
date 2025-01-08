@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use axelar_solana_gateway::num_traits::SaturatingMul;
+use futures::SinkExt;
 use solana_program::hash::Hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
@@ -19,7 +20,7 @@ use solana_sdk::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_sdk::clock::Clock;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::instruction::Instruction;
-use solana_sdk::signature::Keypair;
+use solana_sdk::signature::{Keypair, Signature};
 use solana_sdk::signer::Signer as _;
 use solana_sdk::signers::Signers;
 use solana_sdk::system_instruction;
@@ -158,6 +159,34 @@ impl TestFixture {
         ixs: &[Instruction],
         signing_keypairs: &T,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        self.send_tx_with_custom_signers_and_signature(ixs, signing_keypairs)
+            .await
+            .map(|x| x.1)
+            .map_err(|x| x.1)
+    }
+
+    /// Send a new transaction.
+    /// Using the default `self.payer` for signing.
+    pub async fn send_tx_with_signatures(
+        &mut self,
+        ixs: &[Instruction],
+    ) -> Result<
+        (Vec<Signature>, BanksTransactionResultWithMetadata),
+        (Vec<Signature>, BanksTransactionResultWithMetadata),
+    > {
+        self.send_tx_with_custom_signers_and_signature(ixs, &[&self.payer.insecure_clone()])
+            .await
+    }
+
+    /// Send a new transaction while also providing the signers to use
+    pub async fn send_tx_with_custom_signers_and_signature<T: Signers + ?Sized>(
+        &mut self,
+        ixs: &[Instruction],
+        signing_keypairs: &T,
+    ) -> Result<
+        (Vec<Signature>, BanksTransactionResultWithMetadata),
+        (Vec<Signature>, BanksTransactionResultWithMetadata),
+    > {
         // always refresh blockhash first
         let hash = self.refresh_blockhash().await;
 
@@ -168,6 +197,7 @@ impl TestFixture {
             signing_keypairs,
             hash,
         );
+        let signatures = tx.signatures.clone();
 
         // now branch on which node mode we are in
         match &mut self.test_node {
@@ -196,7 +226,7 @@ impl TestFixture {
                                     result: Ok(()),
                                     metadata: None,
                                 };
-                                Ok(success_result)
+                                Ok((signatures, success_result))
                             }
                             Err(e) => {
                                 use solana_rpc_client_api::client_error::ErrorKind;
@@ -212,7 +242,7 @@ impl TestFixture {
                                     result: err,
                                     metadata: None,
                                 };
-                                Err(fail)
+                                Err((signatures, fail))
                             }
                         }
                     }
@@ -230,7 +260,7 @@ impl TestFixture {
                             result: err,
                             metadata: None,
                         };
-                        Err(fail)
+                        Err((signatures, fail))
                     }
                 }
             }
@@ -241,9 +271,9 @@ impl TestFixture {
                     .unwrap();
 
                 if result.result.is_ok() {
-                    Ok(result)
+                    Ok((signatures, result))
                 } else {
-                    Err(result)
+                    Err((signatures, result))
                 }
             }
         }
