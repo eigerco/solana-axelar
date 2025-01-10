@@ -65,20 +65,48 @@ pub struct ItsProgramWrapper {
     pub counter_pda: Option<Pubkey>,
 }
 
-pub async fn program_test() -> SolanaAxelarIntegrationMetadata {
+async fn program_test() -> SolanaAxelarIntegrationMetadata {
+    std::process::Command::new("solana")
+        .args([
+            "program",
+            "dump",
+            "-u",
+            "m",
+            format!("{}", mpl_token_metadata::ID).as_ref(),
+            "../../target/deploy/mpl_token_metadata.so",
+        ])
+        .output()
+        .expect("failed get mpl_token_metadata program");
+    let programs = vec![
+        ("axelar_solana_its.so".into(), axelar_solana_its::id()),
+        ("mpl_token_metadata.so".into(), mpl_token_metadata::ID),
+    ];
+
     SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![555, 222])
-        .programs_to_deploy(vec![(
-            "axelar_solana_its.so".into(),
-            axelar_solana_its::id(),
-        )])
+        .programs_to_deploy(programs)
         .build()
         .setup()
         .await
 }
 
 async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
-    let mut programs = vec![("axelar_solana_its.so".into(), axelar_solana_its::id())];
+    std::process::Command::new("solana")
+        .args([
+            "program",
+            "dump",
+            "-u",
+            "m",
+            format!("{}", mpl_token_metadata::ID).as_ref(),
+            "../../target/deploy/mpl_token_metadata.so",
+        ])
+        .output()
+        .expect("failed get mpl_token_metadata program");
+    let mut programs = vec![
+        ("axelar_solana_its.so".into(), axelar_solana_its::id()),
+        ("mpl_token_metadata.so".into(), mpl_token_metadata::ID),
+    ];
+
     if with_memo {
         programs.push((
             "axelar_solana_memo_program.so".into(),
