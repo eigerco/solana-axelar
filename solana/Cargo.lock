@@ -884,7 +884,6 @@ dependencies = [
  "solana-program-test",
  "solana-sdk",
  "spl-associated-token-account 5.0.1",
- "spl-pod 0.4.0",
  "spl-token",
  "spl-token-2022 5.0.2",
  "typed-builder",
@@ -912,7 +911,6 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
- "spl-token-2022 5.0.2",
  "thiserror 1.0.69",
 ]
 

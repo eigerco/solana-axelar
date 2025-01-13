@@ -21,7 +21,7 @@ mod role_management;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::command_id;
-use axelar_solana_gateway_test_fixtures::base::TestFixture;
+use axelar_solana_gateway_test_fixtures::base::{workspace_root_dir, TestFixture};
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, random_message, ProgramInvocationState,
 };
@@ -66,20 +66,16 @@ pub struct ItsProgramWrapper {
 }
 
 async fn program_test() -> SolanaAxelarIntegrationMetadata {
-    std::process::Command::new("solana")
-        .args([
-            "program",
-            "dump",
-            "-u",
-            "m",
-            format!("{}", mpl_token_metadata::ID).as_ref(),
-            "../../target/deploy/mpl_token_metadata.so",
-        ])
-        .output()
-        .expect("failed get mpl_token_metadata program");
     let programs = vec![
         ("axelar_solana_its.so".into(), axelar_solana_its::id()),
-        ("mpl_token_metadata.so".into(), mpl_token_metadata::ID),
+        (
+            workspace_root_dir()
+                .join("programs")
+                .join("axelar-solana-its")
+                .join("tests")
+                .join("mpl_token_metadata.so"),
+            mpl_token_metadata::ID,
+        ),
     ];
 
     SolanaAxelarIntegration::builder()
@@ -91,20 +87,16 @@ async fn program_test() -> SolanaAxelarIntegrationMetadata {
 }
 
 async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
-    std::process::Command::new("solana")
-        .args([
-            "program",
-            "dump",
-            "-u",
-            "m",
-            format!("{}", mpl_token_metadata::ID).as_ref(),
-            "../../target/deploy/mpl_token_metadata.so",
-        ])
-        .output()
-        .expect("failed get mpl_token_metadata program");
     let mut programs = vec![
         ("axelar_solana_its.so".into(), axelar_solana_its::id()),
-        ("mpl_token_metadata.so".into(), mpl_token_metadata::ID),
+        (
+            workspace_root_dir()
+                .join("programs")
+                .join("axelar-solana-its")
+                .join("tests")
+                .join("mpl_token_metadata.so"),
+            mpl_token_metadata::ID,
+        ),
     ];
 
     if with_memo {
