@@ -19,7 +19,6 @@ borsh.workspace = true
 mpl-token-metadata.workspace = true
 program-utils = { workspace = true }
 solana-program.workspace = true
-spl-token-2022.workspace = true
 
 [dev-dependencies]
 ethers-core.workspace = true
