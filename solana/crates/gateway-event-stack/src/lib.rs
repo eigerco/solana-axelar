@@ -443,8 +443,8 @@ mod tests {
             config_pda: "DR9Ja5ojPLPDWmWFRmpc2SEUvK94dKX4uM6AofgwAAJm"
                 .parse()
                 .unwrap(),
-            destination_chain: "evm".to_string(),
-            destination_address: "0xdeadbeef".to_string(),
+            destination_chain: "evm".to_owned(),
+            destination_address: "0xdeadbeef".to_owned(),
             payload_hash: [
                 253, 7, 118, 199, 14, 218, 66, 103, 127, 224, 243, 254, 44, 195, 247, 43, 10, 46,
                 193, 191, 38, 1, 250, 10, 98, 37, 164, 74, 132, 208, 191, 145,
