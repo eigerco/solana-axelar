@@ -17,20 +17,29 @@ To integrate with the Axelar Solana Gateway, you are not exposed to be exposed t
 
 ## Sending messages from Solana
 
-### Messages where the payload data gets stored on-chain
-
 Here you can see the full flow of how a message gets proxied through the network when sending a message from Solana to any other chain:
 
-![image](https://github.com/user-attachments/assets/6f81d77c-6607-483b-a590-06394bed6b6e)
+![Solana to other chain](https://github.com/user-attachments/assets/61d9934e-221a-4858-be62-a70c5a12d21d)
 
 For a destination contract to communicate with the Axelar Solana Gateway, it must make a CPI call to the Axelar Solana Gateway.
 - On Solana, there is no such concept as `msg.sender` like there is in Solidity.
-- The interface of `axelar_solana_gateway::GatewayInstruction::CallContract` instruction defines that the first account in the `accounts[]` must be a signer, if the account is set as `signer` then the instruction will proceed and use the account pubkey as the origin of the message.
-- On Solana `program_id`'s **cannot** be signers. This means that while a `program_id` must be a recipient of a GMP message (eg message from EVM to Solana), the `program_id` will **never** be the `sender` of a message; the relationship is not symetrical.
-- The only way for programs to send messages is to create PDAs that use [`invoke_signed()`](https://docs.rs/solana-cpi/latest/solana_cpi/fn.invoke_signed.html) and sign over the CPI call.
+- On Solana `program_id`'s **cannot** be signers.
+- On Solana, only PDAs can sign on behalf of a program. The only way for programs to send messages is to create PDAs that use [`invoke_signed()`](https://docs.rs/solana-cpi/latest/solana_cpi/fn.invoke_signed.html) and sign over the CPI call.
+- The interface of `axelar_solana_gateway::GatewayInstruction::CallContract` instruction defines that the first account in the `accounts[]` must be the `program_id` that is sending the GMP payload.
+- The sedond account is a "siging pda" meaining that a program must generate a PDA with specific paramters and sign the CPI call for `gateway.call_contract`; The presence of such signature acts as an authorizaton token, that allows the Gateway to interpret that the provided `program_id` is indeed the one that made the call and thus will use the `program_id` as the sender.
 
-[Full fledged example](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-memo-program/src/processor.rs#L123-L140): Memo program that leverages a PDA for signing the `CallContract` CPI call.
+[Full fledged example](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-memo-program/src/processor.rs#L123-L157): Memo program that leverages a PDA for signing the `CallContract` CPI call.
 
-### Messages where the payload data is stored off-chain
+| Gateway Instruction |  Use Case | Caveats |
+| - | - | - |
+| [CallContract](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-gateway/src/instructions.rs#L52-L67) | When you can create the data fully on-chain. Or When the data is small enough that you can fit it into tx arguments  | _None_ |
+| [CallContractOffchainData](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-gateway/src/instructions.rs#L69-L85) | When the payload data cannot be generated on-chain or it does not fit into tx size limitations. This ix only requires the payload hash. The full payload is expected to be provided to the relayer directly | Wether the payload gets provided to the relayer before or after sending this ix is fully up to the relayer and not part of the Gateway spec. |
 
-todo
+## Receiving messages from Solana
+
+-- todo PDAs
+
+### Expectations from the destination contract
+
+### Work that the relayer is doing
+
