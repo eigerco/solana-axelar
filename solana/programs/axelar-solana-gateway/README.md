@@ -34,7 +34,9 @@ The second account is a `signing PDA`, meaning the source program must generate 
 | - | - | - | - | - |
 | [CallContract](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-gateway/src/lib.rs#L312-L317) | This acts only as a signing PDA, never initialized; Permits the destination program to call `CallContract` on the Gateway | Destination program will craft this when making the CPI call to the Gateway | Emulates `msg.sender` from Solidity | Destination program |
 
-[Full-fledged example](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-memo-program/src/processor.rs#L123-L157): Memo program that leverages a PDA for signing the `CallContract` CPI call.
+[Full-fledged example](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-memo-program/src/processor.rs#L123-L157): Memo program that leverages a PDA for signing the `Call Contract` CPI call.
+
+[Full-fledged example](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-memo-program/src/processor.rs#L164-L198): Memo program that leverages a PDA for signing the `Call Contract Offchain Data` CPI call.
 
 | Gateway Instruction |  Use Case | Caveats |
 | - | - | - |
@@ -70,6 +72,9 @@ Receiving messages on Solana is more complex than sending messages. There are a 
 
 **Prerequisite:** initialized `Gateway Root Config PDA` with a valid verifier set; active `Multisig Prover`; active `Relayer`;
 
+![Execute Data](https://github.com/user-attachments/assets/d039ad91-b7aa-40d2-9c33-b53d3926ad22)
+
+
 Due to Solana limitations, we cannot verify the desired amount of signatures in a single on-chain transaction to fulfil the minimal requirements imposed by the Axelar protocol. For detailed reading, please look at the [axelar-solana-encoding/README.md](../crates/axelar-solana-encoding/README.md#execute-data).
 
 The approach taken here is that:
@@ -77,12 +82,11 @@ The approach taken here is that:
     1. we can prove that each `message` is part of the `payload digest` with the corresponding Merkle Proof
     2. we can prove that each `verifier` is part of the `verifier set` that signed the `payload digest` with the corresponding Merkle Proof
     3. each `verifier` has a corresponding Signature attached to it
-2. Relayer calls `Initialize Payload Verification Session` on the Gateway [[link to the processor]](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/initialize_payload_verification_session.rs), creating a new PDA that will keep track of the verified signatures. The `payload digest` is used as the core seed parameter for the PDA. This is safe because a `payload digest` will only be duplicated if the `verifier set` remains the same (this is often the case) AND all of the messages are the same. Even if all the messages remain the same, `Axelar Solana Gateway` has idempotency on a per-message level, meaning duplicate execution is impossible.
-3. For each `verifier` + Signature in the `ExecuteData` that signed the payload digest, the Relayer sends a tx [`VerifySignature` (link to the processor)](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/verify_signature.rs). The core logic is that we:
-    1. ensure that the `verifier` is part of the `verifier set` that signed the data using Merkle Proof. 
-    2. check if the `signature` is valid for a given `payload digest` and if it matches the given `verifier` (by performing ECDSA recovery).
-    3. update the `signature verification PDA` to track the current weight of the verifier that was verified and the index of its Signature
-    4. repeat this tx for every `signature` until the `quorum` has been reached
+  
+| action | tx count | description |
+| - | - | - |
+| Relayer calls `Initialize Payload Verification Session` on the Gateway [[link to the processor]](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/initialize_payload_verification_session.rs) | 1 | This creates a new PDA that will keep track of the verified signatures. The `payload digest` is used as the core seed parameter for the PDA. This is safe because a `payload digest` will only be duplicated if the `verifier set` remains the same (this is often the case) AND all of the messages are the same. Even if all the messages remain the same, `Axelar Solana Gateway` has idempotency on a per-message level, meaning duplicate execution is impossible. |
+| The Relayer sends a tx [`VerifySignature` (link to the processor)](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/verify_signature.rs). | For each `verifier` + Signature in the `ExecuteData` that signed the payload digest | The core logic is that we:  <ol><li>ensure that the `verifier` is part of the `verifier set` that signed the data using Merkle Proof. </li><li>check if the `signature` is valid for a given `payload digest` and if it matches the given `verifier` (by performing ECDSA recovery).</li><li>update the `signature verification PDA` to track the current weight of the verifier that was verified and the index of its Signature</li><li>repeat this tx for every `signature` until the `quorum` has been reached</li></ol> |
 
 **Artefact:** We have reached the quorum, tracked on `Signature Verification Session PDA`.
 
@@ -92,20 +96,20 @@ The approach taken here is that:
 
 As in the signature verification step, we cannot approve dozens of Messages in a single transaction due to Solana limitations. 
 
-The Relayer must do the following work:
-1. For each GMP message in the `ExecuteData`, call [`Approve Message` (link to processor)](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/approve_message.rs). The processor takes care of:
-    1. Validating that a `message` is part of a `payload digest` using Merkle Proof.
-    2. Validating that the `payload digest` corresponds to `Signtature Verification PDA`, and it has reached its quorum.
-    3. Validating that the `message` has not already been initialized
-    4. Initializes a new PDA (called `Incoming Message PDA`) responsible for tracking a message's `approved`/`executed` state. The core seed of this PDA is `command_id`. You can read more about `command_id` in the [EVM docs #replay prevention section](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/gateway/INTEGRATION.md#replay-prevention); our implementation is the same.
-    5. This action emits a log for the Relayer to capture.
-    6. repeat this tx for every `message` in a batch.
+| action | tx count | description |
+| - | - | - |
+| Relayer calls [`Approve Message` (link to the processor)](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/approve_message.rs). | For each GMP message in the `ExecuteData` | <ol><li>Validating that a `message` is part of a `payload digest` using Merkle Proof.</li><li>Validating that the `payload digest` corresponds to `Signature Verification PDA`, and it has reached its quorum.</li><li>Validating that the `message` has not already been initialized</li><li>Initializes a new PDA (called `Incoming Message PDA`) responsible for tracking a message's `approved`/`executed` state. The core seed of this PDA is `command_id`. You can read more about `command_id` in the [EVM docs #replay prevention section](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/gateway/INTEGRATION.md#replay-prevention); our implementation is the same.</li><li>This action emits a log for the Relayer to capture.</li><li>Repeat this tx for every `message` in a batch.</li></ol> |
   
-**Artefact:** We have initialized a new `Incoming Message PDA` for each message with its state set as `approved`. For messages approved in previous batches, there have been no changes to their PDA contents.
+**Artefact:** We have initialized a new `Incoming Message PDA` for each message with its state set as `approved`. There have been no changes to PDA contents for messages approved in previous batches.
 
 ### Message Execution
 
 **Prerequisite:** `Incoming Message PDA` for a message.
+
+![Caliing the destination program](https://github.com/user-attachments/assets/f7c1eaf9-cae7-4a74-8cea-19b17caaad0a)
+
+
+[Full-fledged example](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-memo-program/src/processor.rs#L87-L103): Memo program that leverages receives a GMP message and implements `axelar-executable`
 
 After the Relayer reports the event to Amplifier API about a message being approved, the Relayer will receive the raw payload to call the destination program. Because of Solana limitations, the Relayer cannot send large enough payloads in the transaction arguments to satisfy the minimum requirements of Axelar protocol. Therefore, the Relayer does chunk uploading of the raw data to a PDA for the end program to consume. 
 Here is what the Relayer needs to do with the raw payload:
