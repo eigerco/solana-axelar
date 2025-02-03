@@ -92,7 +92,7 @@ The approach taken here is that:
 
 ### Message approval
 
-**Prerequisite:** `Signature Verification PDA` that has reached its quorum.
+**Prerequisite:** `Signature Verification Session PDA` that has reached its quorum.
 
 As in the signature verification step, we cannot approve dozens of Messages in a single transaction due to Solana limitations. 
 
@@ -108,14 +108,16 @@ As in the signature verification step, we cannot approve dozens of Messages in a
 
 ![Caliing the destination program](https://github.com/user-attachments/assets/f7c1eaf9-cae7-4a74-8cea-19b17caaad0a)
 
-
 [Full-fledged example](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-memo-program/src/processor.rs#L87-L103): Memo program that leverages receives a GMP message and implements `axelar-executable`
 
 After the Relayer reports the event to Amplifier API about a message being approved, the Relayer will receive the raw payload to call the destination program. Because of Solana limitations, the Relayer cannot send large enough payloads in the transaction arguments to satisfy the minimum requirements of Axelar protocol. Therefore, the Relayer does chunk uploading of the raw data to a PDA for the end program to consume. 
-Here is what the Relayer needs to do with the raw payload:
-1. Call [`Initialize Message Payload` (link to processor)](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/initialize_message_payload.rs). The seed of the PDA is directly tied to the Relayer and to the `Incoming Message PDA` (`command_id`). This means that if multiple concurrent relayers exist, they will not override each others' payload data. 
-2. Chunk the raw payload and upload it in batches (each separate tx) using [`Write Message Payload`](https://github.com/eigerco/solana-axelar/blob/main/solana/programs/axelar-solana-gateway/src/processor/write_message_payload.rs). Such an approach allows us to **upload up to 10kb of raw message data. That is the upper bound of the Solana integration**.
-3. After the payload has been fully uploaded, the Relayer must call [`Commit Message Payload`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/commit_message_payload.rs) which will compute the hash of the raw payload. This also ensures that after the hash has been calculated & committed, the payload can no longer be mutated in place by the Relayer.
+
+
+| action | tx count | description |
+| - | - | - |
+| Relayer calls [`Initialize Message Payload` (link to processor)](https://github.com/eigerco/solana-axelar/blob/c73300dec01547634a80d85b9984348015eb9fb2/solana/programs/axelar-solana-gateway/src/processor/initialize_message_payload.rs). | 1 | The seed of the PDA is directly tied to the Relayer and the `Incoming Message PDA` (`command_id`). This means that if multiple concurrent relayers exist, they will not override each others' payload data. |
+| Relayer chunks the raw payload and uploads it in batches using [`Write Message Payload`](https://github.com/eigerco/solana-axelar/blob/main/solana/programs/axelar-solana-gateway/src/processor/write_message_payload.rs). | new tx for each chunk of the payload; max size of a chunk ~800 bytes | Such an approach allows us to **upload up to 10kb of raw message data. That is the upper bound of the Solana integration**. |
+| Relayer calls [`Commit Message Payload`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/commit_message_payload.rs) | 1 | Computes the hash of the raw payload. This also ensures that after the hash has been calculated & committed, the payload can no longer be mutated in place by the Relayer. |
 
     As a result, we now have the following PDAs:
     - `Incoming Message PDA`: contains the execution status of a message (will be `approved` state after message approval). Relationship - 1 PDA for each unique message on the Axelar network.
@@ -123,30 +125,21 @@ Here is what the Relayer needs to do with the raw payload:
   
 Next, the Relayer must communicate with the destination program. For a third-party developer to build an integration with the `Axelar Solana Gateway` and receive GMP messages, the only expectation is for the contract to implement [`axelar-executable`](../../crates/axelar-executable/README.md) interface. This allows the Relayer PDA to have a known interface to compose and send transactions after they've been approved on the Gateway. Exception of the rule is [`Interchain Token Service`](../axelar-solana-its/README.md) & [`Governance`](../axelar-solana-governance/README.md) programs, which do not implement `axelar-executable`.
 
-Relayer calls the `destination program`:
-1. The `destination program` (via `axelar-executale`) must call [`Validate Message`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/validate_message.rs).
-    1. The `destination program` needs to craft a `signing pda` to ensure that the given `program id` is the message's desired recipient (akin to `msg.sender` on Solidity). 
-    2. `Incoming Message PDA` status gets set to `executed`
-    3. event gets emitted
-2. After message execution, the Relayer can close `Message Payload PDA` using [`Close Message Payload`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/close_message_payload.rs) call. This will return ~99% of the funds spent uploading the raw data on-chain.
+| action | tx count | description |
+| - | - | - |
+| Relayer calls the `destination program`| 1 | Composes a tx using `axelar-executable` |
+| `Destination program` (via `axelar-executale`) Calls [`Validate Message`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/validate_message.rs). | Internal CPI of 👆 | <ol><li>The `destination program` needs to craft a `signing pda` to ensure that the given `program id` is the message's desired recipient (akin to `msg.sender` on Solidity). </li><li>`Incoming Message PDA` status gets set to `executed`</li><li>event gets emitted</li></ol>
+| The Relayer can close `Message Payload PDA` using [`Close Message Payload`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/close_message_payload.rs) call. | 1 | This will return ~99% of the funds spent uploading the raw data on-chain. |
 
 **Artifact:** Message has been successfully executed; `Incoming Message PDA` marked as `executed`; `Message Payload PDA` has been closed, and funds refunded to the Relayer.
 
 ### Verifier rotation
 
-**Prerequisite:** `Signature Verification PDA` that has reached its quorum.
+**Prerequisite:** `Signature Verification Session PDA` that has reached its quorum.
 
-After the signatures have been verified:
-1. The Relayer will submit a tx [`Rotate Signers`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/rotate_signers.rs).
-    1. The processor will validate the following logic:
-        - If the tx **was not** submitted by `operator`, then check if signer rotation is not happening too frequently (the `rotation delay` parameter is configured on the `Gateway Config PDA`)
-        - If the tx **was** submitted by the `operator`, then skip the rotation delay check 
-    3. Check: Only rotate the verifiers if the `verifier set` that signed the action is the **latest** `verifier set`
-    4. Check: ensure that the new verifier set is not a duplicate of an old one
-    5. Initialize a new `Verifier Tracker PDA` that will track the epoch and the hash of the newly created `verifier set`
-    6. Update the `Gateway Config PDA` to update the latest verifier set epoch
-    7. This will emit an event for the relayer to capture and report back to `ampd`
-
+| action | tx count | description |
+| - | - | - |
+| The Relayer calls [`Rotate Signers`](https://github.com/eigerco/solana-axelar/blob/033bd17df32920eb6b57a0e6b8d3f82298b0c5ff/solana/programs/axelar-solana-gateway/src/processor/rotate_signers.rs). | 1 | <ol><li>The processor will validate the following logic:<ul><li>If the tx **was not** submitted by `operator`, then check if signer rotation is not happening too frequently (the `rotation delay` parameter is configured on the `Gateway Config PDA`)</li><li>If the tx **was** submitted by the `operator`, then skip the rotation delay check </li></ul></li><li>Check: Only rotate the verifiers if the `verifier set` that signed the action is the **latest** `verifier set`</li><li>Check: ensure that the new verifier set is not a duplicate of an old one</li><li>Initialize a new `Verifier Tracker PDA` that will track the epoch and the hash of the newly created `verifier set`</li><li>Update the `Gateway Config PDA` to update the latest verifier set epoch</li><li>This will emit an event for the relayer to capture and report back to `ampd`</li></ol> |
 
 ## Operator role
 
