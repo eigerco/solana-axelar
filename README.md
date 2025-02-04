@@ -24,7 +24,7 @@ The Solana-Axelar integrations contains on-chain and off-chain components.
 - [**Gas Service**](solana/programs/axelar-solana-gas-service/README.md): Used for gas payments for the relayer.
 - [**Interchain Token Service**](solana/programs/axelar-solana-its/README.md): Bridge tokens between chains.
 - [**Multicall**](solana/programs/axelar-solana-multicall): Execute multiple actions from a single GMP message.
-- [**Governance**](solana/programs/axelar-solana-governance/README.md): The governing entity over on-chain programs, responsible for program upgrades
+- [**Governance**](solana/programs/axelar-solana-governance/README.md): The governing entity over on-chain programs, responsible for program upgrades.
 - [**Memo**](solana/programs/axelar-solana-memo-program): An example program that is able to send and receive GMP messages.
 
 
