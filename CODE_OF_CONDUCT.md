@@ -5,4 +5,4 @@
 5. Please keep unstructured critique to a minimum. If you have solid ideas you want to experiment with, make a fork and see how it works.
 6. We will exclude you from interaction if you insult, demean or harass anyone. That is not welcome behavior. We interpret the term “harassment” as including the definition in the Citizen Code of Conduct; if you have any lack of clarity about what might be included in that concept, please read their definition. In particular, we don’t tolerate behavior that excludes people in socially marginalized groups.
 7. Private harassment is also unacceptable. No matter who you are, if you feel you have been or are being harassed or made uncomfortable by a community member, please contact the administrators. Whether you’re a regular contributor or a newcomer, we care about making this community a safe place for you and we’ve got your back.
-8. Likewise any spamming, trolling, flaming, baiting or other attention-stealing behavior is not welcome
+8. Likewise, any spamming, trolling, flaming, baiting, or other attention-stealing behavior is not welcome
