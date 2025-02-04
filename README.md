@@ -25,24 +25,24 @@ The Solana-Axelar integration contains on-chain and off-chain components.
 - [**Interchain Token Service**](solana/programs/axelar-solana-its/README.md): Bridge tokens between chains.
 - [**Multicall**](solana/programs/axelar-solana-multicall): Execute multiple actions from a single GMP message.
 - [**Governance**](solana/programs/axelar-solana-governance/README.md): The governing entity over on-chain programs, responsible for program upgrades.
-- [**Memo**](solana/programs/axelar-solana-memo-program): An example program that is able to send and receive GMP messages.
+- [**Memo**](solana/programs/axelar-solana-memo-program): An example program that sends and receives GMP messages.
 
 
 #### Utility crates
 - [**Axelar Executable**](solana/crates/axelar-executable/README.md): A set of libraries & interfaces that the destination program (3rd party integration) must implement.
 - [**Axelar Solana Encoding**](solana/crates/axelar-solana-encoding/README.md): Encoding used by the Multisig Prover to encode the data in a way that the relayer & the Solana Gateway can interpret.
-- [**Gateway Event Stack**](solana/crates/gateway-event-stack): Used by the Relayer to parse events coming from the Gas Service & the Gateway.
+- [**Gateway Event Stack**](solana/crates/gateway-event-stack): The Relayer uses this crate to parse Gas Service & Gateway events.
 
 ### EVM Smart Contracts
 - [**Axelar Memo**](evm-contracts/src/AxelarMemo.sol): A counterpart of the `axelar-solana-memo` program that acts as an example program used to send GMP messages back and forth Solana.
-- [**Axelar Solana Multi Call**](evm-contracts/src/AxelarSolanaMultiCall.sol): An example contract used to showcase how to compose multicall payloads for Solana.
+- [**Axelar Solana Multi Call**](evm-contracts/src/AxelarSolanaMultiCall.sol): An example contract used to showcase how to compose Multicall payloads for Solana.
 - [**Solana Gateway Payload**](evm-contracts/src/ExampleEncoder.sol): A Solditiy library that can create Solana-specific GMP payloads.
 
 
 ## Related Repositories
 
 - [**Solana Relayer**](https://github.com/eigerco/axelar-solana-relayer): The off-chain entity that will route your messages to and from Solana.
-- [**Relayer Core**](https://github.com/eigerco/axelar-relayer-core): All Axelar-related relayer infrastructure. Used as a core building block for the Solana Relayer. Also used by the Axelar-Starknet and Axlelar-Aleo relayers.
+- [**Relayer Core**](https://github.com/eigerco/axelar-relayer-core): All Axelar-related relayer infrastructure. Used as a core building block for the Solana Relayer. The Axelar-Starknet and Axlelar-Aleo relayers also use it.
 - [**Multisig Prover**](https://github.com/eigerco/axelar-amplifier/tree/add-multisig-prover-sol-logic/contracts/multisig-prover): The entity on the Axelar chain that is responsible for encoding the data for the Relayer and the Solana Gateway
 - [**Utility Scripts**](https://github.com/eigerco/solana-axelar-scripts): Deployment scripts; GMP testing scripts and other utilities.
 
@@ -64,7 +64,7 @@ cargo xtask test
 
 ## About [Eiger](https://www.eiger.co)
 
-We are engineers. We contribute to various ecosystems by building low level implementations and core components. We work on several Axelar and Solana projects and believe that connecting these two is a very important goal to achieve cross-chain execution.
+We are engineers. We contribute to various ecosystems by building low-level implementations and core components. We work on several Axelar and Solana projects and connecting these two is a fundamental goal to achieve cross-chain execution.
 
 Contact us at hello@eiger.co
 Follow us on [X/Twitter](https://x.com/eiger_co)
