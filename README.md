@@ -6,8 +6,9 @@ This repository contains the integration work between Solana and Axelar, enablin
 
 - [Repository contents](#repository-contents)
   - [Solana contracts](#solana-contracts)
-  - [EVM Smart Contracts](#evm-smart-contracts)
-  - [Offchain microservices](#offchain-microservices)
+    - [Utility crates](#utility-crates)
+  - [EVM Smart contracts](#evm-smart-contracts)
+  - [Related repositories](#related-repositories)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
