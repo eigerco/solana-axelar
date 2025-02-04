@@ -34,7 +34,7 @@ The Solana-Axelar integration contains on-chain and off-chain components.
 - [**Gateway Event Stack**](solana/crates/gateway-event-stack): Used by the Relayer to parse events coming from the Gas Service & the Gateway.
 
 ### EVM Smart Contracts
-- [**Axelar Memo**](evm-contracts/src/AxelarMemo.sol): A counterpart of the `axelar-solana-memo` program that acts a an example program used to send GMP messages back and forth Solana.
+- [**Axelar Memo**](evm-contracts/src/AxelarMemo.sol): A counterpart of the `axelar-solana-memo` program that acts as an example program used to send GMP messages back and forth Solana.
 - [**Axelar Solana Multi Call**](evm-contracts/src/AxelarSolanaMultiCall.sol): An example contract used to showcase how to compose multicall payloads for Solana.
 - [**Solana Gateway Payload**](evm-contracts/src/ExampleEncoder.sol): A Solditiy library that can create Solana-specific GMP payloads.
 
