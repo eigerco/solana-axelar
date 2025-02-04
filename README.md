@@ -1,6 +1,6 @@
 # Solana-Axelar Interoperability
 
-This repository contains the integration work between Solana and Axelar, enabling seamless cross-chain communication. The project includes General Message Passing (GMP) contracts and other Axelra core components.
+This repository contains the integration work between Solana and Axelar, enabling seamless cross-chain communication. The project includes General Message Passing (GMP) contracts and other Axelar core components.
 
 ## Table of Contents
 
