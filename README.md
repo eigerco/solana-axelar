@@ -17,7 +17,7 @@ This repository contains the integration work between Solana and Axelar, enablin
 
 ![image](https://github.com/user-attachments/assets/88008f1c-4096-4248-87b2-128b65cb8e41)
 
-The Solana-Axelar integrations contains on-chain and off-chain components.
+The Solana-Axelar integration contains on-chain and off-chain components.
 
 ### Solana contracts
 - [**Gateway**](solana/programs/axelar-solana-gateway/README.md): The core contract responsible for authenticating GMP messages.
