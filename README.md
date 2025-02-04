@@ -11,10 +11,6 @@ This repository contains the integration work between Solana and Axelar, enablin
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-
 
 ## Repository contents
 
@@ -54,29 +50,16 @@ The Solana-Axelar integrations contains on-chain and off-chain components.
 
 ### Prerequisites
 
-- [List of prerequisites, e.g., Rust, Solana CLI, Axelar SDK, etc.]
+- [Solana CLI (for running tests during development)](https://solana.com/docs/intro/installation)
+- [Foundry (for running e2e tests, GMP examples between Solana and an EVM chain)](https://book.getfoundry.sh/getting-started/installation)
 
 ### Installation
 
 ```bash
-# Clone the repo (& init submodules)
-git clone --recurse-submodules <repo url>
-
-# if the repo has already been cloned you need to fetch the submodules
-git submodule update --init --recursive
+git clone git@github.com:eigerco/solana-axelar.git
+cd solana
+cargo xtask test
 ```
-
-### Usage
-
-- [Instructions on how to run the project, deploy contracts, etc.]
-
-## Contributing
-
-- [Guidelines for contributing to the repo, including pull request processes, coding standards, etc.]
-
-## License
-
-- [Details about the licensing of the project]
 
 ## About [Eiger](https://www.eiger.co)
 
