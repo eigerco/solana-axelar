@@ -42,7 +42,7 @@ The Solana-Axelar integration contains on-chain and off-chain components.
 ## Related Repositories
 
 - [**Solana Relayer**](https://github.com/eigerco/axelar-solana-relayer): The off-chain entity that will route your messages to and from Solana.
-- [**Relayer Core**](https://github.com/eigerco/axelar-relayer-core): All Axelar-related relayer infrastructure. Used as a core buidling block for the Solana Relayer. Also used by the Axelar-Starknet and Axlelar-Aleo relayers.
+- [**Relayer Core**](https://github.com/eigerco/axelar-relayer-core): All Axelar-related relayer infrastructure. Used as a core building block for the Solana Relayer. Also used by the Axelar-Starknet and Axlelar-Aleo relayers.
 - [**Multisig Prover**](https://github.com/eigerco/axelar-amplifier/tree/add-multisig-prover-sol-logic/contracts/multisig-prover): The entity on the Axelar chain that is responsible for encoding the data for the Relayer and the Solana Gateway
 - [**Utility Scripts**](https://github.com/eigerco/solana-axelar-scripts): Deployment scripts; GMP testing scripts and other utilities.
 
