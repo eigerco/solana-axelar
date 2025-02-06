@@ -2,6 +2,7 @@
 //! data.
 
 use program_utils::ValidPDA;
+use role_management::processor::ensure_upgrade_authority;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -20,12 +21,15 @@ use crate::state::GovernanceConfig;
 pub(crate) fn process(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    governance_config: GovernanceConfig,
+    mut governance_config: GovernanceConfig,
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
+    let program_data = next_account_info(accounts_iter)?;
     let root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
+
+    ensure_upgrade_authority(program_id, payer, program_data)?;
 
     // Check: System Program Account
     if !system_program::check_id(system_account.key) {
@@ -38,6 +42,8 @@ pub(crate) fn process(
         msg!("Derived PDA does not match provided PDA");
         return Err(ProgramError::InvalidArgument);
     }
+
+    governance_config.bump = bump;
 
     // Check: PDA Account is not initialized
     root_pda.check_uninitialized_pda()?;
