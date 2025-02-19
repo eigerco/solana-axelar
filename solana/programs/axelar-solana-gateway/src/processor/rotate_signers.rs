@@ -123,11 +123,6 @@ impl Processor {
         // Check: Current verifier set isn't expired
         gateway_config.assert_valid_epoch(verifier_set_tracker.epoch)?;
 
-        // Check: new new verifier set PDA must be uninitialised
-        new_empty_verifier_set
-            .check_uninitialized_pda()
-            .map_err(|_err| GatewayError::VerifierSetTrackerAlreadyInitialised)?;
-
         // we always enforce the delay unless unless the operator has been provided and
         // its also the Gateway opreator
         // reference: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L98-L101
@@ -196,42 +191,14 @@ fn rotate_signers<'a>(
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Initialize thethe new verifier set tracker PDA account
-    let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
-    program_utils::init_pda_raw(
+    VerifierSetTracker::create(
+        program_id,
         payer,
         new_empty_verifier_set,
-        program_id,
         system_account,
-        size_of::<VerifierSetTracker>()
-            .try_into()
-            .expect("unexpected u64 overflow in struct size"),
-        &[
-            seed_prefixes::VERIFIER_SET_TRACKER_SEED,
-            new_verifier_set_merkle_root.as_slice(),
-            &[new_verifier_set_bump],
-        ],
-    )?;
-
-    // Store the new verifier set data
-    let mut new_verifier_set_data = new_empty_verifier_set.try_borrow_mut_data()?;
-    let new_verifier_set_tracker = VerifierSetTracker::read_mut(&mut new_verifier_set_data)
-        .ok_or(GatewayError::BytemuckDataLenInvalid)?;
-    *new_verifier_set_tracker = VerifierSetTracker::new(
-        new_verifier_set_bump,
         gateway_config.current_epoch,
-        new_verifier_set_merkle_root,
-    );
-
-    // Check that everything has been derived correctly
-    assert_valid_verifier_set_tracker_pda(new_verifier_set_tracker, new_empty_verifier_set.key)?;
-
-    // Emit the rotation event
-    sol_log_data(&[
-        event_prefixes::SIGNERS_ROTATED,
-        &new_verifier_set_tracker.epoch.to_le_bytes(), // u256 as LE [u8; 32]
-        &new_verifier_set_tracker.verifier_set_hash,   // [u8; 32]
-    ]);
-    Ok(())
+        &new_verifier_set_merkle_root
+    )
 }
 
 fn enough_time_till_next_rotation(current_time: u64, config: &GatewayConfig) -> bool {

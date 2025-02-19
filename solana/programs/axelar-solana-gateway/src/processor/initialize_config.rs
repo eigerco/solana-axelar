@@ -89,34 +89,14 @@ impl Processor {
                 .map_err(|_err| ProgramError::InvalidInstructionData)?;
             let epoch = U256::from_u64(idx.saturating_add(1));
 
-            let (_, pda_bump) = get_verifier_set_tracker_pda(*verifier_set_hash);
-            verifier_set_pda.check_uninitialized_pda()?;
-
-            // Initialize the tracker account
-            program_utils::init_pda_raw(
+            VerifierSetTracker::create(
+                program_id,
                 payer,
                 verifier_set_pda,
-                program_id,
                 system_account,
-                size_of::<VerifierSetTracker>().try_into().map_err(|_err| {
-                    solana_program::msg!("unexpected u64 overflow in struct size");
-                    ProgramError::ArithmeticOverflow
-                })?,
-                &[
-                    seed_prefixes::VERIFIER_SET_TRACKER_SEED,
-                    verifier_set_hash.as_slice(),
-                    &[pda_bump],
-                ],
+                epoch,
+                verifier_set_hash,
             )?;
-
-            // store account data
-            let mut data = verifier_set_pda.try_borrow_mut_data()?;
-            let tracker = VerifierSetTracker::read_mut(&mut data)
-                .ok_or(GatewayError::BytemuckDataLenInvalid)?;
-            *tracker = VerifierSetTracker::new(pda_bump, epoch, *verifier_set_hash);
-
-            // check that everything has been derived correctly
-            assert_valid_verifier_set_tracker_pda(tracker, verifier_set_pda.key)?;
         }
 
         let (_, bump) = get_gateway_root_config_internal(program_id);
