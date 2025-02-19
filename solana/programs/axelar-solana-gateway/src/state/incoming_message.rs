@@ -2,13 +2,13 @@
 
 use axelar_solana_encoding::{hasher::SolanaSyscallHasher, types::messages::Message};
 use bytemuck::{Pod, Zeroable};
-use program_utils::BytemuckedPda;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::log::sol_log_data;
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 use core::str::FromStr;
 use axelar_solana_encoding::LeafHash;
 
-use crate::event_prefixes;
+use crate::{assert_valid_incoming_message_pda, event_prefixes};
 use crate::{error::GatewayError, get_validate_message_signing_pda, seed_prefixes};
 
 /// Data for the incoming message (from Axelar to Solana) PDA.
@@ -137,6 +137,40 @@ impl IncomingMessage {
         ]);
 
         Ok(())
+    }
+
+    pub(crate) fn execute_approved<'a>(pda: &AccountInfo<'a>, program_id: &Pubkey, message: &Message)-> Result<([u8; 32], u8), ProgramError> {
+
+        // compute the message hash
+        let message_hash = message.hash::<SolanaSyscallHasher>();
+
+        // compute the command id
+        let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
+        
+        pda.check_initialized_pda_without_deserialization(program_id)?;
+        let mut data = pda.try_borrow_mut_data()?;
+        let incoming_message =
+            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        assert_valid_incoming_message_pda(
+            &command_id,
+            incoming_message.bump,
+            pda.key,
+        )?;
+
+        // Check: message is approved
+        if !incoming_message.status.is_approved() {
+            return Err(GatewayError::MessageNotApproved.into());
+        }
+
+        
+        // Check: message hashes match
+        if incoming_message.message_hash != message_hash {
+            return Err(GatewayError::MessageHasBeenTamperedWith.into());
+        }
+
+        incoming_message.status = MessageStatus::executed();
+
+        Ok((command_id, incoming_message.bump))
     }
 }
 

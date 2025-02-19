@@ -1,9 +1,6 @@
 use core::str::FromStr;
 
-use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_encoding::LeafHash;
-use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::log::sol_log_data;
 use solana_program::msg;
@@ -13,9 +10,9 @@ use solana_program::pubkey::Pubkey;
 use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
 use crate::error::GatewayError;
-use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
+use crate::state::incoming_message::IncomingMessage;
 use crate::{
-    assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
+    create_validate_message_signing_pda, event_prefixes,
 };
 
 impl Processor {
@@ -43,38 +40,15 @@ impl Processor {
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let caller = next_account_info(accounts_iter)?;
 
-        // compute the message hash
-        let message_hash = message.hash::<SolanaSyscallHasher>();
-
-        // compute the command id
-        let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-
-        // Check: Gateway Root PDA is initialized.
-        incoming_message_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let incoming_message =
-            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        assert_valid_incoming_message_pda(
-            &command_id,
-            incoming_message.bump,
-            incoming_message_pda.key,
-        )?;
-
-        // Check: message is approved
-        if !incoming_message.status.is_approved() {
-            return Err(GatewayError::MessageNotApproved.into());
-        }
-        // Check: message hashes match
-        if incoming_message.message_hash != message_hash {
-            return Err(GatewayError::MessageHasBeenTamperedWith.into());
-        }
+        let (command_id, signing_pda_bump) = IncomingMessage::execute_approved(incoming_message_pda, program_id, &message)?;
+        
         let destination_address = Pubkey::from_str(&message.destination_address)
             .map_err(|_err| GatewayError::InvalidDestinationAddress)?;
 
         // check that caller ir valid signing PDA
         let expected_signing_pda = create_validate_message_signing_pda(
             &destination_address,
-            incoming_message.signing_pda_bump,
+            signing_pda_bump,
             &command_id,
         )?;
         if &expected_signing_pda != caller.key {
@@ -85,9 +59,6 @@ impl Processor {
         if !caller.is_signer {
             return Err(GatewayError::CallerNotSigner.into());
         }
-
-        incoming_message.status = MessageStatus::executed();
-
         // Emit an event
         sol_log_data(&[
             event_prefixes::MESSAGE_EXECUTED,
