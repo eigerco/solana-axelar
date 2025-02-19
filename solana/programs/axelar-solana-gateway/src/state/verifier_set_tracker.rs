@@ -4,6 +4,7 @@ use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
 use program_utils::{BytemuckedPda, ValidPDA};
 pub use core::mem::size_of;
+use std::{cell::{Ref, RefMut}, rc::Rc};
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{assert_valid_verifier_set_tracker_pda, error::GatewayError, get_verifier_set_tracker_pda, seed_prefixes};
@@ -85,6 +86,18 @@ impl VerifierSetTracker {
         Ok(())
     }
 
+
+    pub(crate) fn get<'a>(verifier_set_tracker_account: &AccountInfo<'a>, program_id: &Pubkey) -> Result<(Epoch, VerifierSetHash), ProgramError> {
+        verifier_set_tracker_account.check_initialized_pda_without_deserialization(program_id)?;
+        let data= verifier_set_tracker_account.try_borrow_data()?;
+        let verifier_set_tracker =
+            VerifierSetTracker::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        assert_valid_verifier_set_tracker_pda(
+            verifier_set_tracker,
+            verifier_set_tracker_account.key,
+        )?;
+        Ok((verifier_set_tracker.epoch, verifier_set_tracker.verifier_set_hash))
+    }
 }
 
 impl BytemuckedPda for VerifierSetTracker {}

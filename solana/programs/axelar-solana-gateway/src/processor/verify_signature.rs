@@ -12,7 +12,6 @@ use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_signature_verification_pda,
-    assert_valid_verifier_set_tracker_pda,
 };
 
 impl Processor {
@@ -61,24 +60,17 @@ impl Processor {
         )?;
 
         // Check: Active verifier set tracker PDA is initialized.
-        verifier_set_tracker_account.check_initialized_pda_without_deserialization(program_id)?;
-        let data = verifier_set_tracker_account.try_borrow_data()?;
-        let verifier_set_tracker =
-            VerifierSetTracker::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        assert_valid_verifier_set_tracker_pda(
-            verifier_set_tracker,
-            verifier_set_tracker_account.key,
-        )?;
+        let (epoch, verifier_set_hash) = VerifierSetTracker::get(verifier_set_tracker_account, program_id)?;
 
         // Check: Verifier set isn't expired
-        gateway_config.assert_valid_epoch(verifier_set_tracker.epoch)?;
+        gateway_config.assert_valid_epoch(epoch)?;
 
         // Verify the signature
         session
             .signature_verification
             .process_signature(
                 verifier_info,
-                &verifier_set_tracker.verifier_set_hash,
+                &verifier_set_hash,
                 &payload_merkle_root,
             )
             .map_err(|error| {
