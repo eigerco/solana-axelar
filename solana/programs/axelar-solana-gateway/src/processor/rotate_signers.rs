@@ -1,12 +1,10 @@
 use core::convert::TryInto;
-use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
@@ -19,8 +17,7 @@ use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_signature_verification_pda,
-    assert_valid_verifier_set_tracker_pda, event_prefixes, get_verifier_set_tracker_pda,
-    seed_prefixes,
+    assert_valid_verifier_set_tracker_pda,
 };
 
 impl Processor {

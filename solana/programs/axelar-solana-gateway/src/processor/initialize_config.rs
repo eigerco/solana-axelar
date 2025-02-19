@@ -2,7 +2,7 @@ use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use itertools::Itertools;
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::BytemuckedPda;
 use role_management::processor::ensure_upgrade_authority;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
@@ -18,8 +18,8 @@ use crate::instructions::InitializeConfig;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
 use crate::{
-    assert_valid_gateway_root_pda, assert_valid_verifier_set_tracker_pda,
-    get_gateway_root_config_internal, get_verifier_set_tracker_pda, seed_prefixes,
+    assert_valid_gateway_root_pda,
+    get_gateway_root_config_internal, seed_prefixes,
 };
 
 impl Processor {

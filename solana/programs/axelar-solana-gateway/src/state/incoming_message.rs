@@ -1,7 +1,15 @@
 //! Module for the `IncomingMessage` account type.
 
+use axelar_solana_encoding::{hasher::SolanaSyscallHasher, types::messages::Message};
 use bytemuck::{Pod, Zeroable};
 use program_utils::BytemuckedPda;
+use solana_program::log::sol_log_data;
+use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use core::str::FromStr;
+use axelar_solana_encoding::LeafHash;
+
+use crate::event_prefixes;
+use crate::{error::GatewayError, get_validate_message_signing_pda, seed_prefixes};
 
 /// Data for the incoming message (from Axelar to Solana) PDA.
 #[repr(C)]
@@ -44,6 +52,92 @@ impl IncomingMessage {
 
     /// Size of this type, in bytes.
     pub const LEN: usize = core::mem::size_of::<Self>();
+
+    pub(crate) fn assert_valid_pda<'a>(pda: &AccountInfo<'a>, command_id: &[u8; 32]) -> Result<u8, ProgramError> {
+        let seeds = [
+            seed_prefixes::INCOMING_MESSAGE_SEED,
+            command_id,
+        ];
+        let (_, bump) = Pubkey::find_program_address(
+            &seeds,
+            &crate::ID,
+        );
+        let seeds = [
+            seed_prefixes::INCOMING_MESSAGE_SEED,
+            command_id,
+            &[bump],
+        ];
+        let derived_pubkey = Pubkey::create_program_address(
+            &seeds,
+            &crate::ID,
+        )
+        .expect("invalid bump for the incoming message PDA");
+        if &derived_pubkey != pda.key {
+            solana_program::msg!("Error: Invalid incoming message PDA ");
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        Ok(bump)
+    }
+
+    pub(crate) fn create<'a>(pda: &AccountInfo<'a>, payer: &AccountInfo<'a>, system_program: &AccountInfo<'a>, program_id: &Pubkey, message: Message) -> Result<(), ProgramError> {
+        let cc_id = &message.cc_id;
+        let command_id = command_id(&cc_id.chain, &cc_id.id);
+        
+        let bump =  Self::assert_valid_pda(pda, &command_id)?;
+
+        let seeds = &[
+            seed_prefixes::INCOMING_MESSAGE_SEED,
+            &command_id,
+            &[bump],
+        ];
+        program_utils::init_pda_raw(
+            payer,
+            pda,
+            program_id,
+            system_program,
+            IncomingMessage::LEN.try_into().map_err(|_err| {
+                solana_program::msg!("unexpected u64 overflow in struct size");
+                ProgramError::ArithmeticOverflow
+            })?,
+            seeds,
+        )?;
+
+        let destination_address =
+            Pubkey::from_str(&message.destination_address).map_err(|_err| {
+                solana_program::msg!("Invalid destination address");
+                GatewayError::InvalidDestinationAddress
+            })?;
+        let (_, signing_pda_bump) =
+            get_validate_message_signing_pda(destination_address, command_id);
+
+        let message_hash = message.hash::<SolanaSyscallHasher>();
+        
+        // Persist a new incoming message with "in progress" status in the PDA data.
+        let mut data = pda.try_borrow_mut_data()?;
+        let incoming_message_data =
+            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        *incoming_message_data = IncomingMessage::new(
+            bump,
+            signing_pda_bump,
+            MessageStatus::approved(),
+            message_hash,
+            message.payload_hash,
+        );
+
+        // Emit an event
+        sol_log_data(&[
+            event_prefixes::MESSAGE_APPROVED,
+            &command_id,
+            &destination_address.to_bytes(),
+            &message.payload_hash,
+            cc_id.chain.as_bytes(),
+            cc_id.id.as_bytes(),
+            message.source_address.as_bytes(),
+            message.destination_chain.as_bytes(),
+        ]);
+
+        Ok(())
+    }
 }
 
 impl BytemuckedPda for IncomingMessage {}

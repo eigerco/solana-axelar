@@ -4,7 +4,6 @@ use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
 use program_utils::{BytemuckedPda, ValidPDA};
 pub use core::mem::size_of;
-use std::{cell::{Ref, RefMut}, rc::Rc};
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{assert_valid_verifier_set_tracker_pda, error::GatewayError, get_verifier_set_tracker_pda, seed_prefixes};
