@@ -53,7 +53,12 @@ impl IncomingMessage {
     /// Size of this type, in bytes.
     pub const LEN: usize = core::mem::size_of::<Self>();
 
-    pub(crate) fn assert_valid_pda<'a>(pda: &AccountInfo<'a>, command_id: &[u8; 32]) -> Result<u8, ProgramError> {
+    pub(crate) fn assert_valid_uninitialized_pda<'a>(pda: &AccountInfo<'a>, command_id: &[u8; 32]) -> Result<u8, ProgramError> {
+        // Check: the incoming message PDA already approved
+        pda
+            .check_uninitialized_pda()
+            .map_err(|_err| GatewayError::MessageAlreadyInitialised)?;
+
         let seeds = [
             seed_prefixes::INCOMING_MESSAGE_SEED,
             command_id,
@@ -62,28 +67,17 @@ impl IncomingMessage {
             &seeds,
             &crate::ID,
         );
-        let seeds = [
-            seed_prefixes::INCOMING_MESSAGE_SEED,
-            command_id,
-            &[bump],
-        ];
-        let derived_pubkey = Pubkey::create_program_address(
-            &seeds,
-            &crate::ID,
-        )
-        .expect("invalid bump for the incoming message PDA");
-        if &derived_pubkey != pda.key {
-            solana_program::msg!("Error: Invalid incoming message PDA ");
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        
+        assert_valid_incoming_message_pda(command_id, bump, pda.key)?;
+
         Ok(bump)
     }
 
-    pub(crate) fn create<'a>(pda: &AccountInfo<'a>, payer: &AccountInfo<'a>, system_program: &AccountInfo<'a>, program_id: &Pubkey, message: Message) -> Result<(), ProgramError> {
+    pub(crate) fn populate<'a>(pda: &AccountInfo<'a>, payer: &AccountInfo<'a>, system_program: &AccountInfo<'a>, program_id: &Pubkey, message: Message) -> Result<(), ProgramError> {
         let cc_id = &message.cc_id;
         let command_id = command_id(&cc_id.chain, &cc_id.id);
         
-        let bump =  Self::assert_valid_pda(pda, &command_id)?;
+        let bump =  Self::assert_valid_uninitialized_pda(pda, &command_id)?;
 
         let seeds = &[
             seed_prefixes::INCOMING_MESSAGE_SEED,
@@ -140,7 +134,6 @@ impl IncomingMessage {
     }
 
     pub(crate) fn execute_approved<'a>(pda: &AccountInfo<'a>, program_id: &Pubkey, message: &Message)-> Result<([u8; 32], u8), ProgramError> {
-
         // compute the message hash
         let message_hash = message.hash::<SolanaSyscallHasher>();
 

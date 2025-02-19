@@ -72,11 +72,6 @@ impl Processor {
             verification_session_account.key,
         )?;
 
-        // Check: the incoming message PDA already approved
-        incoming_message_pda
-            .check_uninitialized_pda()
-            .map_err(|_err| GatewayError::MessageAlreadyInitialised)?;
-
         // Check: signature verification session is complete
         if !session.signature_verification.is_valid() {
             return Err(GatewayError::SigningSessionNotValid.into());
@@ -99,7 +94,7 @@ impl Processor {
         // crate a PDA where we write the message metadata contents
         let message = message.leaf.message;
         
-        IncomingMessage::create(
+        IncomingMessage::populate(
             incoming_message_pda,
             funder,
             system_program,
