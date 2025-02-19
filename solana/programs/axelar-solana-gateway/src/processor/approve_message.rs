@@ -1,22 +1,16 @@
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
-use core::str::FromStr;
 use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::log::sol_log_data;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
 use crate::error::GatewayError;
-use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
+use crate::state::incoming_message::IncomingMessage;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
-use crate::{
-    assert_valid_incoming_message_pda, assert_valid_signature_verification_pda, event_prefixes,
-    get_incoming_message_pda, get_validate_message_signing_pda, seed_prefixes,
-};
+use crate::assert_valid_signature_verification_pda;
 
 impl Processor {
     /// Approves an array of messages, signed by the Axelar signers.
@@ -78,18 +72,12 @@ impl Processor {
             verification_session_account.key,
         )?;
 
-        // Check: the incoming message PDA already approved
-        incoming_message_pda
-            .check_uninitialized_pda()
-            .map_err(|_err| GatewayError::MessageAlreadyInitialised)?;
-
         // Check: signature verification session is complete
         if !session.signature_verification.is_valid() {
             return Err(GatewayError::SigningSessionNotValid.into());
         }
 
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
-        let message_hash = message.leaf.message.hash::<SolanaSyscallHasher>();
         let proof = rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&message.proof)
             .map_err(|_err| GatewayError::InvalidMerkleProof)?;
 
@@ -105,64 +93,14 @@ impl Processor {
 
         // crate a PDA where we write the message metadata contents
         let message = message.leaf.message;
-        let cc_id = message.cc_id;
-        let command_id = command_id(&cc_id.chain, &cc_id.id);
-
-        let (_, incoming_message_pda_bump) = get_incoming_message_pda(&command_id);
-        assert_valid_incoming_message_pda(
-            &command_id,
-            incoming_message_pda_bump,
-            incoming_message_pda.key,
-        )?;
-
-        let seeds = &[
-            seed_prefixes::INCOMING_MESSAGE_SEED,
-            &command_id,
-            &[incoming_message_pda_bump],
-        ];
-        program_utils::init_pda_raw(
-            funder,
+        
+        IncomingMessage::populate(
             incoming_message_pda,
-            program_id,
+            funder,
             system_program,
-            IncomingMessage::LEN.try_into().map_err(|_err| {
-                solana_program::msg!("unexpected u64 overflow in struct size");
-                ProgramError::ArithmeticOverflow
-            })?,
-            seeds,
+            program_id,
+            message,
         )?;
-
-        let destination_address =
-            Pubkey::from_str(&message.destination_address).map_err(|_err| {
-                solana_program::msg!("Invalid destination address");
-                GatewayError::InvalidDestinationAddress
-            })?;
-        let (_, signing_pda_bump) =
-            get_validate_message_signing_pda(destination_address, command_id);
-
-        // Persist a new incoming message with "in progress" status in the PDA data.
-        let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let incoming_message_data =
-            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        *incoming_message_data = IncomingMessage::new(
-            incoming_message_pda_bump,
-            signing_pda_bump,
-            MessageStatus::approved(),
-            message_hash,
-            message.payload_hash,
-        );
-
-        // Emit an event
-        sol_log_data(&[
-            event_prefixes::MESSAGE_APPROVED,
-            &command_id,
-            &destination_address.to_bytes(),
-            &message.payload_hash,
-            cc_id.chain.as_bytes(),
-            cc_id.id.as_bytes(),
-            message.source_address.as_bytes(),
-            message.destination_chain.as_bytes(),
-        ]);
 
         Ok(())
     }

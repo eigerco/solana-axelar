@@ -1,4 +1,3 @@
-use core::mem::size_of;
 use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -10,7 +9,7 @@ use super::Processor;
 use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::GatewayConfig;
-use crate::{assert_valid_gateway_root_pda, seed_prefixes};
+use crate::assert_valid_gateway_root_pda;
 
 impl Processor {
     /// Initializes a signature verification session PDA account for a given Axelar payload (former
@@ -85,46 +84,7 @@ impl Processor {
             GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
-        // Check: Verification PDA can be derived from provided seeds.
-        // using canonical bump for the session account
-        let (verification_session_pda, bump) =
-            crate::get_signature_verification_pda(gateway_root_pda.key, &merkle_root);
-        if verification_session_pda != *verification_session_account.key {
-            return Err(GatewayError::InvalidVerificationSessionPDA.into());
-        }
-
-        // Check: the verification session account has not been initialised already
-        verification_session_account
-            .check_uninitialized_pda()
-            .map_err(|_err| GatewayError::VerificationSessionPDAInitialised)?;
-
-        // Use the same seeds as `[crate::get_signature_verification_pda]`, plus the
-        // bump seed.
-        let signers_seeds = &[
-            seed_prefixes::SIGNATURE_VERIFICATION_SEED,
-            gateway_root_pda.key.as_ref(),
-            &merkle_root,
-            &[bump],
-        ];
-
-        // Prepare the `create_account` instruction
-        program_utils::init_pda_raw(
-            payer,
-            verification_session_account,
-            program_id,
-            system_program,
-            size_of::<SignatureVerificationSessionData>()
-                .try_into()
-                .map_err(|_err| {
-                    solana_program::msg!("Unexpected u64 overflow in struct size");
-                    ProgramError::ArithmeticOverflow
-                })?,
-            signers_seeds,
-        )?;
-        let mut data = verification_session_account.try_borrow_mut_data()?;
-        let session = SignatureVerificationSessionData::read_mut(&mut data)
-            .ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        session.bump = bump;
+        SignatureVerificationSessionData::populate(verification_session_account, gateway_root_pda, payer, system_program, program_id, merkle_root)?;
 
         Ok(())
     }
