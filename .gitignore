@@ -25,3 +25,6 @@ rustc-ice-*
 
 **/borsh_encoding_message_limits_report.csv
 **/abi_encoding_message_limits_report.csv
+
+pnpm-lock.yaml
+clients/js/src/

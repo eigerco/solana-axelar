@@ -9,7 +9,7 @@ import { getAllProgramIdls } from './utils.mjs';
 // Instead of calling getAllProgramIdls() from utils.mjs, hardcoded idl value because it fails for rust code 
 // It has to contain Cargo.toml, not sure if it should be before or after
 // It is not necessary for now, JS/TS bindings are the necessary ones
-let allProgramIdls = ['/home/ivan/Development/solana_projects/solana_bindings/program/idl.json'];
+let allProgramIdls = ['/home/ivan/Development/solana_projects/shank/idl/axelar_solana_gateway.json'];
 const [idl, ...additionalIdls] = allProgramIdls.map((idl) =>
   rootNodeFromAnchor(require(idl))
 );

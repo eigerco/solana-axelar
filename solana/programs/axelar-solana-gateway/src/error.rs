@@ -4,7 +4,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 use solana_program::program_error::ProgramError;
 
-const IRRECOVERABLE_ERROR: u32 = 500;
+const IRRECOVERABLE_ERROR: u32 = 12;
 
 /// Errors that may be returned by the Gateway program.
 ///
@@ -71,7 +71,7 @@ pub enum GatewayError {
     // --- NOTICE ---
     // this bumps the error representation to start at 500
     // Any error after this point is deemed irrecoverable
-    EpochCalculationOverflow = IRRECOVERABLE_ERROR,
+    EpochCalculationOverflow,
 
     /// Error indicating the provided verifier set is too old.
     #[error("Verifier set too old")]
