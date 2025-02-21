@@ -8,7 +8,7 @@ use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 
 use crate::check_program_account;
-use crate::instructions::GatewayInstruction;
+use crate::instruction::GatewayInstruction;
 
 mod approve_message;
 mod call_contract;
