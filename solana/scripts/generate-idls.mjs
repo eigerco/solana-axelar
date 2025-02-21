@@ -5,16 +5,16 @@ import { getCargo, getProgramFolders } from './utils.mjs';
 
 const binaryInstallDir = path.join(__dirname, '..', '.cargo');
 
-let programFolders = ['program'];
+let programFolders = ['programs/axelar-solana-gateway'];
 programFolders.forEach((folder) => {
   const cargo = getCargo(folder);
-  const isShank = Object.keys(cargo.dependencies).includes('shank');
+  const isShank = true;
   const programDir = path.join(__dirname, '..', folder);
 
   generateIdl({
     generator: isShank ? 'shank' : 'anchor',
     programName: cargo.package.name.replace(/-/g, '_'),
-    programId: cargo.package.metadata.solana['program-id'],
+    programId: 'gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe',
     idlDir: programDir,
     idlName: 'idl',
     programDir,
