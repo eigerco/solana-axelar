@@ -24,3 +24,6 @@ rustc-ice-*
 
 **/borsh_encoding_message_limits_report.csv
 **/abi_encoding_message_limits_report.csv
+
+generated/axelar-solana-memo-program/.anchor
+generated/axelar-solana-memo-program/pnpm-lock.yaml
