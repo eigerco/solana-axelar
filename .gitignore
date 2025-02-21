@@ -5,6 +5,7 @@ solana/node_modules
 solana/dist
 solana/build
 solana/test-ledger
+solana/pnpm-lock.yaml
 
 axelar/target
 axelar/artifacts

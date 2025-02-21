@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "scripts": {
+    "generate:idls": "zx ./scripts/generate-idls.mjs",
+    "generate:clients": "zx ./scripts/generate-clients.mjs"
+  },
+  "devDependencies": {
+    "@codama/nodes-from-anchor": "^1.0.0",
+    "@codama/renderers-js": "^1.0.0",
+    "@codama/renderers-rust": "^1.0.0",
+    "@iarna/toml": "^2.2.5",
+    "@metaplex-foundation/shank-js": "^0.1.7",
+    "codama": "^1.0.0",
+    "typescript": "^5.5.2",
+    "zx": "^7.2.3"
+  },
+  "engines": {
+    "node": ">=v20.0.0"
+  },
+  "packageManager": "pnpm@10.3.0"
+}
