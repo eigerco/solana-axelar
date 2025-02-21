@@ -1,0 +1,432 @@
+{
+  "version": "0.1.0",
+  "name": "axelar_solana_gateway",
+  "instructions": [],
+  "types": [
+    {
+      "name": "InitializeConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "domainSeparator",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "initialSignerSets",
+            "type": {
+              "vec": {
+                "defined": "VerifierSetHash"
+              }
+            }
+          },
+          {
+            "name": "minimumRotationDelay",
+            "type": {
+              "defined": "RotationDelaySecs"
+            }
+          },
+          {
+            "name": "operator",
+            "type": "publicKey"
+          },
+          {
+            "name": "previousVerifierRetention",
+            "type": {
+              "defined": "VerifierSetEpoch"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "GatewayInstruction",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "ApproveMessage",
+            "fields": [
+              {
+                "name": "message",
+                "type": {
+                  "defined": "MerkleisedMessage"
+                }
+              },
+              {
+                "name": "payload_merkle_root",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "RotateSigners",
+            "fields": [
+              {
+                "name": "new_verifier_set_merkle_root",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "CallContract",
+            "fields": [
+              {
+                "name": "destination_chain",
+                "type": "string"
+              },
+              {
+                "name": "destination_contract_address",
+                "type": "string"
+              },
+              {
+                "name": "payload",
+                "type": "bytes"
+              },
+              {
+                "name": "signing_pda_bump",
+                "type": "u8"
+              }
+            ]
+          },
+          {
+            "name": "CallContractOffchainData",
+            "fields": [
+              {
+                "name": "destination_chain",
+                "type": "string"
+              },
+              {
+                "name": "destination_contract_address",
+                "type": "string"
+              },
+              {
+                "name": "payload_hash",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "signing_pda_bump",
+                "type": "u8"
+              }
+            ]
+          },
+          {
+            "name": "InitializeConfig",
+            "fields": [
+              {
+                "defined": "InitializeConfig"
+              }
+            ]
+          },
+          {
+            "name": "InitializePayloadVerificationSession",
+            "fields": [
+              {
+                "name": "payload_merkle_root",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "VerifySignature",
+            "fields": [
+              {
+                "name": "payload_merkle_root",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "verifier_info",
+                "type": {
+                  "defined": "SigningVerifierSetInfo"
+                }
+              }
+            ]
+          },
+          {
+            "name": "InitializeMessagePayload",
+            "fields": [
+              {
+                "name": "buffer_size",
+                "type": "u64"
+              },
+              {
+                "name": "command_id",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "WriteMessagePayload",
+            "fields": [
+              {
+                "name": "offset",
+                "type": "u64"
+              },
+              {
+                "name": "bytes",
+                "type": "bytes"
+              },
+              {
+                "name": "command_id",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "CommitMessagePayload",
+            "fields": [
+              {
+                "name": "command_id",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "CloseMessagePayload",
+            "fields": [
+              {
+                "name": "command_id",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "ValidateMessage",
+            "fields": [
+              {
+                "name": "message",
+                "type": {
+                  "defined": "Message"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TransferOperatorship"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 0,
+      "name": "VerifierSetAlreadyInitialised",
+      "msg": "Verifier set already initialized"
+    },
+    {
+      "code": 1,
+      "name": "SlotAlreadyVerified",
+      "msg": "Slot has been previously verified"
+    },
+    {
+      "code": 2,
+      "name": "MessageAlreadyInitialised",
+      "msg": "Message already initialized"
+    },
+    {
+      "code": 3,
+      "name": "VerificationSessionPDAInitialised",
+      "msg": "Verification session PDA already initialized"
+    },
+    {
+      "code": 4,
+      "name": "VerifierSetTrackerAlreadyInitialised",
+      "msg": "Verifier set tracker PDA already initialized"
+    },
+    {
+      "code": 5,
+      "name": "SlotIsOutOfBounds",
+      "msg": "Slot is out of bounds"
+    },
+    {
+      "code": 6,
+      "name": "InvalidDigitalSignature",
+      "msg": "Digital signature verification failed"
+    },
+    {
+      "code": 7,
+      "name": "LeafNodeNotPartOfMerkleRoot",
+      "msg": "Leaf node not part of Merkle root"
+    },
+    {
+      "code": 8,
+      "name": "InvalidMerkleProof",
+      "msg": "Signer is not a member of the active verifier set"
+    },
+    {
+      "code": 9,
+      "name": "InvalidDestinationAddress",
+      "msg": "Invalid destination address"
+    },
+    {
+      "code": 10,
+      "name": "MessagePayloadAlreadyInitialized",
+      "msg": "Message Payload PDA was already initialized"
+    },
+    {
+      "code": 11,
+      "name": "MessagePayloadAlreadyCommitted",
+      "msg": "Message Payload has already been committed"
+    },
+    {
+      "code": 12,
+      "name": "EpochCalculationOverflow",
+      "msg": "Epoch calculation resulted in an underflow"
+    },
+    {
+      "code": 13,
+      "name": "VerifierSetTooOld",
+      "msg": "Verifier set too old"
+    },
+    {
+      "code": 14,
+      "name": "BytemuckDataLenInvalid",
+      "msg": "Invalid bytemucked data length"
+    },
+    {
+      "code": 15,
+      "name": "SigningSessionNotValid",
+      "msg": "Signing session not valid"
+    },
+    {
+      "code": 16,
+      "name": "InvalidVerificationSessionPDA",
+      "msg": "Invalid verification session PDA"
+    },
+    {
+      "code": 17,
+      "name": "InvalidVerifierSetTrackerProvided",
+      "msg": "Invalid verifier set tracker provided"
+    },
+    {
+      "code": 18,
+      "name": "ProofNotSignedByLatestVerifierSet",
+      "msg": "Proof not signed by latest verifier set"
+    },
+    {
+      "code": 19,
+      "name": "RotationCooldownNotDone",
+      "msg": "Rotation cooldown not done"
+    },
+    {
+      "code": 20,
+      "name": "InvalidProgramDataDerivation",
+      "msg": "Invalid program data derivation"
+    },
+    {
+      "code": 21,
+      "name": "InvalidLoaderContent",
+      "msg": "Invalid loader content"
+    },
+    {
+      "code": 22,
+      "name": "InvalidLoaderState",
+      "msg": "Invalid loader state"
+    },
+    {
+      "code": 23,
+      "name": "OperatorOrUpgradeAuthorityMustBeSigner",
+      "msg": "Operator or upgrade authority must be signer"
+    },
+    {
+      "code": 24,
+      "name": "InvalidOperatorOrAuthorityAccount",
+      "msg": "Invalid operator or authority account"
+    },
+    {
+      "code": 25,
+      "name": "MessageNotApproved",
+      "msg": "Message not approved"
+    },
+    {
+      "code": 26,
+      "name": "MessageHasBeenTamperedWith",
+      "msg": "Message has been tampered with"
+    },
+    {
+      "code": 27,
+      "name": "InvalidSigningPDA",
+      "msg": "Invalid signing PDA"
+    },
+    {
+      "code": 28,
+      "name": "CallerNotSigner",
+      "msg": "Caller not signer"
+    },
+    {
+      "code": 0,
+      "name": "MissingData",
+      "msg": "Missing data: {0}"
+    },
+    {
+      "code": 1,
+      "name": "InvalidLength",
+      "msg": "Invalid length for {field}: expected {expected}, got {actual}"
+    },
+    {
+      "code": 2,
+      "name": "InvalidUtf8",
+      "msg": "Invalid UTF-8 in {field}: {source}"
+    },
+    {
+      "code": 3,
+      "name": "Other",
+      "msg": "Other error: {0}"
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe"
+  }
+}
