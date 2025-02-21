@@ -27,7 +27,7 @@ pub enum GatewayInstruction {
     ///    `ExecuteData`)
     /// 3..N [WRITE] Gateway `ApprovedCommand` PDA accounts. All commands needs to
     ///         be `ApproveMessages`.
-    ApproveMessage {
+    ApproveMessages {
         /// The message that's to be approved
         message: MerkleisedMessage,
         /// The merkle root of the new message batch
@@ -254,7 +254,7 @@ pub fn approve_messages(
     verification_session_pda: Pubkey,
     incoming_message_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::ApproveMessage {
+    let data = to_vec(&GatewayInstruction::ApproveMessages {
         message,
         payload_merkle_root,
     })?;
