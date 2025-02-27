@@ -8,7 +8,7 @@ import { renderVisitor as renderRustVisitor } from '@codama/renderers-rust';
 // Instead of calling getAllProgramIdls() from utils.mjs, hardcoded idl value because it fails for rust code 
 // It has to contain Cargo.toml, not sure if it should be before or after
 // It is not necessary for now, JS/TS bindings are the necessary ones
-let allProgramIdls = ['../generated/idl/axelar_solana_gateway.json'];
+let allProgramIdls = ['../generated/idl/axelar_solana_memo_program.json'];
 const [idl, ...additionalIdls] = allProgramIdls.map((idl) =>
   rootNodeFromAnchor(require(idl))
 );
@@ -67,7 +67,7 @@ codama.update(
 );
 
 // Only necessary to render JavaScript code
-const jsClient = path.join(__dirname, '..', 'generated', 'axelar-solana-gateway');
+const jsClient = path.join(__dirname, '..', 'generated', 'axelar-solana-memo-program');
 codama.accept(
   renderJavaScriptVisitor(path.join(jsClient, 'src', 'generated'), {
     prettierOptions: require(path.join(jsClient, '.prettierrc.json')),

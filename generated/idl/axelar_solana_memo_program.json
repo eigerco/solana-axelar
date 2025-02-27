@@ -1,0 +1,92 @@
+{
+  "version": "0.1.0",
+  "name": "axelar_solana_memo_program",
+  "instructions": [],
+  "types": [
+    {
+      "name": "Counter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "counter",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AxelarMemoInstruction",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Initialize",
+            "fields": [
+              {
+                "name": "counter_pda_bump",
+                "type": "u8"
+              }
+            ]
+          },
+          {
+            "name": "ProcessMemo",
+            "fields": [
+              {
+                "name": "memo",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SendToGateway",
+            "fields": [
+              {
+                "name": "memo",
+                "type": "string"
+              },
+              {
+                "name": "destination_chain",
+                "type": "string"
+              },
+              {
+                "name": "destination_address",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SendToGatewayOffchainMemo",
+            "fields": [
+              {
+                "name": "memo_hash",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "destination_chain",
+                "type": "string"
+              },
+              {
+                "name": "destination_address",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG"
+  }
+}
