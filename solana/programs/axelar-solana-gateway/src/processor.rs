@@ -60,7 +60,7 @@ impl Processor {
         check_program_account(*program_id)?;
 
         match instruction {
-            GatewayInstruction::ApproveMessages {
+            GatewayInstruction::ApproveMessage {
                 message,
                 payload_merkle_root,
             } => {
