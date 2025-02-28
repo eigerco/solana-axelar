@@ -19,6 +19,7 @@ rand.workspace = true
 libsecp-rand.workspace = true
 gateway-event-stack.workspace = true
 axelar-solana-gas-service.workspace = true
+axelar-solana-relayer-discovery.workspace = true
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 
