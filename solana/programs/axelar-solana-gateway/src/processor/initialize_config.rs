@@ -14,7 +14,7 @@ use solana_program::sysvar::Sysvar;
 
 use super::Processor;
 use crate::error::GatewayError;
-use crate::instruction::InitializeConfig;
+use crate::instructions::InitializeConfig;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
 use crate::{
