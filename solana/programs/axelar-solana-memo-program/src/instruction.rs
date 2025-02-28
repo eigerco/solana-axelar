@@ -8,6 +8,8 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
+use crate::ID;
+
 /// Instructions supported by the Axelar Memo program.
 #[repr(u8)]
 #[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
@@ -97,10 +99,27 @@ pub fn initialize(
     })
 }
 
+/// Creates a [`AxelarMemoInstruction::ProcessMemo`] instruction.
+pub fn process_memo(
+    counter_pda: &(Pubkey, u8),
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(&AxelarMemoInstruction::ProcessMemo { memo: "DINAMO".to_string() } )?;
+
+    let accounts = vec![
+        AccountMeta::new(counter_pda.0, false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
 /// Create a [`AxelarMemoInstruction::SendToGateway`] instruction which will be
 /// used to send a memo to the Solana gateway (create a message that's supposed
 /// to land on an external chain)
-pub fn call_gateway_with_memo(
+pub fn send_to_gateway(
     gateway_root_pda: &Pubkey,
     memo_counter_pda: &Pubkey,
     memo: String,
@@ -115,7 +134,7 @@ pub fn call_gateway_with_memo(
     })?;
     let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let accounts = vec![
-        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new_readonly(ID, false),
         AccountMeta::new(*memo_counter_pda, false),
         AccountMeta::new_readonly(signing_pda.0, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
@@ -131,7 +150,7 @@ pub fn call_gateway_with_memo(
 /// Create a [`AxelarMemoInstruction::SendToGatewayOffchainMemo`] instruction which will be
 /// used to send a memo to the Solana gateway (create a message that's supposed
 /// to land on an external chain)
-pub fn call_gateway_with_offchain_memo(
+pub fn send_to_gateway_offchain_memo(
     gateway_root_pda: &Pubkey,
     memo_counter_pda: &Pubkey,
     memo: String,
@@ -147,7 +166,7 @@ pub fn call_gateway_with_offchain_memo(
     })?;
     let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let accounts = vec![
-        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new_readonly(ID, false),
         AccountMeta::new(*memo_counter_pda, false),
         AccountMeta::new_readonly(signing_pda.0, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
