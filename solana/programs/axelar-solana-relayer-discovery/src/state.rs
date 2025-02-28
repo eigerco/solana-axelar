@@ -58,9 +58,7 @@ impl BorshSerialize for RelayerInstruction {
 
 impl BorshDeserialize for RelayerInstruction {
     fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
-        let mut buffer = Vec::new();
-        reader.read_to_end(&mut buffer)?;
-        bincode::deserialize(&buffer).map_err(|_| Error::from(ErrorKind::InvalidData))
+        bincode::deserialize_from(reader).map_err(|_| Error::from(ErrorKind::InvalidData))
     }
 }
 
@@ -84,9 +82,7 @@ impl BorshSerialize for RelayerExecutionInfo {
 
 impl BorshDeserialize for RelayerExecutionInfo {
     fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
-        let mut buffer = Vec::new();
-        reader.read_to_end(&mut buffer)?;
-        bincode::deserialize(&buffer).map_err(|_| Error::from(ErrorKind::InvalidData))
+        bincode::deserialize_from(reader).map_err(|_| Error::from(ErrorKind::InvalidData))
     }
 }
 
@@ -128,7 +124,7 @@ impl RelayerExecutionInfo {
         let data = bincode::serialize(&relayer_execution_data).map_err(|_| ProgramError::InvalidAccountData)?;
         let data_len = data.len() as u64;
 
-        program_utils::init_pda_raw(payer, pda, program_id, system_program, data_len, &[seed_prefixes::RELAYER_EXECUTION, signing_pda.key.as_ref(), &[bump]])?;
+        program_utils::init_pda_raw(payer, pda, program_id, system_program, data_len, &[seed_prefixes::RELAYER_EXECUTION, destination_address.as_ref(), &[bump]])?;
 
         let mut pda_data = pda.try_borrow_mut_data()?;
         pda_data.write(&data)?;

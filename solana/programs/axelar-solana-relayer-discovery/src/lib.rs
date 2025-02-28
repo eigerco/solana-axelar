@@ -8,7 +8,6 @@ pub mod state;
 // Export current sdk types for downstream users building with a different sdk
 // version.
 pub use solana_program;
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
@@ -129,41 +128,5 @@ pub mod event_utils {
         /// Generic error for any other parsing issues.
         #[error("Other error: {0}")]
         Other(&'static str),
-    }
-
-    pub(crate) fn read_array<const N: usize>(
-        field: &'static str,
-        data: &[u8],
-    ) -> Result<[u8; N], EventParseError> {
-        if data.len() != N {
-            return Err(EventParseError::InvalidLength {
-                field,
-                expected: N,
-                actual: data.len(),
-            });
-        }
-        let array = data
-            .try_into()
-            .map_err(|_err| EventParseError::InvalidLength {
-                field,
-                expected: N,
-                actual: data.len(),
-            })?;
-        Ok(array)
-    }
-
-    pub(crate) fn read_string(
-        field: &'static str,
-        data: Vec<u8>,
-    ) -> Result<String, EventParseError> {
-        String::from_utf8(data).map_err(|err| EventParseError::InvalidUtf8 { field, source: err })
-    }
-
-    #[allow(clippy::little_endian_bytes)]
-    pub(crate) fn parse_u64_le(field: &'static str, data: &[u8]) -> Result<u64, EventParseError> {
-        if data.len() != 8 {
-            return Err(EventParseError::InvalidData(field));
-        }
-        Ok(u64::from_le_bytes(data.try_into().expect("length checked")))
     }
 }
