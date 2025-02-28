@@ -1,0 +1,50 @@
+{
+    "name": "solana-bindings",
+    "version": "0.0.0",
+    "description": "JavaScript client for the Solana Bindings program",
+    "sideEffects": false,
+    "module": "./dist/src/index.mjs",
+    "main": "./dist/src/index.js",
+    "types": "./dist/types/index.d.ts",
+    "type": "commonjs",
+    "exports": {
+      ".": {
+        "types": "./dist/types/index.d.ts",
+        "import": "./dist/src/index.mjs",
+        "require": "./dist/src/index.js"
+      }
+    },
+    "files": [
+      "./dist/src",
+      "./dist/types"
+    ],
+    "scripts": {
+      "build": "rimraf dist && tsup && tsc -p ./tsconfig.declarations.json",
+      "test": "ava"
+    },
+    "peerDependencies": {
+      "@solana/web3.js": "^2.0.0"
+    },
+    "devDependencies": {
+      "@ava/typescript": "^4.1.0",
+      "@solana/web3.js": "^2.0.0",
+      "@types/node": "^20",
+      "ava": "^6.2.0",
+      "rimraf": "^5.0.5",
+      "tsup": "^8.1.2",
+      "typescript": "^5.5.3"
+    },
+    "ava": {
+      "nodeArguments": [
+        "--no-warnings"
+      ],
+      "typescript": {
+        "compile": false,
+        "rewritePaths": {
+          "test/": "dist/test/"
+        }
+      },
+      "failWithoutAssertions": false
+    },
+    "packageManager": "pnpm@10.3.0"
+  }

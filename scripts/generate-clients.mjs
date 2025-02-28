@@ -8,7 +8,7 @@ import { renderVisitor as renderRustVisitor } from '@codama/renderers-rust';
 // Instead of calling getAllProgramIdls() from utils.mjs, hardcoded idl value because it fails for rust code 
 // It has to contain Cargo.toml, not sure if it should be before or after
 // It is not necessary for now, JS/TS bindings are the necessary ones
-let allProgramIdls = ['../generated/idl/axelar_solana_memo_program.json'];
+let allProgramIdls = ['../generated/axelar-solana-memo-program/idl/axelar_solana_memo_program.json'];
 const [idl, ...additionalIdls] = allProgramIdls.map((idl) =>
   rootNodeFromAnchor(require(idl))
 );

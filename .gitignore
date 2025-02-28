@@ -26,5 +26,7 @@ rustc-ice-*
 **/abi_encoding_message_limits_report.csv
 
 pnpm-lock.yaml
-generated/axelar-solana-memo-program/src/
+
+generated/axelar-solana-memo-program/dist/
 generated/axelar-solana-memo-program/idl/
+generated/axelar-solana-memo-program/src/generated/

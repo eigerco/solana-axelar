@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "generate:idls": "zx ./scripts/generate-idls.mjs",
-    "generate:clients": "zx ./scripts/generate-clients.mjs"
+    "generate:clients": "zx ./scripts/generate-clients.mjs",
+    "clients:test": "zx ./scripts/test-js.mjs"
   },
   "devDependencies": {
     "@codama/nodes-from-anchor": "^1.0.0",
