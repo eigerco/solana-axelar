@@ -31,6 +31,21 @@ type AxelarSolanaMemoProgram = {
       name: "initialize";
       accounts: [
         {
+          name: "payer";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "counterPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -47,7 +62,7 @@ type AxelarSolanaMemoProgram = {
       name: "processMemo";
       accounts: [
         {
-          name: "counterPda0";
+          name: "counterPda";
           isMut: true;
           isSigner: false;
         }
@@ -178,6 +193,21 @@ const IDL: AxelarSolanaMemoProgram = {
       name: "initialize",
       accounts: [
         {
+          name: "payer",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "counterPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -194,7 +224,7 @@ const IDL: AxelarSolanaMemoProgram = {
       name: "processMemo",
       accounts: [
         {
-          name: "counterPda0",
+          name: "counterPda",
           isMut: true,
           isSigner: false,
         },

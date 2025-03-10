@@ -27,3 +27,4 @@ rustc-ice-*
 
 generated/axelar-solana-memo-program/.anchor
 generated/axelar-solana-memo-program/pnpm-lock.yaml
+generated/temp

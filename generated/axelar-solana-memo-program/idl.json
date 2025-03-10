@@ -6,6 +6,21 @@
       "name": "initialize",
       "accounts": [
         {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "counterPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -22,7 +37,7 @@
       "name": "processMemo",
       "accounts": [
         {
-          "name": "counterPda0",
+          "name": "counterPda",
           "isMut": true,
           "isSigner": false
         }

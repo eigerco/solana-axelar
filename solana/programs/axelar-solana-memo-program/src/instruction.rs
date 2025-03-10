@@ -76,12 +76,15 @@ pub enum AxelarMemoInstruction {
 }
 
 /// Creates a [`AxelarMemoInstruction::Initialize`] instruction.
-pub fn initialize(counter_pda_bump: u8) -> Result<Instruction, ProgramError> {
+pub fn initialize(payer: &Pubkey, gateway_root_pda: &Pubkey, counter_pda: &Pubkey, counter_pda_bump: u8) -> Result<Instruction, ProgramError> {
     let data = to_vec(&AxelarMemoInstruction::Initialize {
         counter_pda_bump,
     })?;
 
     let accounts = vec![
+        AccountMeta::new(*payer, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new(*counter_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];
 
@@ -94,13 +97,13 @@ pub fn initialize(counter_pda_bump: u8) -> Result<Instruction, ProgramError> {
 
 /// Creates a [`AxelarMemoInstruction::ProcessMemo`] instruction.
 pub fn process_memo(
-    counter_pda: &(Pubkey, u8),
+    counter_pda: &Pubkey,
     memo: String,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&AxelarMemoInstruction::ProcessMemo { memo } )?;
 
     let accounts = vec![
-        AccountMeta::new(counter_pda.0, false),
+        AccountMeta::new(*counter_pda, false),
     ];
 
     Ok(Instruction {

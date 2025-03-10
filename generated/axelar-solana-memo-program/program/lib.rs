@@ -37,13 +37,18 @@ pub mod axelar_solana_memo_program {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
+    #[account(mut)]
+    payer: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
+    #[account(mut)]
+    counter_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct ProcessMemo<'info> {
     #[account(mut)]
-    counter_pda_0: AccountInfo<'info>,
+    counter_pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
