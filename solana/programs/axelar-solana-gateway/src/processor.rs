@@ -160,7 +160,7 @@ impl Processor {
             } => {
                 msg!("Instruction: Write Message Payload");
                 Self::process_write_message_payload(
-                    program_id, accounts, offset, &bytes, command_id,
+                    program_id, accounts, offset as usize, &bytes, command_id,
                 )
             }
             GatewayInstruction::CloseMessagePayload { command_id } => {

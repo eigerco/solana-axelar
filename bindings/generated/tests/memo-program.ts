@@ -1,5 +1,5 @@
-import { Keypair, PublicKey } from "@solana/web3.js";
-import { axelarSolanaMemoProgramProgram, AXELAR_SOLANA_MEMO_PROGRAM_PROGRAM_ID } from "../src/program";
+import { PublicKey } from "@solana/web3.js";
+import { axelarSolanaMemoProgramProgram, AXELAR_SOLANA_MEMO_PROGRAM_PROGRAM_ID } from "../axelar-solana-memo-program/src/program";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
 describe("Ping Memo Program", () => {
@@ -21,7 +21,9 @@ describe("Ping Memo Program", () => {
         }).rpc();
         console.log("Your transaction signature", tx);
     } catch (error) {
-        console.log(error);
+      if (error.logs.includes("Program log: Instruction: Initialize")) {
+        console.log("Initializing failed, probably it has been already initialized. Skipping...");
+      }
     }
     program.methods.processMemo("Test1").accounts({counterPda: counterPdaPublicKey}).rpc();
     program.methods.processMemo("Test2").accounts({counterPda: counterPdaPublicKey}).rpc();
