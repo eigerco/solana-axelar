@@ -4,7 +4,7 @@ import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { AxelarSolanaItsCoder } from "./coder";
 
 export const AXELAR_SOLANA_ITS_PROGRAM_ID = new PublicKey(
-  "its2RSrgfKfQDkuxFhov4nPRw4Wy9i6e757beHvUXZQ"
+  "itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd"
 );
 
 interface GetProgramParams {
@@ -1510,6 +1510,64 @@ type AxelarSolanaIts = {
           isMut: false;
           isSigner: false;
         },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "tokenManagerAddFlowLimiter";
+      accounts: [
         {
           name: "systemProgram";
           isMut: false;
@@ -3121,6 +3179,64 @@ const IDL: AxelarSolanaIts = {
           isMut: false,
           isSigner: false,
         },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerAddFlowLimiter",
+      accounts: [
         {
           name: "systemProgram",
           isMut: false,
