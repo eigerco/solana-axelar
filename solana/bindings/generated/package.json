@@ -4,11 +4,14 @@
   "version": "0.1.0",
   "author": "",
   "license": "Apache-2.0",
+  "peerDependencies": {
+    "@coral-xyz/anchor": "^0.29.0"
+  },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.29.0",
     "@native-to-anchor/buffer-layout": "=0.1.0"
   },
   "exports": {
+    "./its": "./dist/axelar-solana-its/src/index.js",
     "./gateway": "./dist/axelar-solana-gateway/src/index.js",
     "./memo-program": "./dist/axelar-solana-memo-program/src/index.js"
   },
