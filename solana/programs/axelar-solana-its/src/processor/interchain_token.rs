@@ -129,7 +129,6 @@ pub(crate) fn process_inbound_deploy<'a>(
     let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
     assert_valid_its_root_pda(
         parsed_accounts.its_root_pda,
-        parsed_accounts.gateway_root_pda.key,
         its_root_pda_bump,
     )?;
 

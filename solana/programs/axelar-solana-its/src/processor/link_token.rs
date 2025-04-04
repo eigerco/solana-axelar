@@ -55,7 +55,6 @@ pub(crate) fn process_inbound<'a>(
 
     assert_valid_its_root_pda(
         parsed_accounts.its_root_pda,
-        parsed_accounts.gateway_root_pda.key,
         its_root_pda_bump,
     )?;
 
