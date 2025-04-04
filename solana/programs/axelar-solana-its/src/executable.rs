@@ -124,7 +124,6 @@ fn extract_interchain_token_execute_call_data<'a>(
     let its_root_config = InterchainTokenService::load(signing_pda_account)?;
     assert_valid_its_root_pda(
         signing_pda_account,
-        gateway_root_account.key,
         its_root_config.bump,
     )?;
 
