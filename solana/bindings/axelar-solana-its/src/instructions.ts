@@ -1,4 +1,4 @@
-import { axelarSolanaItsProgram } from "@native-to-anchor/axelar-solana-generated/its";
+import { axelarSolanaItsProgram } from "../../generated/axelar-solana-its/src";
 import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -27,7 +27,7 @@ import {
   TOKEN_METADATA_PROGRAM_ID,
 } from "./pda.js";
 import { utils } from "ethers";
-import { AXELAR_SOLANA_GATEWAY_PROGRAM_ID } from "@native-to-anchor/axelar-solana/gateway";
+import { AXELAR_SOLANA_GATEWAY_PROGRAM_ID } from "../../generated/axelar-solana-gateway/src";
 
 const BPF_UPGRADE_LOADER_ID = new PublicKey(
   "BPFLoaderUpgradeab1e11111111111111111111111"

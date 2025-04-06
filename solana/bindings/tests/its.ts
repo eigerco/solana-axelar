@@ -1,5 +1,5 @@
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
-import { axelarSolanaItsProgram } from "../axelar-solana-its/src";
+import { axelarSolanaItsProgram } from "../generated/axelar-solana-its/src";
 import { BN } from "@coral-xyz/anchor";
 
 describe("Ping ITS", () => {
