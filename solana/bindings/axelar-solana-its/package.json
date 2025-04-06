@@ -9,12 +9,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepare": "npm run build-ts",
+    "build-ts": "tsc"
+  },
+  "peerDependencies": {
+    "@native-to-anchor/axelar-solana-generated": "file:../generated",
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
-    "@native-to-anchor/axelar-solana-generated": "file:../generated",
     "@noble/hashes": "^1.3.0",
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.87.0",
