@@ -166,7 +166,7 @@ export class ItsInstructions {
       Buffer.from(params.salt)
     );
     const [tokenManagerPda] = findTokenManagerPda(this.itsRootPda, tokenId);
-    const [rolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
+    const [rolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
     const [deployApprovalPda] = findDeploymentApprovalPda(
       params.payer,
       tokenId,
