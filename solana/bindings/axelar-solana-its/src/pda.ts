@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import { keccak_256 } from "@noble/hashes/sha3";
+import { keccak256, arrayify } from "ethers/lib/utils";
 import { AXELAR_SOLANA_ITS_PROGRAM_ID as PROGRAM_ID } from "../../generated/axelar-solana-its/src";
 
 // Seed prefixes - these must match the Rust implementation
@@ -216,11 +216,13 @@ export function validateDeploymentApprovalPda(
 export function canonicalInterchainTokenDeploySalt(
   mint: PublicKey
 ): Uint8Array {
-  return keccak_256(
-    new Uint8Array([
-      ...Buffer.from(PREFIX_CANONICAL_TOKEN_SALT),
-      ...mint.toBytes(),
-    ])
+  return arrayify(
+    keccak256(
+      new Uint8Array([
+        ...Buffer.from(PREFIX_CANONICAL_TOKEN_SALT),
+        ...mint.toBytes(),
+      ])
+    )
   );
 }
 
@@ -228,12 +230,14 @@ export function interchainTokenDeployerSalt(
   deployer: PublicKey,
   salt: Uint8Array
 ): Uint8Array {
-  return keccak_256(
-    new Uint8Array([
-      ...Buffer.from(PREFIX_INTERCHAIN_TOKEN_SALT),
-      ...deployer.toBytes(),
-      ...salt,
-    ])
+  return arrayify(
+    keccak256(
+      new Uint8Array([
+        ...Buffer.from(PREFIX_INTERCHAIN_TOKEN_SALT),
+        ...deployer.toBytes(),
+        ...salt,
+      ])
+    )
   );
 }
 
@@ -241,18 +245,22 @@ export function linkedTokenDeployerSalt(
   deployer: PublicKey,
   salt: Uint8Array
 ): Uint8Array {
-  return keccak_256(
-    new Uint8Array([
-      ...Buffer.from(PREFIX_CUSTOM_TOKEN_SALT),
-      ...deployer.toBytes(),
-      ...salt,
-    ])
+  return arrayify(
+    keccak256(
+      new Uint8Array([
+        ...Buffer.from(PREFIX_CUSTOM_TOKEN_SALT),
+        ...deployer.toBytes(),
+        ...salt,
+      ])
+    )
   );
 }
 
 export function interchainTokenIdInternal(salt: Uint8Array): Uint8Array {
-  return keccak_256(
-    new Uint8Array([...Buffer.from(PREFIX_INTERCHAIN_TOKEN_ID), ...salt])
+  return arrayify(
+    keccak256(
+      new Uint8Array([...Buffer.from(PREFIX_INTERCHAIN_TOKEN_ID), ...salt])
+    )
   );
 }
 
