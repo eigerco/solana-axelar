@@ -1,0 +1,36 @@
+[package]
+name = "axelar-solana-relayer-discovery"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+solana-program.workspace = true
+spl-token = { workspace = true, features = ["no-entrypoint"] }
+spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+bytemuck.workspace = true
+borsh.workspace = true
+program-utils.workspace = true
+thiserror.workspace = true
+bincode.workspace = true
+serde.workspace = true
+axelar-solana-gateway.workspace = true
+
+[dev-dependencies]
+solana-sdk.workspace = true
+solana-program-test.workspace = true
+axelar-solana-gateway-test-fixtures.workspace = true
+gateway-event-stack.workspace = true
+rstest.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
