@@ -2,7 +2,7 @@
 
 use solana_program::pubkey::Pubkey;
 
-use crate::event_utils::{parse_u64_le, read_array, read_string, EventParseError};
+use event_utils::{parse_u64_le, read_array, read_string, EventParseError};
 
 /// Even emitted by the Axelar Solana Gas service
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]

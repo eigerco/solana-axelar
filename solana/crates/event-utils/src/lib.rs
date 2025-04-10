@@ -1,4 +1,4 @@
-//! Utilities for parsing events emitted by the `GasService` program.
+//! Utilities for parsing events emitted by axelar-solana programs
 
 /// Errors that may occur while parsing a `MessageEvent`.
 #[derive(Debug, thiserror::Error)]
@@ -37,7 +37,8 @@ pub enum EventParseError {
     Other(&'static str),
 }
 
-pub(crate) fn read_array<const N: usize>(
+/// Tries to read a fixed-size array from the provided data slice.
+pub fn read_array<const N: usize>(
     field: &'static str,
     data: &[u8],
 ) -> Result<[u8; N], EventParseError> {
@@ -58,12 +59,14 @@ pub(crate) fn read_array<const N: usize>(
     Ok(array)
 }
 
-pub(crate) fn read_string(field: &'static str, data: Vec<u8>) -> Result<String, EventParseError> {
+/// Tries to read a string from the provided data vector.
+pub fn read_string(field: &'static str, data: Vec<u8>) -> Result<String, EventParseError> {
     String::from_utf8(data).map_err(|err| EventParseError::InvalidUtf8 { field, source: err })
 }
 
+/// Tries to read a u64 from the provided data slice.
 #[allow(clippy::little_endian_bytes)]
-pub(crate) fn parse_u64_le(field: &'static str, data: &[u8]) -> Result<u64, EventParseError> {
+pub fn parse_u64_le(field: &'static str, data: &[u8]) -> Result<u64, EventParseError> {
     if data.len() != 8 {
         return Err(EventParseError::InvalidData(field));
     }

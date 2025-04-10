@@ -781,6 +781,7 @@ dependencies = [
 name = "axelar-solana-gas-service-events"
 version = "0.1.0"
 dependencies = [
+ "event-utils",
  "solana-program",
  "thiserror 1.0.69",
 ]
@@ -798,6 +799,7 @@ dependencies = [
  "bytemuck",
  "bytemuck_derive",
  "ed25519-dalek 2.1.1",
+ "event-utils",
  "hex",
  "itertools 0.12.1",
  "lazy_static",
@@ -2809,6 +2811,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
+name = "event-utils"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "evm-contracts-rs"
 version = "0.1.0"
 dependencies = [
@@ -3133,6 +3142,7 @@ dependencies = [
  "axelar-solana-gas-service-events",
  "axelar-solana-gateway",
  "base64 0.21.7",
+ "event-utils",
  "pretty_assertions",
  "solana-sdk",
  "test-log",

@@ -141,17 +141,18 @@ dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway" }
 axelar-solana-governance = { path = "programs/axelar-solana-governance" }
 
 # helper crates
-gateway-event-stack = { path = "crates/gateway-event-stack" }
-axelar-solana-gas-service-events = { path = "crates/axelar-solana-gas-service-events" }
-axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-executable = { path = "crates/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
+axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
+axelar-solana-gas-service-events = { path = "crates/axelar-solana-gas-service-events" }
 axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures" }
+event-utils = { path = "crates/event-utils" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
+gateway-event-stack = { path = "crates/gateway-event-stack" }
+governance-gmp = { path = "helpers/governance-gmp" }
 interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
 its-instruction-builder = { path = "helpers/its-instruction-builder" }
-governance-gmp = { path = "helpers/governance-gmp" }
 program-utils = { path = "helpers/program-utils" }
 role-management = { path = "helpers/role-management" }
 
