@@ -1,5 +1,5 @@
 [package]
-name = "event-utils"
+name = "event-macros"
 version.workspace = true
 authors.workspace = true
 repository.workspace = true
@@ -7,13 +7,14 @@ homepage.workspace = true
 license.workspace = true
 edition.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
-thiserror.workspace = true
-event-macros.workspace = true
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
 keccak-const.workspace = true
-solana-program.workspace = true
-base64.workspace = true
-axelar-message-primitives.workspace = true
 
 [lints]
 workspace = true

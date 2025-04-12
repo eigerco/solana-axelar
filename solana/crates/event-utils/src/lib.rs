@@ -1,4 +1,25 @@
+#![allow(missing_docs)]
 //! Utilities for parsing events emitted by axelar-solana programs
+use axelar_message_primitives::U256;
+use solana_program::pubkey::Pubkey;
+
+pub use base64;
+pub use event_macros::*;
+
+type Disc = [u8; 16];
+pub trait Event {
+    const DISC: &'static Disc;
+
+    /// Emits the event data using `sol_log_data`
+    fn emit(&self);
+
+    /// Tries to parses an event of this type from a log message string.
+    fn try_from_log(log: &str) -> Result<Box<Self>, EventParseError>;
+
+    /// Parses an event of this type from combined, decoded log data bytes.
+    /// Assumes the discriminant has *already been checked* by the caller.
+    fn deserialize<I: Iterator<Item = Vec<u8>>>(data: I) -> Result<Box<Self>, EventParseError>;
+}
 
 /// Errors that may occur while parsing a `MessageEvent`.
 #[derive(Debug, thiserror::Error)]
@@ -64,11 +85,119 @@ pub fn read_string(field: &'static str, data: Vec<u8>) -> Result<String, EventPa
     String::from_utf8(data).map_err(|err| EventParseError::InvalidUtf8 { field, source: err })
 }
 
+pub fn read_u8(field: &'static str, data: &[u8]) -> Result<u8, EventParseError> {
+    if data.len() != 1 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(data[0])
+}
+
+pub fn read_u16(field: &'static str, data: &[u8]) -> Result<u16, EventParseError> {
+    if data.len() != 2 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(u16::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_u32(field: &'static str, data: &[u8]) -> Result<u32, EventParseError> {
+    if data.len() != 4 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(u32::from_le_bytes(data.try_into().expect("length checked")))
+}
+
 /// Tries to read a u64 from the provided data slice.
 #[allow(clippy::little_endian_bytes)]
-pub fn parse_u64_le(field: &'static str, data: &[u8]) -> Result<u64, EventParseError> {
+pub fn read_u64(field: &'static str, data: &[u8]) -> Result<u64, EventParseError> {
     if data.len() != 8 {
         return Err(EventParseError::InvalidData(field));
     }
+
     Ok(u64::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_u128(field: &'static str, data: &[u8]) -> Result<u128, EventParseError> {
+    if data.len() != 16 {
+        return Err(EventParseError::InvalidData(field));
+    }
+
+    Ok(u128::from_le_bytes(
+        data.try_into().expect("length checked"),
+    ))
+}
+
+pub fn read_i8(field: &'static str, data: &[u8]) -> Result<i8, EventParseError> {
+    if data.len() != 1 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(i8::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_i16(field: &'static str, data: &[u8]) -> Result<i16, EventParseError> {
+    if data.len() != 2 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(i16::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_i32(field: &'static str, data: &[u8]) -> Result<i32, EventParseError> {
+    if data.len() != 4 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(i32::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_i64(field: &'static str, data: &[u8]) -> Result<i64, EventParseError> {
+    if data.len() != 8 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(i64::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_i128(field: &'static str, data: &[u8]) -> Result<i128, EventParseError> {
+    if data.len() != 16 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(i128::from_le_bytes(
+        data.try_into().expect("length checked"),
+    ))
+}
+
+pub fn read_pubkey(field: &'static str, data: &[u8]) -> Result<Pubkey, EventParseError> {
+    if data.len() != 32 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(Pubkey::new_from_array(
+        data.try_into().expect("length checked"),
+    ))
+}
+
+pub fn read_bool(field: &'static str, data: &[u8]) -> Result<bool, EventParseError> {
+    if data.len() != 1 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(data[0] != 0)
+}
+
+pub fn read_f32(field: &'static str, data: &[u8]) -> Result<f32, EventParseError> {
+    if data.len() != 4 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(f32::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_f64(field: &'static str, data: &[u8]) -> Result<f64, EventParseError> {
+    if data.len() != 8 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(f64::from_le_bytes(data.try_into().expect("length checked")))
+}
+
+pub fn read_u256(field: &'static str, data: &[u8]) -> Result<U256, EventParseError> {
+    if data.len() != 32 {
+        return Err(EventParseError::InvalidData(field));
+    }
+    Ok(U256::from_le_bytes(
+        data.try_into().expect("length checked"),
+    ))
 }
