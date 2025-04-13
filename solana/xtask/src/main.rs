@@ -175,13 +175,14 @@ fn workspace_crates_by_category(
         .leak(); // fine to leak as xtask is short lived
     let all_crate_data = crates_in_repo.split_whitespace();
     let all_crate_data = all_crate_data
-        .filter(|item| !item.starts_with('[')) // filters "[dev-dependencies]"
+        .filter(|item| !item.starts_with('[') && !item.contains("proc-macro")) // filters "[dev-dependencies]"
         .tuples()
         .group_by(|(_, _, path)| path.contains("solana/programs"));
     let mut solana_programs = vec![];
     let mut auxiliary_crates = vec![];
     for (is_solana_program, group) in &all_crate_data {
         for (crate_name, _crate_version, crate_path) in group {
+            dbg!(crate_name, _crate_version, crate_path);
             let crate_path = crate_path
                 .strip_prefix('(')
                 .ok_or_eyre("expected prefix not there")?;
