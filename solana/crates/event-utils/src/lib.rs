@@ -14,11 +14,15 @@ pub trait Event {
     fn emit(&self);
 
     /// Tries to parses an event of this type from a log message string.
-    fn try_from_log(log: &str) -> Result<Box<Self>, EventParseError>;
+    fn try_from_log(log: &str) -> Result<Self, EventParseError>
+    where
+        Self: Sized;
 
     /// Parses an event of this type from combined, decoded log data bytes.
     /// Assumes the discriminant has *already been checked* by the caller.
-    fn deserialize<I: Iterator<Item = Vec<u8>>>(data: I) -> Result<Box<Self>, EventParseError>;
+    fn deserialize<I: Iterator<Item = Vec<u8>>>(data: I) -> Result<Self, EventParseError>
+    where
+        Self: Sized;
 }
 
 /// Errors that may occur while parsing a `MessageEvent`.

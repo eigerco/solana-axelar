@@ -201,17 +201,17 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
     });
 
     let deserialize_impl = quote! {
-        fn deserialize<I: Iterator<Item = Vec<u8>>>(mut data: I) -> Result<Box<Self>, ::event_utils::EventParseError> {
+        fn deserialize<I: Iterator<Item = Vec<u8>>>(mut data: I) -> Result<Self, ::event_utils::EventParseError> {
              #(#deserialize_steps)*
 
-             Ok(Box::new(Self {
+             Ok(Self {
                  #(#field_idents_for_struct),*
-             }))
+             })
         }
     };
 
     let try_from_log_impl = quote! {
-         fn try_from_log(log: &str) -> Result<Box<Self>, ::event_utils::EventParseError> {
+         fn try_from_log(log: &str) -> Result<Self, ::event_utils::EventParseError> {
              use ::std::convert::TryInto;
              use ::event_utils::base64::engine::Engine as _;
 
