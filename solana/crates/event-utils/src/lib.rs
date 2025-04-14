@@ -1,4 +1,15 @@
-//! Utilities for parsing events emitted by axelar-solana programs
+//! This crate provides the `Event` trait to be used by Solana programs.
+//! It also provides utility functions to read data from the decoded logs emitted by the program.
+//!
+//! This crate should be used together with the `event-macros` crate, which provides a derive macro
+//! to implement the [`Event`] trait for compoatible structs.
+//!
+//! The `Event` is emitted and parsed differently compared to how Anchor does it, where the
+//! structures are serialized and deserialized with `Borsh`. Here we simply use `sol_log_data` to
+//! log each field as bytes, `sol_log_data` then logs these bytes as base64 encoded strings.
+//!
+//! All programs within the `solana-axelar` integration are encourage to use this crate to emit
+//! events as JavaScript utilities are also provided to parse them from logs.
 use axelar_message_primitives::U256;
 use solana_program::pubkey::Pubkey;
 

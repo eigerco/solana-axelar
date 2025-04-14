@@ -1,4 +1,8 @@
-#![allow(missing_docs)]
+//! This crate provides a procedural macro for deriving the [`event_utils::Event`] trait for structs.
+//!
+//! The `Event` is emitted and parsed differently compared to how Anchor does it, where the
+//! structures are serialized and deserialized with `Borsh`. Here we simply use `sol_log_data` to
+//! log each field as bytes.
 use keccak_const::Shake128;
 use proc_macro::TokenStream;
 use quote::quote;
