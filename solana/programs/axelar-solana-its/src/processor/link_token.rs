@@ -119,7 +119,7 @@ pub(crate) fn process_outbound<'a>(
         destination_chain,
         source_token_address: token_manager.token_address,
         destination_token_address,
-        token_manager_type: token_manager_type as u8,
+        token_manager_type: token_manager_type.into(),
         params: link_params,
     };
     link_started_event.emit();

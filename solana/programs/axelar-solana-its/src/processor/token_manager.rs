@@ -160,7 +160,7 @@ pub(crate) fn deploy<'a>(
     event::TokenManagerDeployed {
         token_id: deploy_token_manager.token_id,
         token_manager: *accounts.token_manager_pda.key,
-        token_manager_type: deploy_token_manager.manager_type as u8,
+        token_manager_type: deploy_token_manager.manager_type.into(),
         params: deploy_token_manager
             .operator
             .map(|op| op.to_bytes().to_vec())

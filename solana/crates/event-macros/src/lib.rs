@@ -96,13 +96,11 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
     let mut emit_slices = Vec::new();
     emit_slices.push(quote! { Self::DISC });
 
-    for field in fields.iter() {
+    for field in fields {
         let field_ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        let slice_expr = if get_u8_array_size(ty).is_some() {
-            quote! { &self.#field_ident[..] }
-        } else if is_vec_u8(ty) {
+        let slice_expr = if get_u8_array_size(ty).is_some() || is_vec_u8(ty) {
             quote! { &self.#field_ident[..] }
         } else if let Some(type_name) = get_simple_type_ident_str(ty) {
             match type_name.as_str() {
@@ -115,7 +113,7 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
                 _ => {
                     return Error::new_spanned(
                         ty,
-                        format!("Unsupported simple type '{}' for emit.", type_name),
+                        format!("Unsupported simple type '{type_name}' for emit."),
                     )
                     .to_compile_error()
                     .into()
@@ -177,7 +175,7 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
                 _ => {
                     return Error::new_spanned(
                         ty,
-                        format!("Unsupported simple type '{}' for deserialize.", type_name),
+                        format!("Unsupported simple type '{type_name}' for deserialize."),
                     )
                     .to_compile_error()
                     .into()

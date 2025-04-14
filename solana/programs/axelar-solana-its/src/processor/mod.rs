@@ -620,7 +620,7 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     )?;
 
     event::TrustedChainRemoved {
-        chain_name: chain_name.to_string(),
+        chain_name: chain_name.to_owned(),
     }
     .emit();
 
