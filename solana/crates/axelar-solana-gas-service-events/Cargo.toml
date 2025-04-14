@@ -10,7 +10,6 @@ edition.workspace = true
 [dependencies]
 event-utils.workspace = true
 solana-program.workspace = true
-thiserror.workspace = true
 
 [lints]
 workspace = true

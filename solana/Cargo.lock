@@ -783,7 +783,6 @@ version = "0.1.0"
 dependencies = [
  "event-utils",
  "solana-program",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -893,7 +892,6 @@ dependencies = [
  "evm-contracts-test-suite",
  "interchain-token-transfer-gmp",
  "itertools 0.12.1",
- "keccak-const",
  "mpl-token-metadata",
  "program-utils",
  "role-management",
@@ -2817,7 +2815,6 @@ name = "event-macros"
 version = "0.1.0"
 dependencies = [
  "keccak-const",
- "proc-macro2",
  "quote",
  "syn 2.0.90",
 ]
@@ -2829,7 +2826,6 @@ dependencies = [
  "axelar-message-primitives",
  "base64 0.21.7",
  "event-macros",
- "keccak-const",
  "solana-program",
  "thiserror 1.0.69",
 ]
