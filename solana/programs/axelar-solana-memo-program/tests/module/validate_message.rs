@@ -28,12 +28,11 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
 
     let mut solana_chain = program_test().await;
     let (counter_pda, counter_bump) =
-        axelar_solana_memo_program::get_counter_pda(&solana_chain.gateway_root_pda);
+        axelar_solana_memo_program::get_counter_pda();
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_memo_program::instruction::initialize(
             &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
             &(counter_pda, counter_bump),
         )
         .unwrap()])

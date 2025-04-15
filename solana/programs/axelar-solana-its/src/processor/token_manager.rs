@@ -291,7 +291,7 @@ pub(crate) fn handover_mint_authority(
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
 
-    assert_valid_its_root_pda(its_root, gateway_root.key, its_root_config.bump)?;
+    assert_valid_its_root_pda(its_root, its_root_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager,
         its_root.key,
