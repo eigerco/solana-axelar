@@ -320,7 +320,7 @@ fn process_initialize(
         gateway_root_pda_account.key,
     )?;
 
-    let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda(gateway_root_pda_account.key);
+    let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda();
     let its_root_config =
         InterchainTokenService::new(its_root_pda_bump, chain_name, its_hub_address);
     its_root_config.init(
@@ -330,7 +330,6 @@ fn process_initialize(
         its_root_pda_account,
         &[
             crate::seed_prefixes::ITS_SEED,
-            gateway_root_pda_account.key.as_ref(),
             &[its_root_pda_bump],
         ],
     )?;
@@ -416,7 +415,6 @@ fn process_operator_accounts<'a>(
     let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
     assert_valid_its_root_pda(
         role_management_accounts.resource,
-        gateway_root_pda.key,
         its_config.bump,
     )?;
 
@@ -568,7 +566,6 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(
         its_root_pda,
-        gateway_root_pda_account.key,
         its_root_config.bump,
     )?;
     its_root_config.paused = paused;
@@ -590,7 +587,6 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(
         its_root_pda,
-        gateway_root_pda_account.key,
         its_root_config.bump,
     )?;
 
@@ -615,7 +611,6 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(
         its_root_pda,
-        gateway_root_pda_account.key,
         its_root_config.bump,
     )?;
 
