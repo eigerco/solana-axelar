@@ -153,7 +153,6 @@ pub(crate) fn process_inbound_transfer<'a>(
             &account_infos,
             &[&[
                 seed_prefixes::ITS_SEED,
-                axelar_executable_accounts.gateway_root_pda.key.as_ref(),
                 &[its_root_bump],
             ]],
         )?;

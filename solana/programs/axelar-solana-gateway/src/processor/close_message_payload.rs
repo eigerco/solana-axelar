@@ -51,7 +51,6 @@ impl Processor {
 
         // Check: Buffer PDA can be derived from provided seeds.
         let message_payload_pda = crate::create_message_payload_pda(
-            *gateway_root_pda.key,
             command_id,
             *payer.key,
             *message_payload.bump,

@@ -46,7 +46,6 @@ pub(crate) fn process_inbound<'a>(
     let its_root_config = InterchainTokenService::load(its_root_pda_account)?;
     assert_valid_its_root_pda(
         its_root_pda_account,
-        gateway_root_pda_account.key,
         its_root_config.bump,
     )?;
     assert_its_not_paused(&its_root_config)?;
@@ -156,7 +155,6 @@ pub(crate) fn process_outbound<'a>(
     let its_root_config = InterchainTokenService::load(accounts.its_root_account)?;
     assert_valid_its_root_pda(
         accounts.its_root_account,
-        accounts.gateway_root_account.key,
         its_root_config.bump,
     )?;
     assert_its_not_paused(&its_root_config)?;

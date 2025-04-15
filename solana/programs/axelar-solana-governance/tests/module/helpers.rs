@@ -68,10 +68,9 @@ pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey
     assert!(res.is_ok());
 
     let memo_counter_pda =
-        axelar_solana_memo_program::get_counter_pda(&sol_integration.gateway_root_pda);
+        axelar_solana_memo_program::get_counter_pda();
     let ix = axelar_solana_memo_program::instruction::initialize(
         &sol_integration.fixture.payer.pubkey(),
-        &sol_integration.gateway_root_pda,
         &memo_counter_pda,
     )
     .unwrap();

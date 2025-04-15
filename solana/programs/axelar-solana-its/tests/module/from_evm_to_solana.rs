@@ -130,7 +130,7 @@ async fn custom_token(
     )
     .await;
     let (its_root_pda, _) =
-        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
+        axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
@@ -340,7 +340,7 @@ async fn test_call_contract_with_token(ctx: &mut ItsTestContext) -> anyhow::Resu
         retrieve_evm_log_with_filter(ctx.evm_its_contracts.gateway.contract_call_filter()).await;
 
     let (its_root_pda, _) =
-        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
+        axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &ctx.deployed_interchain_token);
 
