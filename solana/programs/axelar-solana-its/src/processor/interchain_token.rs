@@ -132,8 +132,8 @@ pub(crate) fn process_deploy<'a>(
         payer,
         parsed_accounts,
         token_id,
-        name.clone(),
-        symbol.clone(),
+        name,
+        symbol,
         decimals,
         initial_supply,
     )?;
