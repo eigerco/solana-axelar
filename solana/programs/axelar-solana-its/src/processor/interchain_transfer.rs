@@ -92,8 +92,9 @@ pub(crate) fn process_inbound_transfer<'a>(
         source_address: payload.source_address.to_vec(),
         destination_address: *parsed_accounts
             .program_ata
-            .map(|account| account.key)
-            .unwrap_or(parsed_accounts.destination_account.key),
+            .map_or(parsed_accounts.destination_account.key, |account| {
+                account.key
+            }),
         amount: converted_amount,
         data_hash: if payload.data.is_empty() {
             [0; 32]
