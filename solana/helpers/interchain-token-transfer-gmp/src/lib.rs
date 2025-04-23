@@ -153,27 +153,27 @@ impl RegisterTokenMetadata {
 
 impl GMPPayload {
     pub fn decode(bytes: &[u8]) -> Result<Self, alloy_sol_types::Error> {
-        let variant = alloy_primitives::U256::abi_decode(&bytes[0..32], true)?;
+        let variant = alloy_primitives::U256::abi_decode(&bytes[0..32])?;
 
         match variant.byte(0) {
             InterchainTransfer::MESSAGE_TYPE_ID => Ok(GMPPayload::InterchainTransfer(
-                InterchainTransfer::abi_decode_params(bytes, true)?,
+                InterchainTransfer::abi_decode_params(bytes)?,
             )),
             DeployInterchainToken::MESSAGE_TYPE_ID => Ok(GMPPayload::DeployInterchainToken(
-                DeployInterchainToken::abi_decode_params(bytes, true)?,
+                DeployInterchainToken::abi_decode_params(bytes)?,
             )),
-            SendToHub::MESSAGE_TYPE_ID => Ok(GMPPayload::SendToHub(SendToHub::abi_decode_params(
-                bytes, true,
-            )?)),
+            SendToHub::MESSAGE_TYPE_ID => {
+                Ok(GMPPayload::SendToHub(SendToHub::abi_decode_params(bytes)?))
+            }
             ReceiveFromHub::MESSAGE_TYPE_ID => Ok(GMPPayload::ReceiveFromHub(
-                ReceiveFromHub::abi_decode_params(bytes, true)?,
+                ReceiveFromHub::abi_decode_params(bytes)?,
             )),
             RegisterTokenMetadata::MESSAGE_TYPE_ID => Ok(GMPPayload::RegisterTokenMetadata(
-                RegisterTokenMetadata::abi_decode_params(bytes, true)?,
+                RegisterTokenMetadata::abi_decode_params(bytes)?,
             )),
-            LinkToken::MESSAGE_TYPE_ID => Ok(GMPPayload::LinkToken(LinkToken::abi_decode_params(
-                bytes, true,
-            )?)),
+            LinkToken::MESSAGE_TYPE_ID => {
+                Ok(GMPPayload::LinkToken(LinkToken::abi_decode_params(bytes)?))
+            }
             _ => Err(alloy_sol_types::Error::custom(
                 "Invalid selector for InterchainTokenService message",
             )),

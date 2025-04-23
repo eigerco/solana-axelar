@@ -61,7 +61,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
             let SolanaGatewayPayload {
                 execute_payload: allocated_payload,
                 accounts: allocated_accounts,
-            } = SolanaGatewayPayload::abi_decode_params(data, true)?;
+            } = SolanaGatewayPayload::abi_decode_params(data)?;
 
             debug_assert_eq!(payload, allocated_payload.to_vec(), "bad payload");
             debug_assert_eq!(accounts, allocated_accounts, "bad accounts");
@@ -92,7 +92,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
 fn extract_payload_silce_and_solana_accounts(
     data: &[u8],
 ) -> Result<(&[u8], Vec<SolanaAccountRepr>), PayloadError> {
-    let mut decoder = Decoder::new(data, true);
+    let mut decoder = Decoder::new(data);
     let decoded_sequence = decoder
         .decode_sequence::<<SolanaGatewayPayload as alloy_sol_types::SolType>::Token<'_>>()?;
 

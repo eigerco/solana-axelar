@@ -153,7 +153,7 @@ pub mod payload_conversions {
     ///
     /// A `ProgramError` is returned if the payload cannot be deserialized.
     pub fn decode_payload(raw_payload: &[u8]) -> Result<GovernanceCommandPayload, ProgramError> {
-        GovernanceCommandPayload::abi_decode(raw_payload, true).map_err(|err| {
+        GovernanceCommandPayload::abi_decode(raw_payload).map_err(|err| {
             msg!("Cannot abi decode GovernanceCommandPayload: {}", err);
             ProgramError::InvalidArgument
         })

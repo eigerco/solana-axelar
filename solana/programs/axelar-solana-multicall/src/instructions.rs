@@ -139,7 +139,7 @@ pub mod encoding {
                 EncodingScheme::Borsh => Ok(borsh::from_slice(data)
                     .map_err(|_error| PayloadError::BorshDeserializeError)?),
                 EncodingScheme::AbiEncoding => {
-                    Ok(AbiMultiCallPayload::abi_decode(data, true)?.try_into()?)
+                    Ok(AbiMultiCallPayload::abi_decode(data)?.try_into()?)
                 }
                 _ => Err(PayloadError::InvalidEncodingScheme),
             }

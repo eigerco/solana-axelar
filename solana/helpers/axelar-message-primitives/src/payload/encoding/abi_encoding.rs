@@ -39,7 +39,7 @@ impl<'payload> DataPayload<'payload> {
     pub(super) fn decode_abi_encoding(
         data: &'payload [u8],
     ) -> Result<(Vec<u8>, Vec<SolanaAccountRepr>), PayloadError> {
-        let decoded = SolanaGatewayPayload::abi_decode_params(data, true)?;
+        let decoded = SolanaGatewayPayload::abi_decode_params(data)?;
         let SolanaGatewayPayload {
             execute_payload,
             accounts,

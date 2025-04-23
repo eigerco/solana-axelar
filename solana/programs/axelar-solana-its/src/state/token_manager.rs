@@ -220,7 +220,7 @@ pub fn decode_params(
     data: &[u8],
 ) -> Result<(Option<Pubkey>, Option<Pubkey>, Pubkey), ProgramError> {
     let (operator_bytes, mint_authority_bytes, token_address) =
-        <(Bytes, Bytes, FixedBytes<32>)>::abi_decode(data, true)
+        <(Bytes, Bytes, FixedBytes<32>)>::abi_decode(data)
             .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     let token_address = Pubkey::new_from_array(token_address.0);
