@@ -219,7 +219,6 @@ pub fn handover_mint_authority(
     mint: Pubkey,
     token_program: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
@@ -228,7 +227,6 @@ pub fn handover_mint_authority(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new(mint, false),
-        AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new(minter_roles_pda, false),

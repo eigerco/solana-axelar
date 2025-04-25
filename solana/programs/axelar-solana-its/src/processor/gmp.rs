@@ -39,7 +39,6 @@ pub(crate) fn process_inbound<'a>(
     let payload_account = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let _system_program = next_account_info(accounts_iter)?;
     let its_root_pda_account = next_account_info(accounts_iter)?;
 
@@ -276,10 +275,9 @@ fn pay_gas<'a>(
 }
 
 fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> ProgramResult {
-    const GATEWAY_ROOT_PDA_INDEX: usize = 0;
-    const TOKEN_MANAGER_PDA_INDEX: usize = 3;
-    const TOKEN_MINT_INDEX: usize = 4;
-    const TOKEN_PROGRAM_INDEX: usize = 6;
+    const TOKEN_MANAGER_PDA_INDEX: usize = 2;
+    const TOKEN_MINT_INDEX: usize = 3;
+    const TOKEN_PROGRAM_INDEX: usize = 5;
 
     // In this case we cannot derive the mint account, so we just use what we got
     // and check later against the mint within the `TokenManager` PDA.
@@ -289,10 +287,6 @@ fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> 
         None
     };
 
-    let gateway_root_pda = accounts
-        .get(GATEWAY_ROOT_PDA_INDEX)
-        .map(|account| *account.key)
-        .ok_or(ProgramError::InvalidAccountData)?;
     let token_program = accounts
         .get(TOKEN_PROGRAM_INDEX)
         .map(|account| *account.key)
@@ -300,7 +294,6 @@ fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> 
 
     let derived_its_accounts = instruction::derive_its_accounts(
         payload,
-        gateway_root_pda,
         token_program,
         maybe_mint,
         Some(Clock::get()?.unix_timestamp),

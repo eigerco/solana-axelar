@@ -56,7 +56,6 @@ pub fn process_message_from_axelar_with_token<'a>(
     payload: &AxelarInterchainTokenExecutablePayload,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let _gateway_root_pda = next_account_info(accounts_iter)?;
     let _its_root_pda = next_account_info(accounts_iter)?;
     let _message_payload_account = next_account_info(accounts_iter)?;
     let _token_program = next_account_info(accounts_iter)?;

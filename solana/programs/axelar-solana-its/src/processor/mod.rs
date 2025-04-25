@@ -293,7 +293,6 @@ fn process_initialize(
     let account_info_iter = &mut accounts.iter();
     let payer = next_account_info(account_info_iter)?;
     let program_data_account = next_account_info(account_info_iter)?;
-    let gateway_root_pda_account = next_account_info(account_info_iter)?;
     let its_root_pda_account = next_account_info(account_info_iter)?;
     let system_account = next_account_info(account_info_iter)?;
     let operator = next_account_info(account_info_iter)?;
@@ -310,15 +309,6 @@ fn process_initialize(
 
     // Check: PDA Account is not initialized
     its_root_pda_account.check_uninitialized_pda()?;
-
-    // Check: Gateway Root PDA Account is valid.
-    let gateway_config_data = gateway_root_pda_account.try_borrow_data()?;
-    let gateway_config =
-        GatewayConfig::read(&gateway_config_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-    axelar_solana_gateway::assert_valid_gateway_root_pda(
-        gateway_config.bump,
-        gateway_root_pda_account.key,
-    )?;
 
     let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda();
     let its_root_config =
@@ -408,7 +398,6 @@ fn process_operator_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<RoleManagementAccounts<'a>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let gateway_root_pda = next_account_info(accounts_iter)?;
 
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
     msg!("Instruction: Operator");
@@ -557,7 +546,6 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
@@ -578,7 +566,6 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
@@ -602,7 +589,6 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 

@@ -280,7 +280,6 @@ pub(crate) fn handover_mint_authority(
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;
-    let gateway_root = next_account_info(accounts_iter)?;
     let its_root = next_account_info(accounts_iter)?;
     let token_manager = next_account_info(accounts_iter)?;
     let minter_roles = next_account_info(accounts_iter)?;
@@ -348,7 +347,6 @@ pub(crate) fn handover_mint_authority(
 }
 
 pub(crate) struct DeployTokenManagerAccounts<'a> {
-    pub(crate) gateway_root_pda: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -375,7 +373,6 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
         let accounts_iter = &mut accounts.iter();
 
         Ok(Self {
-            gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
