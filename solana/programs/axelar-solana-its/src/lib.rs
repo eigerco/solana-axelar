@@ -16,7 +16,7 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 
-solana_program::declare_id!("itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd");
+solana_program::declare_id!("AbDwKPBhZx6tFyCYiyaKaYiJaNiwLxAU1yvKNM8oTW7e");
 
 pub(crate) const ITS_HUB_CHAIN_NAME: &str = "axelar";
 
@@ -121,9 +121,7 @@ pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
 /// # Errors
 ///
 /// If the bump is invalid.
-pub fn its_root_pda(
-    maybe_bump: Option<u8>,
-) -> Result<(Pubkey, u8), ProgramError> {
+pub fn its_root_pda(maybe_bump: Option<u8>) -> Result<(Pubkey, u8), ProgramError> {
     if let Some(bump) = maybe_bump {
         create_its_root_pda(bump).map(|pubkey| (pubkey, bump))
     } else {

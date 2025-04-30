@@ -120,10 +120,7 @@ fn extract_interchain_token_execute_call_data<'a>(
     }
 
     let its_root_config = InterchainTokenService::load(signing_pda_account)?;
-    assert_valid_its_root_pda(
-        signing_pda_account,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(signing_pda_account, its_root_config.bump)?;
 
     let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
         .map_err(|_err| ProgramError::InvalidInstructionData)?

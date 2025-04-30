@@ -1261,7 +1261,6 @@ pub fn deploy_remote_interchain_token_with_minter(
         AccountMeta::new_readonly(metadata_account_key, false),
         AccountMeta::new_readonly(minter, false),
         AccountMeta::new(deploy_approval, false),
-
         AccountMeta::new_readonly(minter_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(sysvar::instructions::ID, false),

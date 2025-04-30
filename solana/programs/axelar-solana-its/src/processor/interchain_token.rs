@@ -151,10 +151,7 @@ pub(crate) fn process_inbound_deploy<'a>(
 ) -> ProgramResult {
     msg!("Instruction: InboundDeploy");
     let its_root_pda_bump = InterchainTokenService::load(accounts.its_root_pda)?.bump;
-    assert_valid_its_root_pda(
-        accounts.its_root_pda,
-        its_root_pda_bump,
-    )?;
+    assert_valid_its_root_pda(accounts.its_root_pda, its_root_pda_bump)?;
 
     let (interchain_token_pda, interchain_token_pda_bump) =
         crate::find_interchain_token_pda(accounts.its_root_pda.key, &token_id);

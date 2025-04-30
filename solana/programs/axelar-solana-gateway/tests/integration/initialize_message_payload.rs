@@ -34,10 +34,8 @@ pub async fn get_message_account(
     message: &Message,
 ) -> Option<Account> {
     let command_id = message_to_command_id(message);
-    let (message_payload_pda, _bump) = axelar_solana_gateway::find_message_payload_pda(
-        command_id,
-        runner.payer.pubkey(),
-    );
+    let (message_payload_pda, _bump) =
+        axelar_solana_gateway::find_message_payload_pda(command_id, runner.payer.pubkey());
     runner
         .try_get_account(&message_payload_pda, &axelar_solana_gateway::ID)
         .await

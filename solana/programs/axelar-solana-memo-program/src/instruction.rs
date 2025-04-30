@@ -74,10 +74,7 @@ pub enum AxelarMemoInstruction {
 }
 
 /// Creates a [`AxelarMemoInstruction::Initialize`] instruction.
-pub fn initialize(
-    payer: &Pubkey,
-    counter_pda: &(Pubkey, u8),
-) -> Result<Instruction, ProgramError> {
+pub fn initialize(payer: &Pubkey, counter_pda: &(Pubkey, u8)) -> Result<Instruction, ProgramError> {
     let data = to_vec(&AxelarMemoInstruction::Initialize {
         counter_pda_bump: counter_pda.1,
     })?;

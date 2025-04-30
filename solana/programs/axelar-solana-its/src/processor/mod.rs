@@ -1,11 +1,9 @@
 #![allow(clippy::too_many_arguments)]
 //! Program state processor
-use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
 use event_utils::Event as _;
 use interchain_token::process_mint;
-use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
+use program_utils::{BorshPda, ValidPDA};
 use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
@@ -318,10 +316,7 @@ fn process_initialize(
         system_account,
         payer,
         its_root_pda_account,
-        &[
-            crate::seed_prefixes::ITS_SEED,
-            &[its_root_pda_bump],
-        ],
+        &[crate::seed_prefixes::ITS_SEED, &[its_root_pda_bump]],
     )?;
 
     let (_user_roles_pda, user_roles_pda_bump) =
@@ -402,10 +397,7 @@ fn process_operator_accounts<'a>(
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
     msg!("Instruction: Operator");
     let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
-    assert_valid_its_root_pda(
-        role_management_accounts.resource,
-        its_config.bump,
-    )?;
+    assert_valid_its_root_pda(role_management_accounts.resource, its_config.bump)?;
 
     Ok(role_management_accounts)
 }
@@ -552,10 +544,7 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     msg!("Instruction: SetPauseStatus");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(
-        its_root_pda,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
     its_root_config.paused = paused;
     its_root_config.store(payer, its_root_pda, system_account)?;
 
@@ -572,10 +561,7 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
     msg!("Instruction: SetTrustedChain");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(
-        its_root_pda,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
     let trusted_chain_event = event::TrustedChainSet { chain_name };
     trusted_chain_event.emit();
@@ -595,10 +581,7 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     msg!("Instruction: RemoveTrustedChain");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(
-        its_root_pda,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
     event::TrustedChainRemoved {
         chain_name: chain_name.to_owned(),

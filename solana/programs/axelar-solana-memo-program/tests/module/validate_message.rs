@@ -27,8 +27,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
     use solana_sdk::pubkey::Pubkey;
 
     let mut solana_chain = program_test().await;
-    let (counter_pda, counter_bump) =
-        axelar_solana_memo_program::get_counter_pda();
+    let (counter_pda, counter_bump) = axelar_solana_memo_program::get_counter_pda();
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_memo_program::instruction::initialize(

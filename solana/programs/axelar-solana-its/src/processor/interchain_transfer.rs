@@ -150,10 +150,7 @@ pub(crate) fn process_inbound_transfer<'a>(
         invoke_signed(
             &its_execute_instruction,
             &account_infos,
-            &[&[
-                seed_prefixes::ITS_SEED,
-                &[its_root_bump],
-            ]],
+            &[&[seed_prefixes::ITS_SEED, &[its_root_bump]]],
         )?;
     }
 

@@ -43,10 +43,7 @@ pub(crate) fn process_inbound<'a>(
     let its_root_pda_account = next_account_info(accounts_iter)?;
 
     let its_root_config = InterchainTokenService::load(its_root_pda_account)?;
-    assert_valid_its_root_pda(
-        its_root_pda_account,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(its_root_pda_account, its_root_config.bump)?;
     assert_its_not_paused(&its_root_config)?;
 
     if message.source_address != its_root_config.its_hub_address {
@@ -152,10 +149,7 @@ pub(crate) fn process_outbound<'a>(
     wrapped: bool,
 ) -> ProgramResult {
     let its_root_config = InterchainTokenService::load(accounts.its_root_account)?;
-    assert_valid_its_root_pda(
-        accounts.its_root_account,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(accounts.its_root_account, its_root_config.bump)?;
     assert_its_not_paused(&its_root_config)?;
     if !its_root_config.is_trusted_chain(&destination_chain)
         && destination_chain != ITS_HUB_CHAIN_NAME

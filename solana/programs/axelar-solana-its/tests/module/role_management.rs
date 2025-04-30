@@ -615,8 +615,7 @@ async fn test_fail_token_manager_minter_proposal_acceptance(ctx: &mut ItsTestCon
 async fn test_fail_mint_without_minter_role(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_config_pda, _) =
-        axelar_solana_its::find_its_root_pda();
+    let (its_root_config_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(
         &its_root_config_pda,
         &ctx.deployed_interchain_token,
