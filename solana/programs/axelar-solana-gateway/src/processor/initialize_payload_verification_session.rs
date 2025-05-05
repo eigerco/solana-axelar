@@ -101,7 +101,6 @@ impl Processor {
         // bump seed.
         let signers_seeds = &[
             seed_prefixes::SIGNATURE_VERIFICATION_SEED,
-            // gateway_root_pda.key.as_ref(),
             &merkle_root,
             &[bump],
         ];
