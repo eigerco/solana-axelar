@@ -407,6 +407,7 @@ fn process_tm_add_flow_limiter<'a>(
     inputs: &RoleManagementInstructionInputs<Roles>,
 ) -> ProgramResult {
     if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
+        msg!("Invalid role: {:?}", inputs.roles);
         return Err(ProgramError::InvalidInstructionData);
     }
     let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
