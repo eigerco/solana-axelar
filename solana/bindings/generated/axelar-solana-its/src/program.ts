@@ -41,11 +41,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "itsRootPda";
           isMut: true;
           isSigner: false;
@@ -91,11 +86,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "itsRootPda";
           isMut: true;
           isSigner: false;
@@ -127,11 +117,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "itsRootPda";
           isMut: true;
           isSigner: false;
@@ -159,11 +144,6 @@ type AxelarSolanaIts = {
         },
         {
           name: "programDataAddress";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -285,11 +265,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -362,11 +337,6 @@ type AxelarSolanaIts = {
         },
         {
           name: "mplTokenMetadata";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -465,11 +435,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -541,11 +506,6 @@ type AxelarSolanaIts = {
           name: "payer";
           isMut: true;
           isSigner: true;
-        },
-        {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
         },
         {
           name: "systemProgram";
@@ -679,11 +639,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -789,11 +744,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -873,11 +823,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -934,11 +879,6 @@ type AxelarSolanaIts = {
         },
         {
           name: "tokenMetadataAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -1031,11 +971,6 @@ type AxelarSolanaIts = {
         },
         {
           name: "tokenManagerPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -1154,11 +1089,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -1268,11 +1198,6 @@ type AxelarSolanaIts = {
         {
           name: "flowSlotPda";
           isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "gatewayRootPda";
-          isMut: false;
           isSigner: false;
         },
         {
@@ -1391,11 +1316,6 @@ type AxelarSolanaIts = {
       name: "operatorTransferOperatorship";
       accounts: [
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -1454,11 +1374,6 @@ type AxelarSolanaIts = {
       name: "operatorProposeOperatorship";
       accounts: [
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -1516,11 +1431,6 @@ type AxelarSolanaIts = {
     {
       name: "operatorAcceptOperatorship";
       accounts: [
-        {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
         {
           name: "systemProgram";
           isMut: false;
@@ -1737,11 +1647,6 @@ type AxelarSolanaIts = {
       name: "tokenManagerTransferOperatorship";
       accounts: [
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -1800,11 +1705,6 @@ type AxelarSolanaIts = {
       name: "tokenManagerProposeOperatorship";
       accounts: [
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -1862,11 +1762,6 @@ type AxelarSolanaIts = {
     {
       name: "tokenManagerAcceptOperatorship";
       accounts: [
-        {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
         {
           name: "systemProgram";
           isMut: false;
@@ -1933,11 +1828,6 @@ type AxelarSolanaIts = {
         {
           name: "mint";
           isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "gatewayRootPda";
-          isMut: false;
           isSigner: false;
         },
         {
@@ -2025,11 +1915,6 @@ type AxelarSolanaIts = {
       name: "interchainTokenTransferMintership";
       accounts: [
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -2088,11 +1973,6 @@ type AxelarSolanaIts = {
       name: "interchainTokenProposeMintership";
       accounts: [
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "systemProgram";
           isMut: false;
           isSigner: false;
@@ -2150,11 +2030,6 @@ type AxelarSolanaIts = {
     {
       name: "interchainTokenAcceptMintership";
       accounts: [
-        {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
         {
           name: "systemProgram";
           isMut: false;
@@ -2297,11 +2172,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "itsRootPda",
           isMut: true,
           isSigner: false,
@@ -2347,11 +2217,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "itsRootPda",
           isMut: true,
           isSigner: false,
@@ -2383,11 +2248,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "itsRootPda",
           isMut: true,
           isSigner: false,
@@ -2415,11 +2275,6 @@ const IDL: AxelarSolanaIts = {
         },
         {
           name: "programDataAddress",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },
@@ -2541,11 +2396,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -2618,11 +2468,6 @@ const IDL: AxelarSolanaIts = {
         },
         {
           name: "mplTokenMetadata",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },
@@ -2721,11 +2566,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -2797,11 +2637,6 @@ const IDL: AxelarSolanaIts = {
           name: "payer",
           isMut: true,
           isSigner: true,
-        },
-        {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
         },
         {
           name: "systemProgram",
@@ -2935,11 +2770,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -3045,11 +2875,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -3129,11 +2954,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -3190,11 +3010,6 @@ const IDL: AxelarSolanaIts = {
         },
         {
           name: "tokenMetadataAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },
@@ -3287,11 +3102,6 @@ const IDL: AxelarSolanaIts = {
         },
         {
           name: "tokenManagerPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },
@@ -3410,11 +3220,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -3524,11 +3329,6 @@ const IDL: AxelarSolanaIts = {
         {
           name: "flowSlotPda",
           isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "gatewayRootPda",
-          isMut: false,
           isSigner: false,
         },
         {
@@ -3647,11 +3447,6 @@ const IDL: AxelarSolanaIts = {
       name: "operatorTransferOperatorship",
       accounts: [
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -3710,11 +3505,6 @@ const IDL: AxelarSolanaIts = {
       name: "operatorProposeOperatorship",
       accounts: [
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -3772,11 +3562,6 @@ const IDL: AxelarSolanaIts = {
     {
       name: "operatorAcceptOperatorship",
       accounts: [
-        {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
         {
           name: "systemProgram",
           isMut: false,
@@ -3993,11 +3778,6 @@ const IDL: AxelarSolanaIts = {
       name: "tokenManagerTransferOperatorship",
       accounts: [
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -4056,11 +3836,6 @@ const IDL: AxelarSolanaIts = {
       name: "tokenManagerProposeOperatorship",
       accounts: [
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -4118,11 +3893,6 @@ const IDL: AxelarSolanaIts = {
     {
       name: "tokenManagerAcceptOperatorship",
       accounts: [
-        {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
         {
           name: "systemProgram",
           isMut: false,
@@ -4189,11 +3959,6 @@ const IDL: AxelarSolanaIts = {
         {
           name: "mint",
           isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "gatewayRootPda",
-          isMut: false,
           isSigner: false,
         },
         {
@@ -4281,11 +4046,6 @@ const IDL: AxelarSolanaIts = {
       name: "interchainTokenTransferMintership",
       accounts: [
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -4344,11 +4104,6 @@ const IDL: AxelarSolanaIts = {
       name: "interchainTokenProposeMintership",
       accounts: [
         {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "systemProgram",
           isMut: false,
           isSigner: false,
@@ -4406,11 +4161,6 @@ const IDL: AxelarSolanaIts = {
     {
       name: "interchainTokenAcceptMintership",
       accounts: [
-        {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
         {
           name: "systemProgram",
           isMut: false,

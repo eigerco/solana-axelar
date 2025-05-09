@@ -270,7 +270,6 @@ pub struct Initialize<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     program_data_address: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     #[account(mut)]
     its_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
@@ -284,7 +283,6 @@ pub struct SetPauseStatus<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     program_data_address: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     #[account(mut)]
     its_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
@@ -295,7 +293,6 @@ pub struct SetTrustedChain<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     program_data_address: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     #[account(mut)]
     its_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
@@ -306,7 +303,6 @@ pub struct RemoveTrustedChain<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     program_data_address: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     #[account(mut)]
     its_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
@@ -337,7 +333,6 @@ pub struct RegisterCanonicalInterchainToken<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     token_metadata_account: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
     its_root_pda: AccountInfo<'info>,
     #[account(mut)]
@@ -361,7 +356,6 @@ pub struct DeployRemoteCanonicalInterchainToken<'info> {
     metadata_account: AccountInfo<'info>,
     sysvar_instructions: AccountInfo<'info>,
     mpl_token_metadata: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -386,7 +380,6 @@ pub struct InterchainTransfer<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -401,7 +394,6 @@ pub struct InterchainTransfer<'info> {
 pub struct DeployInterchainToken<'info> {
     #[account(mut)]
     payer: Signer<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
     its_root_pda: AccountInfo<'info>,
     #[account(mut)]
@@ -434,7 +426,6 @@ pub struct DeployRemoteInterchainToken<'info> {
     metadata_account: AccountInfo<'info>,
     sysvar_instructions: AccountInfo<'info>,
     mpl_token_metadata: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -458,7 +449,6 @@ pub struct DeployRemoteInterchainTokenWithMinter<'info> {
     token_manager_pda: AccountInfo<'info>,
     sysvar_instructions: AccountInfo<'info>,
     mpl_token_metadata: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -475,7 +465,6 @@ pub struct RegisterTokenMetadata<'info> {
     payer: Signer<'info>,
     mint: AccountInfo<'info>,
     token_program: Program<'info, Token>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -491,7 +480,6 @@ pub struct RegisterCustomToken<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     token_metadata_account: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
     its_root_pda: AccountInfo<'info>,
     #[account(mut)]
@@ -516,7 +504,6 @@ pub struct LinkToken<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     token_manager_pda: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -541,7 +528,6 @@ pub struct CallContractWithInterchainToken<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -566,7 +552,6 @@ pub struct CallContractWithInterchainTokenOffchainData<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -590,7 +575,6 @@ pub struct SetFlowLimit<'info> {
 
 #[derive(Accounts)]
 pub struct Operator<'info> {
-    gateway_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
     #[account(mut)]
     payer: Signer<'info>,
@@ -637,7 +621,6 @@ pub struct TokenManagerHandOverMintAuthority<'info> {
     payer: Signer<'info>,
     #[account(mut)]
     mint: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     its_root_pda: AccountInfo<'info>,
     token_manager_pda: AccountInfo<'info>,
     #[account(mut)]
