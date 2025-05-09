@@ -232,6 +232,7 @@ describe("Ping ITS", () => {
           sysvarInstructions: payer.publicKey,
           mplTokenMetadata: payer.publicKey,
           metadataAccount: payer.publicKey,
+          payerAta: payer.publicKey,
           minter: payer.publicKey,
           minterRolesPda: payer.publicKey,
         })
