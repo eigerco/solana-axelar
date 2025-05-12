@@ -4,7 +4,7 @@ import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { AxelarSolanaItsCoder } from "./coder";
 
 export const AXELAR_SOLANA_ITS_PROGRAM_ID = new PublicKey(
-  "itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd"
+  "BQBcNPpVKWEQ1V3rBfqYT91UFUMFR3gQNpiiyKjsjhR8"
 );
 
 interface GetProgramParams {
@@ -435,6 +435,11 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -823,6 +828,11 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -971,6 +981,11 @@ type AxelarSolanaIts = {
         },
         {
           name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -2566,6 +2581,11 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -2954,6 +2974,11 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -3102,6 +3127,11 @@ const IDL: AxelarSolanaIts = {
         },
         {
           name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },

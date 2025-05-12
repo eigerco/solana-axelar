@@ -380,6 +380,7 @@ pub struct InterchainTransfer<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -465,6 +466,7 @@ pub struct RegisterTokenMetadata<'info> {
     payer: Signer<'info>,
     mint: AccountInfo<'info>,
     token_program: Program<'info, Token>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -504,6 +506,7 @@ pub struct LinkToken<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     token_manager_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,

@@ -191,6 +191,7 @@ describe("Ping ITS", () => {
           tokenManagerAta: payer.publicKey,
           tokenProgram: payer.publicKey,
           flowSlotPda: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
@@ -303,6 +304,7 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           mint: payer.publicKey,
           tokenProgram: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
@@ -359,6 +361,7 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           tokenManagerPda: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
