@@ -531,6 +531,7 @@ pub struct CallContractWithInterchainToken<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -555,6 +556,7 @@ pub struct CallContractWithInterchainTokenOffchainData<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,

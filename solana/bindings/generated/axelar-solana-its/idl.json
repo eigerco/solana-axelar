@@ -1103,6 +1103,11 @@
           "isSigner": false
         },
         {
+          "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "axelarSolanaGateway",
           "isMut": false,
           "isSigner": false
@@ -1215,6 +1220,11 @@
         {
           "name": "flowSlotPda",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
+          "isMut": false,
           "isSigner": false
         },
         {
