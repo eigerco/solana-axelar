@@ -133,10 +133,10 @@ cargo xtask create-bindings gateway -u
 
 It is vital to check changes that have been provided from regenerating bindings. Post generating modifications have been done due to the limitations of the `native-to-anchor` binary. Therefore, comparing with the help of versioning system, re-running tests and detailed code review is necessary so that the bindings functionality remains on point.
 
-### Current hacks that needs to be respected
+### Current hacks that need to be respected
 
-* The current import paths, which `native-to-anchor` tries to fix. Current ones needs to be respected.
-* The Roles enum. This struct has encoding issues if we allow `native to anchor` to generate it, as we need to respect the value bits in the original enum.
+* The current import paths, which `native-to-anchor` tries to fix. Current ones need to be respected.
+* The Roles enum. This struct has encoding issues if we allow `native-to-anchor` to generate it, as we need to respect the value bits in the original enum.
 
 # Additional things to be checked
 
