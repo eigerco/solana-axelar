@@ -1,7 +1,15 @@
 #!/bin/bash
 
-# This script is used to deploy the axelar programs to the solana-test-validator
-# and replace the program ids in the bindings and programs rust files
+# Programs at `solana/programs` have fixed id's which are not going to be the same when you deploy the program locally. In order
+# to fix this situation, we have the `./prepare_test.sh` script, that will do everything for you.
+
+# This script is used to:
+#
+# 1. Deploy the axelar programs to the solana-test-validator 
+# 2. Replace the program ids in the bindings and programs rust files
+# 3. Build the programs with the new ids
+# 4. Deploy the programs again with the new ids
+
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_PATH=$SCRIPT_PATH/../..
