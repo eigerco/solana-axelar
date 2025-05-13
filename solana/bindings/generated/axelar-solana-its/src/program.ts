@@ -1104,6 +1104,11 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -1213,6 +1218,11 @@ type AxelarSolanaIts = {
         {
           name: "flowSlotPda";
           isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
           isSigner: false;
         },
         {
@@ -3250,6 +3260,11 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -3359,6 +3374,11 @@ const IDL: AxelarSolanaIts = {
         {
           name: "flowSlotPda",
           isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
           isSigner: false,
         },
         {
