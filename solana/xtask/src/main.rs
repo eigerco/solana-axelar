@@ -231,7 +231,7 @@ fn main() -> eyre::Result<()> {
                     // Read the current lib.rs content
                     let lib_content = std::fs::read_to_string(&lib_rs_path)?;
                     let updated_content = lib_content.replace(
-                        &lib_content
+                        lib_content
                             .lines()
                             .find(|line| line.contains("solana_program::declare_id!("))
                             .unwrap_or("declare_id!(\"NoMatch\");"),
@@ -243,7 +243,7 @@ fn main() -> eyre::Result<()> {
                 }
             }
 
-            println!("Program IDs regenerated and successfully");
+            println!("Program IDs regenerated and successfully updated");
         }
     }
 
