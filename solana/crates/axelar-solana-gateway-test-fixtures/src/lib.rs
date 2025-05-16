@@ -12,5 +12,6 @@ pub mod base;
 pub mod gas_service;
 pub mod gateway;
 pub mod test_signer;
+pub mod relayer_discovery;
 
 pub use gateway::{SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata};
