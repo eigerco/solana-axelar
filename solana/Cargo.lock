@@ -840,6 +840,7 @@ dependencies = [
  "axelar-solana-gas-service",
  "axelar-solana-gas-service-events",
  "axelar-solana-gateway",
+ "axelar-solana-relayer-discovery",
  "bincode",
  "ed25519-dalek 2.1.1",
  "gateway-event-stack",
@@ -957,6 +958,27 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "axelar-solana-relayer-discovery"
+version = "0.1.0"
+dependencies = [
+ "axelar-solana-gateway",
+ "axelar-solana-gateway-test-fixtures",
+ "bincode",
+ "borsh 1.5.3",
+ "bytemuck",
+ "gateway-event-stack",
+ "program-utils",
+ "rstest",
+ "serde",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-token",
+ "spl-token-2022 5.0.2",
  "thiserror 1.0.69",
 ]
 

@@ -173,6 +173,7 @@ proc-macro2 = "1"
 # solana programs
 axelar-solana-its = { path = "programs/axelar-solana-its" }
 axelar-solana-gas-service = { path = "programs/axelar-solana-gas-service" }
+axelar-solana-relayer-discovery = { path = "programs/axelar-solana-relayer-discovery" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
 axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
