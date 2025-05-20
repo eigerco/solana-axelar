@@ -507,11 +507,13 @@ pub fn verify_signature(
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn validate_message(
     incoming_message_pda: &Pubkey,
+    message_payload_pda: &Pubkey,
     signing_pda: &Pubkey,
     message: Message,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
         AccountMeta::new(*incoming_message_pda, false),
+        AccountMeta::new_readonly(*message_payload_pda, false),
         AccountMeta::new_readonly(*signing_pda, true),
     ];
 
