@@ -398,7 +398,7 @@ impl SolanaAxelarIntegrationMetadata {
         self.commit_message_payload(msg_command_id).await?;
 
         let (message_payload_account, _bump) =
-            axelar_solana_gateway::find_message_payload_pda(msg_command_id, self.payer.pubkey());
+            axelar_solana_gateway::get_message_payload_pda(&msg_command_id, self.payer.pubkey());
 
         Ok(message_payload_account)
     }

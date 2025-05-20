@@ -2,7 +2,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::validate_message;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
-use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
+use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda, get_message_payload_pda};
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{make_messages, GetGatewayError};
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
@@ -10,6 +10,7 @@ use solana_program_test::tokio;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Signer;
 
 #[tokio::test]
 async fn fail_if_message_pda_does_not_exist() {
@@ -34,11 +35,12 @@ async fn fail_if_message_pda_does_not_exist() {
         .leaf;
     let fake_command_id = solana_program::keccak::hash(b"fake command id").0; // source of error -- invalid command id
     let (incoming_message_pda, ..) = get_incoming_message_pda(&fake_command_id);
+    let (message_payload_pda, ..) = get_message_payload_pda(&fake_command_id, metadata.payer.pubkey());
 
     // action
     let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, fake_command_id);
-    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+    let ix = validate_message_for_tests(&incoming_message_pda, &message_payload_pda, &signing_pda, message_leaf.message)
         .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
@@ -74,6 +76,7 @@ async fn fail_if_message_already_executed() {
         &message_leaf.message.cc_id.id,
     );
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
+    let (message_payload_pda, ..) = get_message_payload_pda(&command_id, metadata.payer.pubkey());
     let mut incoming_message = metadata.incoming_message(incoming_message_pda).await;
     incoming_message.status = MessageStatus::executed(); // source of error
     set_existing_incoming_message_state(&mut metadata, incoming_message_pda, incoming_message)
@@ -82,7 +85,7 @@ async fn fail_if_message_already_executed() {
     // action
     let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, command_id);
-    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+    let ix = validate_message_for_tests(&incoming_message_pda, &message_payload_pda, &signing_pda, message_leaf.message)
         .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
@@ -118,11 +121,12 @@ async fn fail_if_message_has_been_tampered_with() {
         &message_leaf.message.cc_id.id,
     );
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
+    let (message_payload_pda, ..) = get_message_payload_pda(&command_id, metadata.payer.pubkey());
 
     // action
     let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, command_id);
-    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+    let ix = validate_message_for_tests(&incoming_message_pda, &message_payload_pda, &signing_pda, message_leaf.message)
         .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
@@ -157,11 +161,12 @@ async fn fail_if_invalid_signing_pda_seeds() {
         &message_leaf.message.cc_id.id,
     );
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
+    let (message_payload_pda, ..) = get_message_payload_pda(&command_id, metadata.payer.pubkey());
 
     // action
     let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, [42; 32]); // source of error, invalid command id
-    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+    let ix = validate_message_for_tests(&incoming_message_pda, &message_payload_pda, &signing_pda, message_leaf.message)
         .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
@@ -195,10 +200,11 @@ async fn set_existing_incoming_message_state(
 
 fn validate_message_for_tests(
     incoming_message_pda: &Pubkey,
+    message_payload_pda: &Pubkey,
     signing_pda: &Pubkey,
     message: Message,
 ) -> Result<Instruction, ProgramError> {
-    let mut res = validate_message(incoming_message_pda, signing_pda, message)?;
+    let mut res = validate_message(incoming_message_pda, message_payload_pda, signing_pda, message)?;
     // needed because we cannot sign with a PDA without creating a real on-chain
     // program
     res.accounts[1].is_signer = false;

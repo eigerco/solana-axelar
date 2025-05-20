@@ -334,11 +334,11 @@ pub fn create_call_contract_signing_pda(
 /// using [`create_message_payload_pda`] instead.
 #[inline]
 #[must_use]
-pub fn find_message_payload_pda(command_id: [u8; 32], authority: Pubkey) -> (Pubkey, u8) {
+pub fn get_message_payload_pda(command_id: &[u8; 32], authority: Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
             seed_prefixes::MESSAGE_PAYLOAD_SEED,
-            &command_id,
+            command_id,
             authority.as_ref(),
         ],
         &crate::ID,
@@ -379,7 +379,7 @@ pub fn assert_valid_message_payload_pda(
 }
 
 /// Creates the `MessagePayload` PDA from a bump previously calculated
-/// by [`find_message_payload_pda`].
+/// by [`get_message_payload_pda`].
 ///
 /// # Errors
 ///
@@ -417,13 +417,13 @@ mod tests {
         assert_eq!(found_pda, created_pda);
     }
 
-    /// Test that the bump from `find_message_payload_pda` generates the same public key when
+    /// Test that the bump from `get_message_payload_pda` generates the same public key when
     /// used with the same inputs by `create_message_payload_pda`.
     #[test]
     fn test_find_and_create_message_payload_pda_bump_reuse() {
         let authority = Pubkey::new_unique();
         let command_id = rand::random();
-        let (found_pda, bump) = find_message_payload_pda(command_id, authority);
+        let (found_pda, bump) = get_message_payload_pda(&command_id, authority);
         let created_pda = create_message_payload_pda(command_id, authority, bump).unwrap();
         assert_eq!(found_pda, created_pda);
     }

@@ -8,7 +8,7 @@ use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway::{
-    find_message_payload_pda, get_incoming_message_pda, get_validate_message_signing_pda,
+    get_message_payload_pda, get_incoming_message_pda, get_validate_message_signing_pda,
 };
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, random_message, ProgramInvocationState,
@@ -35,7 +35,7 @@ pub async fn get_message_account(
 ) -> Option<Account> {
     let command_id = message_to_command_id(message);
     let (message_payload_pda, _bump) =
-        axelar_solana_gateway::find_message_payload_pda(command_id, runner.payer.pubkey());
+        get_message_payload_pda(&command_id, runner.payer.pubkey());
     runner
         .try_get_account(&message_payload_pda, &axelar_solana_gateway::ID)
         .await
@@ -145,7 +145,7 @@ pub async fn initialize_message_payload_pda(
     assert!(message_payload.payload_hash.iter().all(|&x| x == 0));
 
     // Check the bump too
-    let (_, bump) = find_message_payload_pda(command_id, runner.payer.pubkey());
+    let (_, bump) = get_message_payload_pda(&command_id, runner.payer.pubkey());
     assert_eq!(*message_payload.bump, bump);
 }
 
