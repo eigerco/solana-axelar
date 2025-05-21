@@ -8,11 +8,11 @@ use program_utils::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
-use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::sysvar::Sysvar;
+use solana_program::{msg, system_program};
 
 use crate::processor::interchain_token::{self, DeployInterchainTokenAccounts};
 use crate::processor::interchain_transfer::process_inbound_transfer;
@@ -39,8 +39,12 @@ pub(crate) fn process_inbound<'a>(
     let payload_account = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
-    let _system_program = next_account_info(accounts_iter)?;
+    let system_program = next_account_info(accounts_iter)?;
     let its_root_pda_account = next_account_info(accounts_iter)?;
+
+    if !system_program::check_id(system_program.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
 
     let its_root_config = InterchainTokenService::load(its_root_pda_account)?;
     assert_valid_its_root_pda(its_root_pda_account, its_root_config.bump)?;
@@ -124,13 +128,21 @@ impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
         Self: Sized,
     {
         let accounts_iter = &mut accounts.iter();
+        let gateway_root_account = next_account_info(accounts_iter)?;
+        let gateway_program_id = next_account_info(accounts_iter)?;
+        let gas_service_config_account = next_account_info(accounts_iter)?;
+        let gas_service = next_account_info(accounts_iter)?;
+        let system_program = next_account_info(accounts_iter)?;
+        if !system_program::check_id(system_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
 
         Ok(Self {
-            gateway_root_account: next_account_info(accounts_iter)?,
-            _gateway_program_id: next_account_info(accounts_iter)?,
-            gas_service_config_account: next_account_info(accounts_iter)?,
-            gas_service: next_account_info(accounts_iter)?,
-            system_program: next_account_info(accounts_iter)?,
+            gateway_root_account,
+            _gateway_program_id: gateway_program_id,
+            gas_service_config_account,
+            gas_service,
+            system_program,
             its_root_account: next_account_info(accounts_iter)?,
             call_contract_signing_account: next_account_info(accounts_iter)?,
             program_account: next_account_info(accounts_iter)?,

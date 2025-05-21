@@ -296,11 +296,11 @@ fn process_initialize(
     let operator = next_account_info(account_info_iter)?;
     let user_roles_account = next_account_info(account_info_iter)?;
 
-    msg!("Instruction: Initialize");
     // Check: System Program Account
     if !system_program::check_id(system_account.key) {
         return Err(ProgramError::IncorrectProgramId);
     }
+    msg!("Instruction: Initialize");
 
     // Check: Upgrade Authority
     ensure_upgrade_authority(program_id, payer, program_data_account)?;
@@ -389,12 +389,20 @@ fn process_operator_accept_operatorship<'a>(
     )
 }
 
+fn get_role_management_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<RoleManagementAccounts<'a>, ProgramError> {
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts)?;
+    if !system_program::check_id(role_management_accounts.system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(role_management_accounts)
+}
+
 fn process_operator_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<RoleManagementAccounts<'a>, ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    let role_management_accounts = get_role_management_accounts(accounts)?;
     msg!("Instruction: Operator");
     let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
     assert_valid_its_root_pda(role_management_accounts.resource, its_config.bump)?;
@@ -410,9 +418,14 @@ fn process_tm_add_flow_limiter<'a>(
         msg!("Invalid role: {:?}", inputs.roles);
         return Err(ProgramError::InvalidInstructionData);
     }
-    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
+    let role_management_accounts = get_role_management_accounts(accounts)?;
     msg!("Instruction: TM AddFlowLimiter");
-    role_management::processor::add(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
+    role_management::processor::add(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )
 }
 
 fn process_tm_remove_flow_limiter<'a>(
@@ -422,9 +435,14 @@ fn process_tm_remove_flow_limiter<'a>(
     if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
         return Err(ProgramError::InvalidInstructionData);
     }
-    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
+    let role_management_accounts = get_role_management_accounts(accounts)?;
     msg!("Instruction: TM RemoveFlowLimiter");
-    role_management::processor::remove(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
+    role_management::processor::remove(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )
 }
 
 fn process_tm_set_flow_limit<'a>(
@@ -484,6 +502,9 @@ fn process_tm_operator_accounts<'a>(
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    if !system_program::check_id(role_management_accounts.system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     msg!("Instruction: TM Operator");
     let token_manager = TokenManager::load(role_management_accounts.resource)?;
     assert_valid_token_manager_pda(
@@ -542,7 +563,11 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     msg!("Instruction: SetPauseStatus");
+
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
@@ -559,7 +584,11 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     msg!("Instruction: SetTrustedChain");
+
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
@@ -579,7 +608,11 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     msg!("Instruction: RemoveTrustedChain");
+
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;

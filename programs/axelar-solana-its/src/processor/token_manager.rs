@@ -10,7 +10,8 @@ use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
 use solana_program::pubkey::Pubkey;
-use solana_program::{msg, system_program};
+use solana_program::{msg, system_program, sysvar};
+use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
@@ -286,6 +287,9 @@ pub(crate) fn handover_mint_authority(
     let token_program = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     msg!("Instruction: TM Hand Over Mint Authority");
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
@@ -371,17 +375,37 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
         Self: Sized,
     {
         let accounts_iter = &mut accounts.iter();
+        let system_account = next_account_info(accounts_iter)?;
+        let its_root_pda = next_account_info(accounts_iter)?;
+        let token_manager_pda = next_account_info(accounts_iter)?;
+        let token_mint = next_account_info(accounts_iter)?;
+        let token_manager_ata = next_account_info(accounts_iter)?;
+        let token_program = next_account_info(accounts_iter)?;
+        let ata_program = next_account_info(accounts_iter)?;
+        let its_roles_pda = next_account_info(accounts_iter)?;
+        let rent_sysvar = next_account_info(accounts_iter)?;
+
+        if !system_program::check_id(system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        check_spl_token_program_account(token_program.key)?;
+        if !spl_associated_token_account::check_id(ata_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::rent::check_id(rent_sysvar.key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
 
         Ok(Self {
-            system_account: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
-            token_manager_pda: next_account_info(accounts_iter)?,
-            token_mint: next_account_info(accounts_iter)?,
-            token_manager_ata: next_account_info(accounts_iter)?,
-            token_program: next_account_info(accounts_iter)?,
-            ata_program: next_account_info(accounts_iter)?,
-            its_roles_pda: next_account_info(accounts_iter)?,
-            _rent_sysvar: next_account_info(accounts_iter)?,
+            system_account,
+            its_root_pda,
+            token_manager_pda,
+            token_mint,
+            token_manager_ata,
+            token_program,
+            ata_program,
+            its_roles_pda,
+            _rent_sysvar: rent_sysvar,
             operator: next_account_info(accounts_iter).ok(),
             operator_roles_pda: next_account_info(accounts_iter).ok(),
         })
@@ -402,14 +426,23 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for SetFlowLimitAccounts<'a> {
 
     fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
         let accounts_iter = &mut value.iter();
+        let flow_limiter = next_account_info(accounts_iter)?;
+        let its_root_pda = next_account_info(accounts_iter)?;
+        let token_manager_pda = next_account_info(accounts_iter)?;
+        let its_user_roles_pda = next_account_info(accounts_iter)?;
+        let token_manager_user_roles_pda = next_account_info(accounts_iter)?;
+        let system_account = next_account_info(accounts_iter)?;
+        if !system_program::check_id(system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
 
         Ok(Self {
-            flow_limiter: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
-            token_manager_pda: next_account_info(accounts_iter)?,
-            its_user_roles_pda: next_account_info(accounts_iter)?,
-            token_manager_user_roles_pda: next_account_info(accounts_iter)?,
-            system_account: next_account_info(accounts_iter)?,
+            flow_limiter,
+            its_root_pda,
+            token_manager_pda,
+            its_user_roles_pda,
+            token_manager_user_roles_pda,
+            system_account,
         })
     }
 }
