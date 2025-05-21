@@ -17,7 +17,8 @@ use solana_program::program_pack::Pack as _;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_instruction};
+use solana_program::{msg, sysvar, system_instruction, system_program};
+use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
 
@@ -60,18 +61,48 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
         Self: Sized,
     {
         let accounts_iter = &mut accounts.iter();
+        let system_account = next_account_info(accounts_iter)?;
+        let its_root_pda = next_account_info(accounts_iter)?;
+        let token_manager_pda = next_account_info(accounts_iter)?;
+        let token_mint = next_account_info(accounts_iter)?;
+        let token_manager_ata = next_account_info(accounts_iter)?;
+        let token_program = next_account_info(accounts_iter)?;
+        let ata_program = next_account_info(accounts_iter)?;
+        let its_roles_pda = next_account_info(accounts_iter)?;
+        let rent_sysvar = next_account_info(accounts_iter)?;
+        let sysvar_instructions = next_account_info(accounts_iter)?;
+        let mpl_token_metadata_program = next_account_info(accounts_iter)?;
+
+        if !system_program::check_id(system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        check_spl_token_program_account(token_program.key)?;
+        if !spl_associated_token_account::check_id(ata_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::rent::check_id(rent_sysvar.key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
+        if !sysvar::instructions::check_id(sysvar_instructions.key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        if *mpl_token_metadata_program.key != mpl_token_metadata::ID {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
         Ok(Self {
-            system_account: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
-            token_manager_pda: next_account_info(accounts_iter)?,
-            token_mint: next_account_info(accounts_iter)?,
-            token_manager_ata: next_account_info(accounts_iter)?,
-            token_program: next_account_info(accounts_iter)?,
-            ata_program: next_account_info(accounts_iter)?,
-            its_roles_pda: next_account_info(accounts_iter)?,
-            rent_sysvar: next_account_info(accounts_iter)?,
-            sysvar_instructions: next_account_info(accounts_iter)?,
-            mpl_token_metadata_program: next_account_info(accounts_iter)?,
+            system_account,
+            its_root_pda,
+            token_manager_pda,
+            token_mint,
+            token_manager_ata,
+            token_program,
+            ata_program,
+            its_roles_pda,
+            rent_sysvar,
+            sysvar_instructions,
+            mpl_token_metadata_program,
             mpl_token_metadata_account: next_account_info(accounts_iter)?,
             payer_ata: next_account_info(accounts_iter)?,
             minter: next_account_info(accounts_iter).ok(),
@@ -237,7 +268,6 @@ pub(crate) fn process_outbound_deploy<'a>(
     let token_id = crate::interchain_token_id_internal(&salt);
     let mut outbound_message_accounts_index = OUTBOUND_MESSAGE_ACCOUNTS_INDEX;
 
-    msg!("Instruction: OutboundDeploy");
     let destination_minter_data = if let Some(destination_minter) = maybe_destination_minter {
         let minter = next_account_info(accounts_iter)?;
         let deploy_approval = next_account_info(accounts_iter)?;
@@ -258,6 +288,10 @@ pub(crate) fn process_outbound_deploy<'a>(
     } else {
         None
     };
+
+    let (_other, outbound_message_accounts) = accounts.split_at(outbound_message_accounts_index);
+    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
+    msg!("Instruction: OutboundDeploy");
 
     let token_metadata = Metadata::from_bytes(&metadata.try_borrow_data()?)?;
     let mint_data = Mint::unpack(&mint.try_borrow_data()?)?;
@@ -290,9 +324,6 @@ pub(crate) fn process_outbound_deploy<'a>(
             .map(|data| data.0.clone())
             .unwrap_or_default(),
     });
-
-    let (_other, outbound_message_accounts) = accounts.split_at(outbound_message_accounts_index);
-    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
     gmp::process_outbound(
         payer,
@@ -560,7 +591,11 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     let deploy_approval_account = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     msg!("Instruction: ApproveDeployRemoteInterchainToken");
+
     ensure_signer_roles(
         &crate::id(),
         token_manager_account,
@@ -612,8 +647,13 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let deploy_approval_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
 
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     msg!("Instruction: RevokeDeployRemoteInterchainToken");
+
     if !payer.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
