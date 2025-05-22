@@ -511,11 +511,13 @@ pub fn verify_signature(
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn validate_message(
     incoming_message_pda: &Pubkey,
+    message_payload_pda: &Pubkey,
     signing_pda: &Pubkey,
     message: Message,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
         AccountMeta::new(*incoming_message_pda, false),
+        AccountMeta::new_readonly(*message_payload_pda, false),
         AccountMeta::new_readonly(*signing_pda, true),
     ];
 
@@ -539,7 +541,7 @@ pub fn initialize_message_payload(
     command_id: [u8; 32],
     buffer_size: u64,
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, payer);
+    let (message_payload_pda, _) = crate::get_message_payload_pda(&command_id, payer);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -572,7 +574,7 @@ pub fn write_message_payload(
     bytes: &[u8],
     offset: u64,
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
+    let (message_payload_pda, _) = crate::get_message_payload_pda(&command_id, authority);
     let accounts = vec![
         AccountMeta::new(authority, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
@@ -600,7 +602,7 @@ pub fn commit_message_payload(
     authority: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
+    let (message_payload_pda, _) = crate::get_message_payload_pda(&command_id, authority);
 
     let accounts = vec![
         AccountMeta::new(authority, true),
@@ -626,7 +628,7 @@ pub fn close_message_payload(
     authority: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
+    let (message_payload_pda, _) = crate::get_message_payload_pda(&command_id, authority);
     let accounts = vec![
         AccountMeta::new(authority, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
