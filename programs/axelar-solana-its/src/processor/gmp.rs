@@ -106,6 +106,7 @@ pub(crate) fn process_inbound<'a>(
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct GmpAccounts<'a> {
     pub(crate) gateway_root_account: &'a AccountInfo<'a>,
     pub(crate) _gateway_program_id: &'a AccountInfo<'a>,
@@ -335,4 +336,69 @@ fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> 
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use solana_program::account_info::AccountInfo;
+    use solana_program::program_error::ProgramError;
+    use solana_program::pubkey::Pubkey;
+    use solana_program::system_program;
+
+    use crate::processor::gmp::GmpAccounts;
+    use crate::FromAccountInfoSlice;
+
+    #[test]
+    fn test_accounts_for_gmp_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            system_account,
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts = GmpAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_ok());
+
+        // Switch system account to make it fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account,
+        ];
+        let parsed_accounts = GmpAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+    }
 }

@@ -501,10 +501,8 @@ fn process_tm_operator_accounts<'a>(
 ) -> Result<RoleManagementAccounts<'a>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    if !system_program::check_id(role_management_accounts.system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    let accounts_slice = accounts.get(1..).ok_or(ProgramError::InvalidAccountData)?;
+    let role_management_accounts = get_role_management_accounts(accounts_slice)?;
     msg!("Instruction: TM Operator");
     let token_manager = TokenManager::load(role_management_accounts.resource)?;
     assert_valid_token_manager_pda(
@@ -556,16 +554,8 @@ fn process_it_accept_mintership<'a>(
     )
 }
 
-fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-    let program_data_account = next_account_info(accounts_iter)?;
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
-
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+fn process_set_pause_status<'a>(accounts: &'a [AccountInfo<'a>], paused: bool) -> ProgramResult {
+    let (payer, program_data_account, its_root_pda, system_account) = extract_accounts(accounts)?;
     msg!("Instruction: SetPauseStatus");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
@@ -577,16 +567,11 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     Ok(())
 }
 
-fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-    let program_data_account = next_account_info(accounts_iter)?;
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
-
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+fn process_set_trusted_chain<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    chain_name: String,
+) -> ProgramResult {
+    let (payer, program_data_account, its_root_pda, system_account) = extract_accounts(accounts)?;
     msg!("Instruction: SetTrustedChain");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
@@ -601,16 +586,11 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
     Ok(())
 }
 
-fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-    let program_data_account = next_account_info(accounts_iter)?;
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
-
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+fn process_remove_trusted_chain<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    chain_name: &str,
+) -> ProgramResult {
+    let (payer, program_data_account, its_root_pda, system_account) = extract_accounts(accounts)?;
     msg!("Instruction: RemoveTrustedChain");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
@@ -626,4 +606,139 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     its_root_config.store(payer, its_root_pda, system_account)?;
 
     Ok(())
+}
+
+fn extract_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<
+    (
+        &'a AccountInfo<'a>,
+        &'a AccountInfo<'a>,
+        &'a AccountInfo<'a>,
+        &'a AccountInfo<'a>,
+    ),
+    ProgramError,
+> {
+    let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
+    let program_data_account = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok((payer, program_data_account, its_root_pda, system_account))
+}
+
+#[cfg(test)]
+mod tests {
+    use solana_program::account_info::AccountInfo;
+    use solana_program::program_error::ProgramError;
+    use solana_program::pubkey::Pubkey;
+    use solana_program::system_program;
+
+    use crate::processor::extract_accounts;
+
+    use super::get_role_management_accounts;
+
+    #[test]
+    fn test_get_role_management_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let res = get_role_management_accounts(&accounts);
+        assert!(res.is_ok());
+
+        // change system account to fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account,
+        ];
+        let res = get_role_management_accounts(&accounts);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
+    }
+
+    #[test]
+    fn test_extract_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        // system account check fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            system_account,
+        ];
+
+        let res = extract_accounts(&accounts);
+        assert!(res.is_ok());
+
+        // fail, but system account check passes
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let res = extract_accounts(&accounts);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
+    }
 }

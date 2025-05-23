@@ -458,6 +458,7 @@ pub fn ensure_proper_account(
 }
 
 /// Accounts used by role management instructions.
+#[derive(Debug)]
 pub struct RoleManagementAccounts<'a> {
     /// System account.
     pub system_account: &'a AccountInfo<'a>,

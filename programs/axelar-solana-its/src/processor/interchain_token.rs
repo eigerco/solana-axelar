@@ -17,7 +17,7 @@ use solana_program::program_pack::Pack as _;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, sysvar, system_instruction, system_program};
+use solana_program::{msg, system_instruction, system_program, sysvar};
 use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
@@ -33,6 +33,7 @@ use crate::{
     Roles,
 };
 
+#[derive(Debug)]
 pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
@@ -81,14 +82,14 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
             return Err(ProgramError::IncorrectProgramId);
         }
         if !sysvar::rent::check_id(rent_sysvar.key) {
-            return Err(ProgramError::InvalidAccountData);
+            return Err(ProgramError::IncorrectProgramId);
         }
         if !sysvar::instructions::check_id(sysvar_instructions.key) {
-            return Err(ProgramError::InvalidAccountData);
+            return Err(ProgramError::IncorrectProgramId);
         }
 
         if *mpl_token_metadata_program.key != mpl_token_metadata::ID {
-            return Err(ProgramError::InvalidAccountData);
+            return Err(ProgramError::IncorrectProgramId);
         }
 
         Ok(Self {
@@ -702,4 +703,366 @@ pub(crate) fn use_deploy_approval(
     }
 
     program_utils::close_pda(minter, deploy_approval_account)
+}
+
+#[cfg(test)]
+mod tests {
+    use solana_program::account_info::AccountInfo;
+    use solana_program::program_error::ProgramError;
+    use solana_program::pubkey::Pubkey;
+    use solana_program::{system_program, sysvar};
+
+    use crate::processor::interchain_token::{
+        approve_deploy_remote_interchain_token, revoke_deploy_remote_interchain_token,
+        DeployInterchainTokenAccounts,
+    };
+    use crate::FromAccountInfoSlice;
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn test_accounts_for_deploy_interchain_token_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let mut token_program_lamports = 2;
+        let mut token_program_data = [1, 2, 3];
+        let token_program = AccountInfo::new(
+            &spl_token_2022::ID,
+            true,
+            true,
+            &mut token_program_lamports,
+            &mut token_program_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut program_ata_lamports = 2;
+        let mut program_ata_data = [1, 2, 3];
+        let program_ata = AccountInfo::new(
+            &spl_associated_token_account::ID,
+            true,
+            true,
+            &mut program_ata_lamports,
+            &mut program_ata_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut rent_lamports = 2;
+        let mut rent_data = [1, 2, 3];
+        let rent = AccountInfo::new(
+            &sysvar::rent::ID,
+            true,
+            true,
+            &mut rent_lamports,
+            &mut rent_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut sysvar_lamports = 2;
+        let mut sysvar_data = [1, 2, 3];
+        let sysvar_instructions = AccountInfo::new(
+            &sysvar::instructions::ID,
+            true,
+            true,
+            &mut sysvar_lamports,
+            &mut sysvar_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut mpl_lamports = 2;
+        let mut mpl_data = [1, 2, 3];
+        let mpl_token_metadata_program = AccountInfo::new(
+            &mpl_token_metadata::ID,
+            true,
+            true,
+            &mut mpl_lamports,
+            &mut mpl_data,
+            &key,
+            true,
+            1,
+        );
+
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            token_program.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            sysvar_instructions.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts =
+            DeployInterchainTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_ok());
+
+        // Switch system account to make it fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            token_program.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            sysvar_instructions.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts =
+            DeployInterchainTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // Switch token program to make it fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            sysvar_instructions.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts =
+            DeployInterchainTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // Switch program ata to make it fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            token_program.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            sysvar_instructions.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts =
+            DeployInterchainTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // Switch rent to make it fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            token_program.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            sysvar_instructions.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts =
+            DeployInterchainTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // Switch sysvar to make it fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            token_program.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts =
+            DeployInterchainTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // Switch mpl to make it fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            token_program.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            sysvar_instructions.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let parsed_accounts =
+            DeployInterchainTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+    }
+
+    #[test]
+    fn test_approve_deploy_remote_interchain_token() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let mut accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let res = approve_deploy_remote_interchain_token(
+            &accounts,
+            key,
+            [0; 32],
+            "chain".to_owned(),
+            vec![1, 2],
+        );
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
+
+        // Change value to system account
+        // Fails in different place, but not on parsing accounts
+        accounts[4] = system_account;
+        let res = approve_deploy_remote_interchain_token(
+            &accounts,
+            key,
+            [0; 32],
+            "chain".to_owned(),
+            vec![1, 2],
+        );
+        assert!(res.is_err());
+        assert_ne!(res.unwrap_err(), ProgramError::IncorrectProgramId);
+    }
+
+    #[test]
+    fn test_revoke_deploy_remote_interchain_token() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let mut accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let res =
+            revoke_deploy_remote_interchain_token(&accounts, key, [0; 32], "chain".to_owned());
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
+
+        // Change value to system account
+        // Fails in different place, but not on parsing accounts
+        accounts[2] = system_account;
+        let res =
+            revoke_deploy_remote_interchain_token(&accounts, key, [0; 32], "chain".to_owned());
+        assert!(res.is_err());
+        assert_ne!(res.unwrap_err(), ProgramError::IncorrectProgramId);
+    }
 }
