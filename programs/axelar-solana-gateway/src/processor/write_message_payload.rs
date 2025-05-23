@@ -55,11 +55,10 @@ impl Processor {
         // Check: Incoming Message PDA account is initialized and validate it
         incoming_message_account.check_initialized_pda_without_deserialization(program_id)?;
         let incoming_message_data = incoming_message_account.try_borrow_data()?;
-        let incoming_message = IncomingMessage::read(&incoming_message_data)
-            .ok_or_else(|| {
-                solana_program::msg!("Error: failed to read incoming message account data");
-                ProgramError::InvalidAccountData
-            })?;
+        let incoming_message = IncomingMessage::read(&incoming_message_data).ok_or_else(|| {
+            solana_program::msg!("Error: failed to read incoming message account data");
+            ProgramError::InvalidAccountData
+        })?;
 
         // Validate the IncomingMessage PDA using the stored bump
         crate::assert_valid_incoming_message_pda(
