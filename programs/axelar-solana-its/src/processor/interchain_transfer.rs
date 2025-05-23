@@ -11,11 +11,11 @@ use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
-use solana_program::{msg, system_program, sysvar};
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
+use solana_program::{msg, system_program, sysvar};
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
@@ -772,13 +772,10 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
         if !sysvar::rent::check_id(rent_sysvar.key) {
             return Err(ProgramError::IncorrectProgramId);
         }
-        match mpl_token_metadata_program {
-            Some(val) => {
-                if *val.key != mpl_token_metadata::ID {
-                    return Err(ProgramError::IncorrectProgramId);
-                }
-            },
-            None => {}
+        if let Some(val) = mpl_token_metadata_program {
+            if *val.key != mpl_token_metadata::ID {
+                return Err(ProgramError::IncorrectProgramId);
+            }
         }
 
         Ok(GiveTokenAccounts {
@@ -883,6 +880,7 @@ impl<'a> From<&GiveTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
 }
 
 #[cfg(test)]
+#[allow(clippy::too_many_lines)]
 mod tests {
     use solana_program::account_info::AccountInfo;
     use solana_program::program_error::ProgramError;
@@ -976,7 +974,8 @@ mod tests {
         let payer = dummy_account.clone();
         let payload = dummy_account.clone();
 
-        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
         assert!(parsed_accounts.is_ok());
 
         // wrong system account, to fail
@@ -997,9 +996,13 @@ mod tests {
             dummy_account.clone(),
         ];
 
-        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
         assert!(parsed_accounts.is_err());
-        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
 
         // wrong program ata, to fail
         let accounts = [
@@ -1019,9 +1022,13 @@ mod tests {
             dummy_account.clone(),
         ];
 
-        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
         assert!(parsed_accounts.is_err());
-        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
 
         // wrong rent, to fail
         let accounts = [
@@ -1041,9 +1048,13 @@ mod tests {
             dummy_account.clone(),
         ];
 
-        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
         assert!(parsed_accounts.is_err());
-        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
 
         // wrong mpl, to fail
         let accounts = [
@@ -1063,9 +1074,13 @@ mod tests {
             dummy_account.clone(),
         ];
 
-        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
         assert!(parsed_accounts.is_err());
-        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
     }
 
     #[test]
@@ -1104,7 +1119,7 @@ mod tests {
             dummy_account.clone(),
             dummy_account.clone(),
             system_account.clone(),
-            dummy_account.clone()
+            dummy_account.clone(),
         ];
 
         let res = TakeTokenAccounts::from_account_info_slice(&accounts, &());
@@ -1125,7 +1140,7 @@ mod tests {
             dummy_account.clone(),
             dummy_account.clone(),
             dummy_account.clone(),
-            dummy_account.clone()
+            dummy_account.clone(),
         ];
         let res = TakeTokenAccounts::from_account_info_slice(&accounts, &());
         assert!(res.is_err());
