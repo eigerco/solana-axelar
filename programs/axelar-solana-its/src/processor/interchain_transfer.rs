@@ -11,7 +11,7 @@ use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
-use solana_program::msg;
+use solana_program::{msg, system_program, sysvar};
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -704,6 +704,7 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     }
 }
 
+#[derive(Debug)]
 struct GiveTokenAccounts<'a> {
     payer: &'a AccountInfo<'a>,
     system_account: &'a AccountInfo<'a>,
@@ -731,24 +732,56 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
         payer_and_payload: &Self::Context,
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
+        let system_account = next_account_info(accounts_iter)?;
+        let its_root_pda = next_account_info(accounts_iter)?;
+        let token_manager_pda = next_account_info(accounts_iter)?;
+        let token_mint = next_account_info(accounts_iter)?;
+        let token_manager_ata = next_account_info(accounts_iter)?;
+        let token_program = next_account_info(accounts_iter)?;
+        let ata_program = next_account_info(accounts_iter)?;
+        let its_roles_pda = next_account_info(accounts_iter)?;
+        let rent_sysvar = next_account_info(accounts_iter)?;
+        let destination_account = next_account_info(accounts_iter)?;
+        let flow_slot_pda = next_account_info(accounts_iter)?;
+        let program_ata = next_account_info(accounts_iter).ok();
+        let mpl_token_metadata_program = next_account_info(accounts_iter).ok();
+        let mpl_token_metadata_account = next_account_info(accounts_iter).ok();
+
+        if !system_program::check_id(system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !spl_associated_token_account::check_id(ata_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::rent::check_id(rent_sysvar.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        match mpl_token_metadata_program {
+            Some(val) => {
+                if *val.key != mpl_token_metadata::ID {
+                    return Err(ProgramError::IncorrectProgramId);
+                }
+            },
+            None => {}
+        }
 
         Ok(GiveTokenAccounts {
             payer: payer_and_payload.0,
             message_payload_pda: payer_and_payload.1,
-            system_account: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
-            token_manager_pda: next_account_info(accounts_iter)?,
-            token_mint: next_account_info(accounts_iter)?,
-            token_manager_ata: next_account_info(accounts_iter)?,
-            token_program: next_account_info(accounts_iter)?,
-            _ata_program: next_account_info(accounts_iter)?,
-            _its_roles_pda: next_account_info(accounts_iter)?,
-            _rent_sysvar: next_account_info(accounts_iter)?,
-            destination_account: next_account_info(accounts_iter)?,
-            flow_slot_pda: next_account_info(accounts_iter)?,
-            program_ata: next_account_info(accounts_iter).ok(),
-            mpl_token_metadata_program: next_account_info(accounts_iter).ok(),
-            mpl_token_metadata_account: next_account_info(accounts_iter).ok(),
+            system_account,
+            its_root_pda,
+            token_manager_pda,
+            token_mint,
+            token_manager_ata,
+            token_program,
+            _ata_program: ata_program,
+            _its_roles_pda: its_roles_pda,
+            _rent_sysvar: rent_sysvar,
+            destination_account,
+            flow_slot_pda,
+            program_ata,
+            mpl_token_metadata_program,
+            mpl_token_metadata_account,
         })
     }
 }
@@ -830,5 +863,190 @@ impl<'a> From<&GiveTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
             token_manager_pda: value.token_manager_pda,
             flow_slot_pda: value.flow_slot_pda,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use solana_program::account_info::AccountInfo;
+    use solana_program::program_error::ProgramError;
+    use solana_program::pubkey::Pubkey;
+    use solana_program::system_program;
+    use solana_program::sysvar;
+
+    use crate::processor::interchain_transfer::GiveTokenAccounts;
+    use crate::FromAccountInfoSlice;
+
+    #[test]
+    fn test_accounts_in_give_token_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let mut program_ata_lamports = 2;
+        let mut program_ata_data = [1, 2, 3];
+        let program_ata = AccountInfo::new(
+            &spl_associated_token_account::ID,
+            true,
+            true,
+            &mut program_ata_lamports,
+            &mut program_ata_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut rent_lamports = 2;
+        let mut rent_data = [1, 2, 3];
+        let rent = AccountInfo::new(
+            &sysvar::rent::ID,
+            true,
+            true,
+            &mut rent_lamports,
+            &mut rent_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut mpl_lamports = 2;
+        let mut mpl_data = [1, 2, 3];
+        let mpl_token_metadata_program = AccountInfo::new(
+            &mpl_token_metadata::ID,
+            true,
+            true,
+            &mut mpl_lamports,
+            &mut mpl_data,
+            &key,
+            true,
+            1,
+        );
+
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let payer = dummy_account.clone();
+        let payload = dummy_account.clone();
+
+        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_ok());
+
+        // wrong system account, to fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
+
+        // wrong program ata, to fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
+
+        // wrong rent, to fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
+
+        // wrong mpl, to fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts = GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(parsed_accounts.unwrap_err(), ProgramError::IncorrectProgramId);
     }
 }
