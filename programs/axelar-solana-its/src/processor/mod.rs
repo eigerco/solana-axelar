@@ -555,7 +555,8 @@ fn process_it_accept_mintership<'a>(
 }
 
 fn process_set_pause_status<'a>(accounts: &'a [AccountInfo<'a>], paused: bool) -> ProgramResult {
-    let (payer, program_data_account, its_root_pda, system_account) = extract_accounts(accounts)?;
+    let (payer, program_data_account, its_root_pda, system_account) =
+        get_trusted_chain_accounts(accounts)?;
     msg!("Instruction: SetPauseStatus");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
@@ -571,7 +572,8 @@ fn process_set_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: String,
 ) -> ProgramResult {
-    let (payer, program_data_account, its_root_pda, system_account) = extract_accounts(accounts)?;
+    let (payer, program_data_account, its_root_pda, system_account) =
+        get_trusted_chain_accounts(accounts)?;
     msg!("Instruction: SetTrustedChain");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
@@ -590,7 +592,8 @@ fn process_remove_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: &str,
 ) -> ProgramResult {
-    let (payer, program_data_account, its_root_pda, system_account) = extract_accounts(accounts)?;
+    let (payer, program_data_account, its_root_pda, system_account) =
+        get_trusted_chain_accounts(accounts)?;
     msg!("Instruction: RemoveTrustedChain");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
@@ -608,7 +611,7 @@ fn process_remove_trusted_chain<'a>(
     Ok(())
 }
 
-fn extract_accounts<'a>(
+fn get_trusted_chain_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<
     (
@@ -638,7 +641,7 @@ mod tests {
     use solana_program::pubkey::Pubkey;
     use solana_program::system_program;
 
-    use crate::processor::extract_accounts;
+    use crate::processor::get_trusted_chain_accounts;
 
     use super::get_role_management_accounts;
 
@@ -697,7 +700,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_accounts() {
+    fn test_get_trusted_chain_accounts() {
         let key = Pubkey::new_unique();
 
         let mut system_account_lamports = 1;
@@ -726,7 +729,7 @@ mod tests {
             system_account,
         ];
 
-        let res = extract_accounts(&accounts);
+        let res = get_trusted_chain_accounts(&accounts);
         assert!(res.is_ok());
 
         // fail, but system account check passes
@@ -737,7 +740,7 @@ mod tests {
             dummy_account.clone(),
             dummy_account.clone(),
         ];
-        let res = extract_accounts(&accounts);
+        let res = get_trusted_chain_accounts(&accounts);
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
     }
