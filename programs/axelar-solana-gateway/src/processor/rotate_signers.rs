@@ -4,13 +4,12 @@ use core::mem::size_of;
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use event_utils::{read_array, EventParseError};
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::{validate_system_account_key, BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
 use solana_program::sysvar::Sysvar;
 
 use super::Processor;
@@ -69,9 +68,7 @@ impl Processor {
         let system_account = next_account_info(accounts_iter)?;
         let operator = next_account_info(accounts_iter);
 
-        if !system_program::check_id(system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(system_account.key)?;
 
         // Check: Gateway Root PDA is initialized.
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;

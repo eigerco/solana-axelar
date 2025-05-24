@@ -6,11 +6,10 @@ use crate::events::GovernanceEvent;
 use crate::state::proposal::{ExecutableProposal, ExecuteProposalData};
 use crate::state::GovernanceConfig;
 use borsh::to_vec;
-use program_utils::{from_u64_to_u256_le_bytes, ValidPDA};
+use program_utils::{from_u64_to_u256_le_bytes, validate_system_account_key, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
 
 /// Executes a previously GMP received proposal if the proposal has reached its
 /// ETA.
@@ -29,9 +28,7 @@ pub(crate) fn process(
     let config_pda = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
 
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_account.key)?;
 
     let config_data = config_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
 

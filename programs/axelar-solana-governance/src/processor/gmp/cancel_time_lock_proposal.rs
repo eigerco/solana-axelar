@@ -2,9 +2,9 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L18).
 
+use program_utils::validate_system_account_key;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program_error::ProgramError;
-use solana_program::system_program;
 
 use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
@@ -25,9 +25,7 @@ pub(crate) fn process(
     let root_pda = next_account_info(accounts_iter)?;
     let proposal_pda = next_account_info(accounts_iter)?;
 
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_account.key)?;
 
     ExecutableProposal::load_and_ensure_correct_proposal_pda(proposal_pda, &ctx.proposal_hash)?;
 

@@ -2,13 +2,12 @@ use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
 use core::str::FromStr;
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::{validate_system_account_key, BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
 
 use super::Processor;
 use crate::error::GatewayError;
@@ -63,9 +62,7 @@ impl Processor {
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
 
-        if !system_program::check_id(system_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(system_program.key)?;
 
         // Check: Gateway Root PDA is initialized.
         // No need to check the bump because that would already be implied by a valid `verification_session_account`

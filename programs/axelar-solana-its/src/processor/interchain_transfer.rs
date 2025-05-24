@@ -5,7 +5,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
-use program_utils::BorshPda;
+use program_utils::{validate_system_account_key, BorshPda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -15,7 +15,7 @@ use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_program, sysvar};
+use solana_program::{msg, sysvar};
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
@@ -678,9 +678,7 @@ pub(crate) struct TakeTokenAccounts<'a> {
 
 impl Validate for TakeTokenAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
-        if !system_program::check_id(self.system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(self.system_account.key)?;
         Ok(())
     }
 }
@@ -739,9 +737,7 @@ struct GiveTokenAccounts<'a> {
 
 impl Validate for GiveTokenAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
-        if !system_program::check_id(self.system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(self.system_account.key)?;
         if !spl_associated_token_account::check_id(self.ata_program.key) {
             return Err(ProgramError::IncorrectProgramId);
         }

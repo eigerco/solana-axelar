@@ -1,11 +1,11 @@
 //! This module provides logic to handle user role management instructions.
-use program_utils::{close_pda, BorshPda};
+use program_utils::{close_pda, validate_system_account_key, BorshPda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::{bpf_loader_upgradeable, msg, system_program};
+use solana_program::{bpf_loader_upgradeable, msg};
 
 use crate::instructions::RoleManagementInstructionInputs;
 use crate::seed_prefixes;
@@ -494,9 +494,7 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for RoleManagementAccounts<'a> {
     fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
         let account_iter = &mut value.iter();
         let system_account = next_account_info(account_iter)?;
-        if !system_program::check_id(system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(system_account.key)?;
 
         Ok(Self {
             system_account,
@@ -640,6 +638,7 @@ mod tests {
     use solana_program::{
         bpf_loader_upgradeable::{self, UpgradeableLoaderState},
         pubkey::Pubkey,
+        system_program,
     };
     use solana_sdk::account::Account;
 

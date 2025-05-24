@@ -1,7 +1,7 @@
 //! Processor for [`TokenManager`] related requests.
 
 use event_utils::Event as _;
-use program_utils::{BorshPda, ValidPDA};
+use program_utils::{validate_system_account_key, BorshPda, ValidPDA};
 use role_management::processor::ensure_roles;
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -287,9 +287,7 @@ pub(crate) fn handover_mint_authority(
     let token_program = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_account.key)?;
     msg!("Instruction: TM Hand Over Mint Authority");
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
@@ -367,9 +365,7 @@ pub(crate) struct DeployTokenManagerAccounts<'a> {
 
 impl Validate for DeployTokenManagerAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
-        if !system_program::check_id(self.system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(self.system_account.key)?;
         check_spl_token_program_account(self.token_program.key)?;
         if !spl_associated_token_account::check_id(self.ata_program.key) {
             return Err(ProgramError::IncorrectProgramId);
@@ -433,9 +429,7 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for SetFlowLimitAccounts<'a> {
         let its_user_roles_pda = next_account_info(accounts_iter)?;
         let token_manager_user_roles_pda = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
-        if !system_program::check_id(system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(system_account.key)?;
 
         Ok(Self {
             flow_limiter,

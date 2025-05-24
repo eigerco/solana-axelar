@@ -4,15 +4,15 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::{self, Itertools};
-use program_utils::BorshPda;
+use program_utils::{validate_system_account_key, BorshPda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_program};
 
 use crate::processor::interchain_token::{self, DeployInterchainTokenAccounts};
 use crate::processor::interchain_transfer::process_inbound_transfer;
@@ -42,9 +42,7 @@ pub(crate) fn process_inbound<'a>(
     let system_program = next_account_info(accounts_iter)?;
     let its_root_pda_account = next_account_info(accounts_iter)?;
 
-    if !system_program::check_id(system_program.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_program.key)?;
 
     let its_root_config = InterchainTokenService::load(its_root_pda_account)?;
     assert_valid_its_root_pda(its_root_pda_account, its_root_config.bump)?;
@@ -120,9 +118,7 @@ pub(crate) struct GmpAccounts<'a> {
 
 impl Validate for GmpAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
-        if !system_program::check_id(self.system_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(self.system_program.key)?;
         Ok(())
     }
 }
@@ -138,7 +134,7 @@ impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
         Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
-        
+
         let obj = Self {
             gateway_root_account: next_account_info(accounts_iter)?,
             _gateway_program_id: next_account_info(accounts_iter)?,
