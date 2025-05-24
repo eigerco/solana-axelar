@@ -530,3 +530,25 @@ pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
         Some(())
     }
 }
+
+/// Checks if the key is from system account
+pub fn validate_system_account_key(key: &Pubkey) -> Result<(), ProgramError> {
+    if !system_program::check_id(&key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use solana_program::{system_program, sysvar};
+
+    use crate::validate_system_account_key;
+
+    #[test]
+    fn test_validate_system_account_key() {
+        assert!(validate_system_account_key(&system_program::ID).is_ok());
+        assert!(validate_system_account_key(&sysvar::instructions::ID).is_err());
+        assert!(validate_system_account_key(&sysvar::rent::ID).is_err());
+    }
+}
