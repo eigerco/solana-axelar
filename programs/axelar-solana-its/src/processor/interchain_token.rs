@@ -27,7 +27,7 @@ use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInterna
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_deploy_approval_pda, event};
+use crate::{assert_valid_deploy_approval_pda, event, Validate};
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
@@ -52,6 +52,30 @@ pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) minter_roles_pda: Option<&'a AccountInfo<'a>>,
 }
 
+
+impl Validate for DeployInterchainTokenAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+         if !system_program::check_id(self.system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        check_spl_token_program_account(self.token_program.key)?;
+        if !spl_associated_token_account::check_id(self.ata_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::rent::check_id(self.rent_sysvar.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::instructions::check_id(self.sysvar_instructions.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
+        if *self.mpl_token_metadata_program.key != mpl_token_metadata::ID {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
     type Context = ();
     fn from_account_info_slice(
@@ -59,56 +83,30 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
         _context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
-        let system_account = next_account_info(accounts_iter)?;
-        let its_root_pda = next_account_info(accounts_iter)?;
-        let token_manager_pda = next_account_info(accounts_iter)?;
-        let token_mint = next_account_info(accounts_iter)?;
-        let token_manager_ata = next_account_info(accounts_iter)?;
-        let token_program = next_account_info(accounts_iter)?;
-        let ata_program = next_account_info(accounts_iter)?;
-        let its_roles_pda = next_account_info(accounts_iter)?;
-        let rent_sysvar = next_account_info(accounts_iter)?;
-        let sysvar_instructions = next_account_info(accounts_iter)?;
-        let mpl_token_metadata_program = next_account_info(accounts_iter)?;
 
-        if !system_program::check_id(system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        check_spl_token_program_account(token_program.key)?;
-        if !spl_associated_token_account::check_id(ata_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !sysvar::rent::check_id(rent_sysvar.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !sysvar::instructions::check_id(sysvar_instructions.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-
-        if *mpl_token_metadata_program.key != mpl_token_metadata::ID {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-
-        Ok(Self {
-            system_account,
-            its_root_pda,
-            token_manager_pda,
-            token_mint,
-            token_manager_ata,
-            token_program,
-            ata_program,
-            its_roles_pda,
-            rent_sysvar,
-            sysvar_instructions,
-            mpl_token_metadata_program,
+        let obj = Self {
+            system_account: next_account_info(accounts_iter)?,
+            its_root_pda: next_account_info(accounts_iter)?,
+            token_manager_pda: next_account_info(accounts_iter)?,
+            token_mint: next_account_info(accounts_iter)?,
+            token_manager_ata: next_account_info(accounts_iter)?,
+            token_program: next_account_info(accounts_iter)?,
+            ata_program: next_account_info(accounts_iter)?,
+            its_roles_pda: next_account_info(accounts_iter)?,
+            rent_sysvar: next_account_info(accounts_iter)?,
+            sysvar_instructions: next_account_info(accounts_iter)?,
+            mpl_token_metadata_program: next_account_info(accounts_iter)?,
             mpl_token_metadata_account: next_account_info(accounts_iter)?,
             payer_ata: next_account_info(accounts_iter)?,
             minter: next_account_info(accounts_iter).ok(),
             minter_roles_pda: next_account_info(accounts_iter).ok(),
-        })
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
@@ -123,7 +121,7 @@ impl<'a> From<DeployInterchainTokenAccounts<'a>> for DeployTokenManagerAccounts<
             token_program: value.token_program,
             ata_program: value.ata_program,
             its_roles_pda: value.its_roles_pda,
-            _rent_sysvar: value.rent_sysvar,
+            rent_sysvar: value.rent_sysvar,
             operator: value.minter,
             operator_roles_pda: value.minter_roles_pda,
         }

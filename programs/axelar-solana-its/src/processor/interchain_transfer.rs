@@ -27,7 +27,7 @@ use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
 use crate::{
     assert_valid_flow_slot_pda, assert_valid_token_manager_pda, event, seed_prefixes,
-    FromAccountInfoSlice,
+    FromAccountInfoSlice, Validate,
 };
 
 use super::gmp::{self, GmpAccounts};
@@ -676,6 +676,15 @@ pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
 }
 
+impl Validate for TakeTokenAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        if !system_program::check_id(self.system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     type Context = ();
     fn from_account_info_slice(
@@ -684,39 +693,27 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
-        let payer = next_account_info(accounts_iter)?;
-        let authority = next_account_info(accounts_iter)?;
-        let source_account = next_account_info(accounts_iter)?;
-        let token_mint = next_account_info(accounts_iter)?;
-        let token_manager_pda = next_account_info(accounts_iter)?;
-        let token_manager_ata = next_account_info(accounts_iter)?;
-        let token_program = next_account_info(accounts_iter)?;
-        let flow_slot_pda = next_account_info(accounts_iter)?;
-        let system_account = {
-            next_account_info(accounts_iter)?;
-            next_account_info(accounts_iter)?;
-            next_account_info(accounts_iter)?;
-            next_account_info(accounts_iter)?;
-            next_account_info(accounts_iter)?
+        let obj = TakeTokenAccounts {
+            payer: next_account_info(accounts_iter)?,
+            authority: next_account_info(accounts_iter)?,
+            source_account: next_account_info(accounts_iter)?,
+            token_mint: next_account_info(accounts_iter)?,
+            token_manager_pda: next_account_info(accounts_iter)?,
+            token_manager_ata: next_account_info(accounts_iter)?,
+            token_program: next_account_info(accounts_iter)?,
+            flow_slot_pda: next_account_info(accounts_iter)?,
+            system_account: {
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?
+            },
+            its_root_pda: next_account_info(accounts_iter)?,
         };
-        let its_root_pda = next_account_info(accounts_iter)?;
+        obj.validate()?;
 
-        if !system_program::check_id(system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-
-        Ok(TakeTokenAccounts {
-            payer,
-            authority,
-            source_account,
-            token_mint,
-            token_manager_pda,
-            token_manager_ata,
-            token_program,
-            flow_slot_pda,
-            system_account,
-            its_root_pda,
-        })
+        Ok(obj)
     }
 }
 
@@ -730,14 +727,34 @@ struct GiveTokenAccounts<'a> {
     token_mint: &'a AccountInfo<'a>,
     token_manager_ata: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
-    _ata_program: &'a AccountInfo<'a>,
+    ata_program: &'a AccountInfo<'a>,
     _its_roles_pda: &'a AccountInfo<'a>,
-    _rent_sysvar: &'a AccountInfo<'a>,
+    rent_sysvar: &'a AccountInfo<'a>,
     destination_account: &'a AccountInfo<'a>,
     flow_slot_pda: &'a AccountInfo<'a>,
     program_ata: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_program: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_account: Option<&'a AccountInfo<'a>>,
+}
+
+impl Validate for GiveTokenAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        if !system_program::check_id(self.system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !spl_associated_token_account::check_id(self.ata_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::rent::check_id(self.rent_sysvar.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if let Some(val) = self.mpl_token_metadata_program {
+            if *val.key != mpl_token_metadata::ID {
+                return Err(ProgramError::IncorrectProgramId);
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
@@ -748,54 +765,28 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
         payer_and_payload: &Self::Context,
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
-        let system_account = next_account_info(accounts_iter)?;
-        let its_root_pda = next_account_info(accounts_iter)?;
-        let token_manager_pda = next_account_info(accounts_iter)?;
-        let token_mint = next_account_info(accounts_iter)?;
-        let token_manager_ata = next_account_info(accounts_iter)?;
-        let token_program = next_account_info(accounts_iter)?;
-        let ata_program = next_account_info(accounts_iter)?;
-        let its_roles_pda = next_account_info(accounts_iter)?;
-        let rent_sysvar = next_account_info(accounts_iter)?;
-        let destination_account = next_account_info(accounts_iter)?;
-        let flow_slot_pda = next_account_info(accounts_iter)?;
-        let program_ata = next_account_info(accounts_iter).ok();
-        let mpl_token_metadata_program = next_account_info(accounts_iter).ok();
-        let mpl_token_metadata_account = next_account_info(accounts_iter).ok();
 
-        if !system_program::check_id(system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !spl_associated_token_account::check_id(ata_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !sysvar::rent::check_id(rent_sysvar.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if let Some(val) = mpl_token_metadata_program {
-            if *val.key != mpl_token_metadata::ID {
-                return Err(ProgramError::IncorrectProgramId);
-            }
-        }
-
-        Ok(GiveTokenAccounts {
+        let obj = GiveTokenAccounts {
             payer: payer_and_payload.0,
             message_payload_pda: payer_and_payload.1,
-            system_account,
-            its_root_pda,
-            token_manager_pda,
-            token_mint,
-            token_manager_ata,
-            token_program,
-            _ata_program: ata_program,
-            _its_roles_pda: its_roles_pda,
-            _rent_sysvar: rent_sysvar,
-            destination_account,
-            flow_slot_pda,
-            program_ata,
-            mpl_token_metadata_program,
-            mpl_token_metadata_account,
-        })
+            system_account: next_account_info(accounts_iter)?,
+            its_root_pda: next_account_info(accounts_iter)?,
+            token_manager_pda: next_account_info(accounts_iter)?,
+            token_mint: next_account_info(accounts_iter)?,
+            token_manager_ata: next_account_info(accounts_iter)?,
+            token_program: next_account_info(accounts_iter)?,
+            ata_program: next_account_info(accounts_iter)?,
+            _its_roles_pda: next_account_info(accounts_iter)?,
+            rent_sysvar: next_account_info(accounts_iter)?,
+            destination_account: next_account_info(accounts_iter)?,
+            flow_slot_pda: next_account_info(accounts_iter)?,
+            program_ata: next_account_info(accounts_iter).ok(),
+            mpl_token_metadata_program: next_account_info(accounts_iter).ok(),
+            mpl_token_metadata_account: next_account_info(accounts_iter).ok(),
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
@@ -810,6 +801,18 @@ struct AxelarInterchainTokenExecutableAccounts<'a> {
     destination_program_accounts: &'a [AccountInfo<'a>],
 }
 
+impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        if !spl_associated_token_account::check_id(self.program_ata.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if *self.mpl_token_metadata_program.key != mpl_token_metadata::ID {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a> {
     type Context = (GiveTokenAccounts<'a>, usize);
 
@@ -818,7 +821,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
         context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let give_token_accounts = &context.0;
         let destination_accounts_len = context.1;
@@ -831,7 +834,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
             .get(destination_accounts_index..)
             .ok_or(ProgramError::NotEnoughAccountKeys)?;
 
-        Ok(Self {
+        let obj = Self {
             its_root_pda: give_token_accounts.its_root_pda,
             message_payload_pda: give_token_accounts.message_payload_pda,
             token_program: give_token_accounts.token_program,
@@ -846,7 +849,10 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
                 .mpl_token_metadata_account
                 .ok_or(ProgramError::NotEnoughAccountKeys)?,
             destination_program_accounts,
-        })
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
