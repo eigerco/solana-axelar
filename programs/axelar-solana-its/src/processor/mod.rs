@@ -389,20 +389,10 @@ fn process_operator_accept_operatorship<'a>(
     )
 }
 
-fn get_role_management_accounts<'a>(
-    accounts: &'a [AccountInfo<'a>],
-) -> Result<RoleManagementAccounts<'a>, ProgramError> {
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts)?;
-    if !system_program::check_id(role_management_accounts.system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-    Ok(role_management_accounts)
-}
-
 fn process_operator_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<RoleManagementAccounts<'a>, ProgramError> {
-    let role_management_accounts = get_role_management_accounts(accounts)?;
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts)?;
     msg!("Instruction: Operator");
     let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
     assert_valid_its_root_pda(role_management_accounts.resource, its_config.bump)?;
@@ -418,14 +408,9 @@ fn process_tm_add_flow_limiter<'a>(
         msg!("Invalid role: {:?}", inputs.roles);
         return Err(ProgramError::InvalidInstructionData);
     }
-    let role_management_accounts = get_role_management_accounts(accounts)?;
+    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
     msg!("Instruction: TM AddFlowLimiter");
-    role_management::processor::add(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::OPERATOR,
-    )
+    role_management::processor::add(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
 }
 
 fn process_tm_remove_flow_limiter<'a>(
@@ -435,14 +420,9 @@ fn process_tm_remove_flow_limiter<'a>(
     if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
         return Err(ProgramError::InvalidInstructionData);
     }
-    let role_management_accounts = get_role_management_accounts(accounts)?;
+    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
     msg!("Instruction: TM RemoveFlowLimiter");
-    role_management::processor::remove(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::OPERATOR,
-    )
+    role_management::processor::remove(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
 }
 
 fn process_tm_set_flow_limit<'a>(
@@ -501,8 +481,7 @@ fn process_tm_operator_accounts<'a>(
 ) -> Result<RoleManagementAccounts<'a>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
-    let accounts_slice = accounts.get(1..).ok_or(ProgramError::InvalidAccountData)?;
-    let role_management_accounts = get_role_management_accounts(accounts_slice)?;
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
     msg!("Instruction: TM Operator");
     let token_manager = TokenManager::load(role_management_accounts.resource)?;
     assert_valid_token_manager_pda(
@@ -642,62 +621,6 @@ mod tests {
     use solana_program::system_program;
 
     use crate::processor::get_trusted_chain_accounts;
-
-    use super::get_role_management_accounts;
-
-    #[test]
-    fn test_get_role_management_accounts() {
-        let key = Pubkey::new_unique();
-
-        let mut system_account_lamports = 1;
-        let mut system_account_data = [1, 2, 3];
-        let system_account = AccountInfo::new(
-            &system_program::ID,
-            true,
-            true,
-            &mut system_account_lamports,
-            &mut system_account_data,
-            &key,
-            true,
-            1,
-        );
-
-        let mut lamports = 2;
-        let mut data = [1, 2, 3];
-        let dummy_account =
-            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
-
-        let accounts = [
-            system_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-        ];
-
-        let res = get_role_management_accounts(&accounts);
-        assert!(res.is_ok());
-
-        // change system account to fail
-        let accounts = [
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account,
-        ];
-        let res = get_role_management_accounts(&accounts);
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
-    }
 
     #[test]
     fn test_get_trusted_chain_accounts() {
