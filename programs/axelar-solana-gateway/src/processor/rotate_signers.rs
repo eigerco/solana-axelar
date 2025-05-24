@@ -10,6 +10,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 use solana_program::sysvar::Sysvar;
 
 use super::Processor;
@@ -67,6 +68,10 @@ impl Processor {
         let payer = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
         let operator = next_account_info(accounts_iter);
+
+        if !system_program::check_id(system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
 
         // Check: Gateway Root PDA is initialized.
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;

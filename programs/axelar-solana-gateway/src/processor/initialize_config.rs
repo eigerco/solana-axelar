@@ -64,6 +64,10 @@ impl Processor {
         let gateway_root_pda = next_account_info(core_accounts)?;
         let system_account = next_account_info(core_accounts)?;
 
+        if !system_program::check_id(system_account.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
         // Check: Upgrade authority
         ensure_upgrade_authority(program_id, upgrade_authority, program_data)?;
 

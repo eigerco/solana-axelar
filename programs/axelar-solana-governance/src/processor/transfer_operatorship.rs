@@ -5,10 +5,10 @@
 
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
+use solana_program::{msg, system_program};
 
 use super::ensure_valid_governance_root_pda;
 use crate::events::GovernanceEvent;
@@ -30,10 +30,14 @@ pub(crate) fn process(
     new_operator: [u8; 32],
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let _system_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
     let _payer = next_account_info(accounts_iter)?;
     let operator_account = next_account_info(accounts_iter)?;
     let config_pda = next_account_info(accounts_iter)?;
+
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
 
     let mut config_data = config_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
 

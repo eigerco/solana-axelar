@@ -4,8 +4,8 @@
 
 use program_utils::{checked_from_u256_le_bytes_to_u64, current_time};
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
+use solana_program::{msg, system_program};
 
 use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
@@ -26,6 +26,10 @@ pub(crate) fn process(
     let payer = next_account_info(accounts_iter)?;
     let _root_pda = next_account_info(accounts_iter)?;
     let proposal_pda = next_account_info(accounts_iter)?;
+
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
 
     let proposal_time = checked_from_u256_le_bytes_to_u64(&ctx.cmd_payload.eta.to_le_bytes())?;
 

@@ -4,9 +4,9 @@
 use borsh::to_vec;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::{msg, system_program};
 
 use crate::events::GovernanceEvent;
 use crate::state::proposal::{ExecutableProposal, ExecuteProposalData};
@@ -23,12 +23,16 @@ pub(crate) fn process(
     execute_proposal_data: &ExecuteProposalData,
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let _system_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
     let _payer = next_account_info(accounts_iter)?;
     let config_pda = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
     let operator_account = next_account_info(accounts_iter)?;
     let operator_pda_marker_account = next_account_info(accounts_iter)?;
+
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
 
     let config_data = config_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
 

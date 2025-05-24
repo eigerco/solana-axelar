@@ -8,6 +8,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 
 use super::Processor;
 use crate::error::GatewayError;
@@ -61,6 +62,10 @@ impl Processor {
         let verification_session_account = next_account_info(accounts_iter)?;
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
+
+        if !system_program::check_id(system_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
 
         // Check: Gateway Root PDA is initialized.
         // No need to check the bump because that would already be implied by a valid `verification_session_account`
