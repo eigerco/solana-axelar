@@ -3,7 +3,7 @@
 use borsh::BorshDeserialize;
 use event_utils::Event as _;
 use interchain_token::process_mint;
-use program_utils::{BorshPda, ValidPDA};
+use program_utils::{validate_system_account_key, BorshPda, ValidPDA};
 use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
@@ -607,9 +607,7 @@ fn get_trusted_chain_accounts<'a>(
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_account.key)?;
     Ok((payer, program_data_account, its_root_pda, system_account))
 }
 

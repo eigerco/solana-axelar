@@ -1,15 +1,15 @@
 use crate::assert_valid_config_pda;
 use crate::state::Config;
 use axelar_solana_gas_service_events::event_prefixes;
-use program_utils::{transfer_lamports, BytemuckedPda, ValidPDA};
+use program_utils::{transfer_lamports, validate_system_account_key, BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
+use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_instruction;
-use solana_program::{msg, system_program};
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn process_pay_native_for_contract_call(
@@ -32,9 +32,7 @@ pub(crate) fn process_pay_native_for_contract_call(
     let config_pda = next_account_info(accounts)?;
     let system_program = next_account_info(accounts)?;
 
-    if !system_program::check_id(system_program.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_program.key)?;
 
     try_load_config(program_id, config_pda)?;
 
@@ -88,9 +86,7 @@ pub(crate) fn add_native_gas(
     let config_pda = next_account_info(accounts)?;
     let system_program = next_account_info(accounts)?;
 
-    if !system_program::check_id(system_program.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_program.key)?;
 
     try_load_config(program_id, config_pda)?;
 

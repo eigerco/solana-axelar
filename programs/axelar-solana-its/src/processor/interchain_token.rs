@@ -7,7 +7,7 @@ use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
 use mpl_token_metadata::types::TokenStandard;
-use program_utils::BorshPda;
+use program_utils::{validate_system_account_key, BorshPda};
 use role_management::processor::{ensure_roles, ensure_signer_roles};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -17,7 +17,7 @@ use solana_program::program_pack::Pack as _;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_instruction, system_program, sysvar};
+use solana_program::{msg, system_instruction, sysvar};
 use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
@@ -52,12 +52,9 @@ pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) minter_roles_pda: Option<&'a AccountInfo<'a>>,
 }
 
-
 impl Validate for DeployInterchainTokenAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
-         if !system_program::check_id(self.system_account.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_system_account_key(self.system_account.key)?;
         check_spl_token_program_account(self.token_program.key)?;
         if !spl_associated_token_account::check_id(self.ata_program.key) {
             return Err(ProgramError::IncorrectProgramId);
@@ -590,9 +587,7 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     let deploy_approval_account = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_account.key)?;
     msg!("Instruction: ApproveDeployRemoteInterchainToken");
 
     ensure_signer_roles(
@@ -648,9 +643,7 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
     let deploy_approval_account = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
+    validate_system_account_key(system_account.key)?;
     msg!("Instruction: RevokeDeployRemoteInterchainToken");
 
     if !payer.is_signer {

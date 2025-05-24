@@ -533,7 +533,8 @@ pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
 
 /// Checks if the key is from system account
 pub fn validate_system_account_key(key: &Pubkey) -> Result<(), ProgramError> {
-    if !system_program::check_id(&key) {
+    if !system_program::check_id(key) {
+        msg!("Wrong system account key");
         return Err(ProgramError::IncorrectProgramId);
     }
     Ok(())
