@@ -4,6 +4,7 @@
 
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program_error::ProgramError;
+use solana_program::system_program;
 
 use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
@@ -19,10 +20,14 @@ pub(crate) fn process(
     accounts: &[AccountInfo<'_>],
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let _system_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
     let _payer = next_account_info(accounts_iter)?;
     let root_pda = next_account_info(accounts_iter)?;
     let proposal_pda = next_account_info(accounts_iter)?;
+
+    if !system_program::check_id(system_account.key) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
 
     ExecutableProposal::load_and_ensure_correct_proposal_pda(proposal_pda, &ctx.proposal_hash)?;
 
