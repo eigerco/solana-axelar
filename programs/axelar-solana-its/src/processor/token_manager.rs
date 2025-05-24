@@ -1,7 +1,7 @@
 //! Processor for [`TokenManager`] related requests.
 
 use event_utils::Event as _;
-use program_utils::{BorshPda, ValidPDA};
+use program_utils::{validate_system_account_key, BorshPda, ValidPDA};
 use role_management::processor::ensure_roles;
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -10,14 +10,15 @@ use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
 use solana_program::pubkey::Pubkey;
-use solana_program::{msg, system_program};
+use solana_program::{msg, system_program, sysvar};
+use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, event};
+use crate::{assert_valid_its_root_pda, event, Validate};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
 
 pub(crate) fn set_flow_limit(
@@ -286,6 +287,7 @@ pub(crate) fn handover_mint_authority(
     let token_program = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    validate_system_account_key(system_account.key)?;
     msg!("Instruction: TM Hand Over Mint Authority");
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
@@ -346,6 +348,7 @@ pub(crate) fn handover_mint_authority(
     Ok(())
 }
 
+#[derive(Debug)]
 pub(crate) struct DeployTokenManagerAccounts<'a> {
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
@@ -355,9 +358,23 @@ pub(crate) struct DeployTokenManagerAccounts<'a> {
     pub(crate) token_program: &'a AccountInfo<'a>,
     pub(crate) ata_program: &'a AccountInfo<'a>,
     pub(crate) its_roles_pda: &'a AccountInfo<'a>,
-    pub(crate) _rent_sysvar: &'a AccountInfo<'a>,
+    pub(crate) rent_sysvar: &'a AccountInfo<'a>,
     pub(crate) operator: Option<&'a AccountInfo<'a>>,
     pub(crate) operator_roles_pda: Option<&'a AccountInfo<'a>>,
+}
+
+impl Validate for DeployTokenManagerAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        check_spl_token_program_account(self.token_program.key)?;
+        if !spl_associated_token_account::check_id(self.ata_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::rent::check_id(self.rent_sysvar.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        Ok(())
+    }
 }
 
 impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
@@ -368,11 +385,11 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
         _context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
 
-        Ok(Self {
+        let obj = Self {
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -381,13 +398,17 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
             token_program: next_account_info(accounts_iter)?,
             ata_program: next_account_info(accounts_iter)?,
             its_roles_pda: next_account_info(accounts_iter)?,
-            _rent_sysvar: next_account_info(accounts_iter)?,
+            rent_sysvar: next_account_info(accounts_iter)?,
             operator: next_account_info(accounts_iter).ok(),
             operator_roles_pda: next_account_info(accounts_iter).ok(),
-        })
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct SetFlowLimitAccounts<'a> {
     pub(crate) flow_limiter: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
@@ -402,14 +423,251 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for SetFlowLimitAccounts<'a> {
 
     fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
         let accounts_iter = &mut value.iter();
+        let flow_limiter = next_account_info(accounts_iter)?;
+        let its_root_pda = next_account_info(accounts_iter)?;
+        let token_manager_pda = next_account_info(accounts_iter)?;
+        let its_user_roles_pda = next_account_info(accounts_iter)?;
+        let token_manager_user_roles_pda = next_account_info(accounts_iter)?;
+        let system_account = next_account_info(accounts_iter)?;
+        validate_system_account_key(system_account.key)?;
 
         Ok(Self {
-            flow_limiter: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
-            token_manager_pda: next_account_info(accounts_iter)?,
-            its_user_roles_pda: next_account_info(accounts_iter)?,
-            token_manager_user_roles_pda: next_account_info(accounts_iter)?,
-            system_account: next_account_info(accounts_iter)?,
+            flow_limiter,
+            its_root_pda,
+            token_manager_pda,
+            its_user_roles_pda,
+            token_manager_user_roles_pda,
+            system_account,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use solana_program::account_info::AccountInfo;
+    use solana_program::program_error::ProgramError;
+    use solana_program::pubkey::Pubkey;
+    use solana_program::{system_program, sysvar};
+
+    use crate::processor::token_manager::{DeployTokenManagerAccounts, SetFlowLimitAccounts};
+    use crate::FromAccountInfoSlice;
+
+    use super::handover_mint_authority;
+
+    struct TestAccount<'a> {
+        _pubkey: Box<Pubkey>,
+        _lamports: Box<u64>,
+        _data: Box<[u8; 3]>,
+        info: AccountInfo<'a>,
+    }
+
+    impl<'a> TestAccount<'a> {
+        fn new(pubkey: Pubkey) -> Self {
+            let pubkey = Box::new(pubkey);
+            let lamports = Box::new(2);
+            let data = Box::new([1, 2, 3]);
+
+            let info = AccountInfo::new(
+                Box::leak(pubkey.clone()),
+                true,
+                true,
+                Box::leak(lamports.clone()),
+                Box::leak(data.clone()),
+                Box::leak(pubkey.clone()),
+                true,
+                1,
+            );
+
+            Self {
+                _pubkey: pubkey,
+                _lamports: lamports,
+                _data: data,
+                info,
+            }
+        }
+
+        fn with_custom(pubkey: Pubkey, lamports_val: u64) -> Self {
+            let pubkey = Box::new(pubkey);
+            let lamports = Box::new(lamports_val);
+            let data = Box::new([1, 2, 3]);
+
+            let info = AccountInfo::new(
+                Box::leak(pubkey.clone()),
+                true,
+                true,
+                Box::leak(lamports.clone()),
+                Box::leak(data.clone()),
+                Box::leak(pubkey.clone()),
+                true,
+                1,
+            );
+
+            Self {
+                _pubkey: pubkey,
+                _lamports: lamports,
+                _data: data,
+                info,
+            }
+        }
+    }
+
+    struct TestAccounts<'a> {
+        accounts: Vec<AccountInfo<'a>>,
+        dummy: TestAccount<'a>,
+    }
+
+    fn get_valid_accounts<'a>() -> TestAccounts<'a> {
+        let dummy_key = Pubkey::new_unique();
+
+        let system = TestAccount::with_custom(system_program::ID, 1);
+        let dummy = TestAccount::new(dummy_key);
+        let token = TestAccount::new(spl_token_2022::ID);
+        let ata = TestAccount::new(spl_associated_token_account::ID);
+        let rent = TestAccount::new(sysvar::rent::ID);
+
+        let accounts = vec![
+            system.info.clone(),
+            dummy.info.clone(),
+            dummy.info.clone(),
+            dummy.info.clone(),
+            dummy.info.clone(),
+            token.info.clone(),
+            ata.info.clone(),
+            dummy.info.clone(),
+            rent.info.clone(),
+        ];
+
+        TestAccounts { accounts, dummy }
+    }
+
+    #[allow(clippy::indexing_slicing)]
+    fn test_invalid_index(index: usize) {
+        let mut test = get_valid_accounts();
+        test.accounts[index] = test.dummy.info.clone();
+
+        let result = DeployTokenManagerAccounts::from_account_info_slice(&test.accounts, &());
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), ProgramError::IncorrectProgramId);
+    }
+
+    #[test]
+    fn test_valid_accounts() {
+        let test = get_valid_accounts();
+        let result = DeployTokenManagerAccounts::from_account_info_slice(&test.accounts, &());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_invalid_system_account() {
+        test_invalid_index(0);
+    }
+
+    #[test]
+    fn test_invalid_token_program() {
+        test_invalid_index(5);
+    }
+
+    #[test]
+    fn test_invalid_program_ata() {
+        test_invalid_index(6);
+    }
+
+    #[test]
+    fn test_invalid_rent() {
+        test_invalid_index(8);
+    }
+
+    #[test]
+    fn test_accounts_for_set_flow_limit_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            system_account,
+        ];
+        let parsed_accounts = SetFlowLimitAccounts::try_from(accounts.as_slice());
+        assert!(parsed_accounts.is_ok());
+
+        // Switch system account to make it fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account,
+        ];
+        let parsed_accounts = SetFlowLimitAccounts::try_from(accounts.as_slice());
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+    }
+
+    #[test]
+    fn test_handover_mint_authority() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let mut accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let res = handover_mint_authority(&accounts, [0; 32]);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
+
+        // Change value to system account
+        // Fails in different place, but not on parsing accounts
+        accounts[6] = system_account;
+        let res = handover_mint_authority(&accounts, [0; 32]);
+        assert!(res.is_err());
+        assert_ne!(res.unwrap_err(), ProgramError::IncorrectProgramId);
     }
 }

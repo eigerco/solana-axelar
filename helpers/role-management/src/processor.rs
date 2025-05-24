@@ -1,5 +1,5 @@
 //! This module provides logic to handle user role management instructions.
-use program_utils::{close_pda, BorshPda};
+use program_utils::{close_pda, validate_system_account_key, BorshPda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_program::entrypoint::ProgramResult;
@@ -458,6 +458,7 @@ pub fn ensure_proper_account(
 }
 
 /// Accounts used by role management instructions.
+#[derive(Debug)]
 pub struct RoleManagementAccounts<'a> {
     /// System account.
     pub system_account: &'a AccountInfo<'a>,
@@ -492,9 +493,11 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for RoleManagementAccounts<'a> {
 
     fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
         let account_iter = &mut value.iter();
+        let system_account = next_account_info(account_iter)?;
+        validate_system_account_key(system_account.key)?;
 
         Ok(Self {
-            system_account: next_account_info(account_iter)?,
+            system_account,
             payer: next_account_info(account_iter)?,
             payer_roles_account: next_account_info(account_iter)?,
             resource: next_account_info(account_iter)?,
@@ -635,6 +638,7 @@ mod tests {
     use solana_program::{
         bpf_loader_upgradeable::{self, UpgradeableLoaderState},
         pubkey::Pubkey,
+        system_program,
     };
     use solana_sdk::account::Account;
 
@@ -773,5 +777,59 @@ mod tests {
                 "Invalid result for bit pattern {bits}",
             );
         }
+    }
+
+    #[test]
+    fn test_accounts_from_role_management_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let res = RoleManagementAccounts::try_from(accounts.as_slice());
+        assert!(res.is_ok());
+
+        // change system account to fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account,
+        ];
+        let res = RoleManagementAccounts::try_from(accounts.as_slice());
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
     }
 }

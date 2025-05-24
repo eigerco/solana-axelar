@@ -5,17 +5,17 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
-use program_utils::BorshPda;
+use program_utils::{validate_system_account_key, BorshPda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
-use solana_program::msg;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
+use solana_program::{msg, sysvar};
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
@@ -27,7 +27,7 @@ use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
 use crate::{
     assert_valid_flow_slot_pda, assert_valid_token_manager_pda, event, seed_prefixes,
-    FromAccountInfoSlice,
+    FromAccountInfoSlice, Validate,
 };
 
 use super::gmp::{self, GmpAccounts};
@@ -662,6 +662,7 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
     Ok(())
 }
 
+#[derive(Debug)]
 pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) authority: &'a AccountInfo<'a>,
@@ -675,6 +676,13 @@ pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
 }
 
+impl Validate for TakeTokenAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     type Context = ();
     fn from_account_info_slice(
@@ -683,7 +691,7 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
-        Ok(TakeTokenAccounts {
+        let obj = TakeTokenAccounts {
             payer: next_account_info(accounts_iter)?,
             authority: next_account_info(accounts_iter)?,
             source_account: next_account_info(accounts_iter)?,
@@ -700,10 +708,14 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
                 next_account_info(accounts_iter)?
             },
             its_root_pda: next_account_info(accounts_iter)?,
-        })
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
+#[derive(Debug)]
 struct GiveTokenAccounts<'a> {
     payer: &'a AccountInfo<'a>,
     system_account: &'a AccountInfo<'a>,
@@ -713,14 +725,32 @@ struct GiveTokenAccounts<'a> {
     token_mint: &'a AccountInfo<'a>,
     token_manager_ata: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
-    _ata_program: &'a AccountInfo<'a>,
+    ata_program: &'a AccountInfo<'a>,
     _its_roles_pda: &'a AccountInfo<'a>,
-    _rent_sysvar: &'a AccountInfo<'a>,
+    rent_sysvar: &'a AccountInfo<'a>,
     destination_account: &'a AccountInfo<'a>,
     flow_slot_pda: &'a AccountInfo<'a>,
     program_ata: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_program: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_account: Option<&'a AccountInfo<'a>>,
+}
+
+impl Validate for GiveTokenAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        if !spl_associated_token_account::check_id(self.ata_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !sysvar::rent::check_id(self.rent_sysvar.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if let Some(val) = self.mpl_token_metadata_program {
+            if *val.key != mpl_token_metadata::ID {
+                return Err(ProgramError::IncorrectProgramId);
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
@@ -732,7 +762,7 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
-        Ok(GiveTokenAccounts {
+        let obj = GiveTokenAccounts {
             payer: payer_and_payload.0,
             message_payload_pda: payer_and_payload.1,
             system_account: next_account_info(accounts_iter)?,
@@ -741,15 +771,18 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             token_mint: next_account_info(accounts_iter)?,
             token_manager_ata: next_account_info(accounts_iter)?,
             token_program: next_account_info(accounts_iter)?,
-            _ata_program: next_account_info(accounts_iter)?,
+            ata_program: next_account_info(accounts_iter)?,
             _its_roles_pda: next_account_info(accounts_iter)?,
-            _rent_sysvar: next_account_info(accounts_iter)?,
+            rent_sysvar: next_account_info(accounts_iter)?,
             destination_account: next_account_info(accounts_iter)?,
             flow_slot_pda: next_account_info(accounts_iter)?,
             program_ata: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_program: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_account: next_account_info(accounts_iter).ok(),
-        })
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
@@ -764,6 +797,18 @@ struct AxelarInterchainTokenExecutableAccounts<'a> {
     destination_program_accounts: &'a [AccountInfo<'a>],
 }
 
+impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        if !spl_associated_token_account::check_id(self.program_ata.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if *self.mpl_token_metadata_program.key != mpl_token_metadata::ID {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a> {
     type Context = (GiveTokenAccounts<'a>, usize);
 
@@ -772,7 +817,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
         context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let give_token_accounts = &context.0;
         let destination_accounts_len = context.1;
@@ -785,7 +830,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
             .get(destination_accounts_index..)
             .ok_or(ProgramError::NotEnoughAccountKeys)?;
 
-        Ok(Self {
+        let obj = Self {
             its_root_pda: give_token_accounts.its_root_pda,
             message_payload_pda: give_token_accounts.message_payload_pda,
             token_program: give_token_accounts.token_program,
@@ -800,7 +845,10 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
                 .mpl_token_metadata_account
                 .ok_or(ProgramError::NotEnoughAccountKeys)?,
             destination_program_accounts,
-        })
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
@@ -830,5 +878,274 @@ impl<'a> From<&GiveTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
             token_manager_pda: value.token_manager_pda,
             flow_slot_pda: value.flow_slot_pda,
         }
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::too_many_lines)]
+mod tests {
+    use solana_program::account_info::AccountInfo;
+    use solana_program::program_error::ProgramError;
+    use solana_program::pubkey::Pubkey;
+    use solana_program::system_program;
+    use solana_program::sysvar;
+
+    use crate::processor::interchain_transfer::GiveTokenAccounts;
+    use crate::FromAccountInfoSlice;
+
+    use super::TakeTokenAccounts;
+
+    #[test]
+    fn test_accounts_in_give_token_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let mut program_ata_lamports = 2;
+        let mut program_ata_data = [1, 2, 3];
+        let program_ata = AccountInfo::new(
+            &spl_associated_token_account::ID,
+            true,
+            true,
+            &mut program_ata_lamports,
+            &mut program_ata_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut rent_lamports = 2;
+        let mut rent_data = [1, 2, 3];
+        let rent = AccountInfo::new(
+            &sysvar::rent::ID,
+            true,
+            true,
+            &mut rent_lamports,
+            &mut rent_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut mpl_lamports = 2;
+        let mut mpl_data = [1, 2, 3];
+        let mpl_token_metadata_program = AccountInfo::new(
+            &mpl_token_metadata::ID,
+            true,
+            true,
+            &mut mpl_lamports,
+            &mut mpl_data,
+            &key,
+            true,
+            1,
+        );
+
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let payer = dummy_account.clone();
+        let payload = dummy_account.clone();
+
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_ok());
+
+        // wrong system account, to fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // wrong program ata, to fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // wrong rent, to fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            mpl_token_metadata_program.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+
+        // wrong mpl, to fail
+        let accounts = [
+            system_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            program_ata.clone(),
+            dummy_account.clone(),
+            rent.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let parsed_accounts =
+            GiveTokenAccounts::from_account_info_slice(&accounts, &(&payer, &payload));
+        assert!(parsed_accounts.is_err());
+        assert_eq!(
+            parsed_accounts.unwrap_err(),
+            ProgramError::IncorrectProgramId
+        );
+    }
+
+    #[test]
+    fn test_accounts_in_test_token_accounts() {
+        let key = Pubkey::new_unique();
+
+        let mut system_account_lamports = 1;
+        let mut system_account_data = [1, 2, 3];
+        let system_account = AccountInfo::new(
+            &system_program::ID,
+            true,
+            true,
+            &mut system_account_lamports,
+            &mut system_account_data,
+            &key,
+            true,
+            1,
+        );
+
+        let mut lamports = 2;
+        let mut data = [1, 2, 3];
+        let dummy_account =
+            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            system_account.clone(),
+            dummy_account.clone(),
+        ];
+
+        let res = TakeTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(res.is_ok());
+
+        // change system account to fail
+        let accounts = [
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+            dummy_account.clone(),
+        ];
+        let res = TakeTokenAccounts::from_account_info_slice(&accounts, &());
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ProgramError::IncorrectProgramId);
     }
 }
