@@ -461,157 +461,127 @@ mod tests {
 
     use super::handover_mint_authority;
 
+    struct TestAccount<'a> {
+        _pubkey: Box<Pubkey>,
+        _lamports: Box<u64>,
+        _data: Box<[u8; 3]>,
+        info: AccountInfo<'a>,
+    }
+
+    impl<'a> TestAccount<'a> {
+        fn new(pubkey: Pubkey) -> Self {
+            let pubkey = Box::new(pubkey);
+            let lamports = Box::new(2);
+            let data = Box::new([1, 2, 3]);
+
+            let info = AccountInfo::new(
+                Box::leak(pubkey.clone()),
+                true,
+                true,
+                Box::leak(lamports.clone()),
+                Box::leak(data.clone()),
+                Box::leak(pubkey.clone()),
+                true,
+                1,
+            );
+
+            Self {
+                _pubkey: pubkey,
+                _lamports: lamports,
+                _data: data,
+                info,
+            }
+        }
+
+        fn with_custom(pubkey: Pubkey, lamports_val: u64) -> Self {
+            let pubkey = Box::new(pubkey);
+            let lamports = Box::new(lamports_val);
+            let data = Box::new([1, 2, 3]);
+
+            let info = AccountInfo::new(
+                Box::leak(pubkey.clone()),
+                true,
+                true,
+                Box::leak(lamports.clone()),
+                Box::leak(data.clone()),
+                Box::leak(pubkey.clone()),
+                true,
+                1,
+            );
+
+            Self {
+                _pubkey: pubkey,
+                _lamports: lamports,
+                _data: data,
+                info,
+            }
+        }
+    }
+
+    struct TestAccounts<'a> {
+        accounts: Vec<AccountInfo<'a>>,
+        dummy: TestAccount<'a>,
+    }
+
+    fn get_valid_accounts<'a>() -> TestAccounts<'a> {
+        let dummy_key = Pubkey::new_unique();
+
+        let system = TestAccount::with_custom(system_program::ID, 1);
+        let dummy = TestAccount::new(dummy_key);
+        let token = TestAccount::new(spl_token_2022::ID);
+        let ata = TestAccount::new(spl_associated_token_account::ID);
+        let rent = TestAccount::new(sysvar::rent::ID);
+
+        let accounts = vec![
+            system.info.clone(),
+            dummy.info.clone(),
+            dummy.info.clone(),
+            dummy.info.clone(),
+            dummy.info.clone(),
+            token.info.clone(),
+            ata.info.clone(),
+            dummy.info.clone(),
+            rent.info.clone(),
+        ];
+
+        TestAccounts { accounts, dummy }
+    }
+
+    #[allow(clippy::indexing_slicing)]
+    fn test_invalid_index(index: usize) {
+        let mut test = get_valid_accounts();
+        test.accounts[index] = test.dummy.info.clone();
+
+        let result = DeployTokenManagerAccounts::from_account_info_slice(&test.accounts, &());
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), ProgramError::IncorrectProgramId);
+    }
+
     #[test]
-    #[allow(clippy::too_many_lines)]
-    fn test_accounts_for_deploy_manager_accounts() {
-        let key = Pubkey::new_unique();
+    fn test_valid_accounts() {
+        let test = get_valid_accounts();
+        let result = DeployTokenManagerAccounts::from_account_info_slice(&test.accounts, &());
+        assert!(result.is_ok());
+    }
 
-        let mut system_account_lamports = 1;
-        let mut system_account_data = [1, 2, 3];
-        let system_account = AccountInfo::new(
-            &system_program::ID,
-            true,
-            true,
-            &mut system_account_lamports,
-            &mut system_account_data,
-            &key,
-            true,
-            1,
-        );
+    #[test]
+    fn test_invalid_system_account() {
+        test_invalid_index(0);
+    }
 
-        let mut lamports = 2;
-        let mut data = [1, 2, 3];
-        let dummy_account =
-            AccountInfo::new(&key, true, true, &mut lamports, &mut data, &key, true, 1);
+    #[test]
+    fn test_invalid_token_program() {
+        test_invalid_index(5);
+    }
 
-        let mut token_program_lamports = 2;
-        let mut token_program_data = [1, 2, 3];
-        let token_program = AccountInfo::new(
-            &spl_token_2022::ID,
-            true,
-            true,
-            &mut token_program_lamports,
-            &mut token_program_data,
-            &key,
-            true,
-            1,
-        );
+    #[test]
+    fn test_invalid_program_ata() {
+        test_invalid_index(6);
+    }
 
-        let mut program_ata_lamports = 2;
-        let mut program_ata_data = [1, 2, 3];
-        let program_ata = AccountInfo::new(
-            &spl_associated_token_account::ID,
-            true,
-            true,
-            &mut program_ata_lamports,
-            &mut program_ata_data,
-            &key,
-            true,
-            1,
-        );
-
-        let mut rent_lamports = 2;
-        let mut rent_data = [1, 2, 3];
-        let rent = AccountInfo::new(
-            &sysvar::rent::ID,
-            true,
-            true,
-            &mut rent_lamports,
-            &mut rent_data,
-            &key,
-            true,
-            1,
-        );
-
-        let accounts = [
-            system_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            token_program.clone(),
-            program_ata.clone(),
-            dummy_account.clone(),
-            rent.clone(),
-        ];
-        let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(&accounts, &());
-        assert!(parsed_accounts.is_ok());
-
-        // Switch system account to make it fail
-        let accounts = [
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            token_program.clone(),
-            program_ata.clone(),
-            dummy_account.clone(),
-            rent.clone(),
-        ];
-        let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(&accounts, &());
-        assert!(parsed_accounts.is_err());
-        assert_eq!(
-            parsed_accounts.unwrap_err(),
-            ProgramError::IncorrectProgramId
-        );
-
-        // Switch token program to make it fail
-        let accounts = [
-            system_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            program_ata.clone(),
-            dummy_account.clone(),
-            rent.clone(),
-        ];
-        let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(&accounts, &());
-        assert!(parsed_accounts.is_err());
-        assert_eq!(
-            parsed_accounts.unwrap_err(),
-            ProgramError::IncorrectProgramId
-        );
-
-        // Switch program ata to make it fail
-        let accounts = [
-            system_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            token_program.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            rent.clone(),
-        ];
-        let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(&accounts, &());
-        assert!(parsed_accounts.is_err());
-        assert_eq!(
-            parsed_accounts.unwrap_err(),
-            ProgramError::IncorrectProgramId
-        );
-
-        // Switch rent to make it fail
-        let accounts = [
-            system_account,
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            dummy_account.clone(),
-            token_program,
-            program_ata,
-            dummy_account.clone(),
-            dummy_account,
-        ];
-        let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(&accounts, &());
-        assert!(parsed_accounts.is_err());
-        assert_eq!(
-            parsed_accounts.unwrap_err(),
-            ProgramError::IncorrectProgramId
-        );
+    #[test]
+    fn test_invalid_rent() {
+        test_invalid_index(8);
     }
 
     #[test]
