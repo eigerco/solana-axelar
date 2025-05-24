@@ -19,7 +19,7 @@ use crate::processor::interchain_transfer::process_inbound_transfer;
 use crate::processor::link_token;
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{assert_its_not_paused, assert_valid_its_root_pda, ITS_HUB_CHAIN_NAME};
+use crate::{assert_its_not_paused, assert_valid_its_root_pda, Validate, ITS_HUB_CHAIN_NAME};
 use crate::{instruction, FromAccountInfoSlice};
 
 pub(crate) fn process_inbound<'a>(
@@ -118,6 +118,15 @@ pub(crate) struct GmpAccounts<'a> {
     pub(crate) program_account: &'a AccountInfo<'a>,
 }
 
+impl Validate for GmpAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        if !system_program::check_id(self.system_program.key) {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
     type Context = ();
 
@@ -126,28 +135,23 @@ impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
         _context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
-        let gateway_root_account = next_account_info(accounts_iter)?;
-        let gateway_program_id = next_account_info(accounts_iter)?;
-        let gas_service_config_account = next_account_info(accounts_iter)?;
-        let gas_service = next_account_info(accounts_iter)?;
-        let system_program = next_account_info(accounts_iter)?;
-        if !system_program::check_id(system_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-
-        Ok(Self {
-            gateway_root_account,
-            _gateway_program_id: gateway_program_id,
-            gas_service_config_account,
-            gas_service,
-            system_program,
+        
+        let obj = Self {
+            gateway_root_account: next_account_info(accounts_iter)?,
+            _gateway_program_id: next_account_info(accounts_iter)?,
+            gas_service_config_account: next_account_info(accounts_iter)?,
+            gas_service: next_account_info(accounts_iter)?,
+            system_program: next_account_info(accounts_iter)?,
             its_root_account: next_account_info(accounts_iter)?,
             call_contract_signing_account: next_account_info(accounts_iter)?,
             program_account: next_account_info(accounts_iter)?,
-        })
+        };
+        obj.validate()?;
+
+        Ok(obj)
     }
 }
 
