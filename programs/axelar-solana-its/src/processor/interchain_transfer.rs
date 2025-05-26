@@ -685,13 +685,13 @@ impl Validate for TakeTokenAccounts<'_> {
 
 impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     type Context = ();
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         _context: &Self::Context,
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
-        let obj = TakeTokenAccounts {
+        Ok(TakeTokenAccounts {
             payer: next_account_info(accounts_iter)?,
             authority: next_account_info(accounts_iter)?,
             source_account: next_account_info(accounts_iter)?,
@@ -708,10 +708,7 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
                 next_account_info(accounts_iter)?
             },
             its_root_pda: next_account_info(accounts_iter)?,
-        };
-        obj.validate()?;
-
-        Ok(obj)
+        })
     }
 }
 
@@ -756,13 +753,13 @@ impl Validate for GiveTokenAccounts<'_> {
 impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
     type Context = (&'a AccountInfo<'a>, &'a AccountInfo<'a>);
 
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         payer_and_payload: &Self::Context,
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
-        let obj = GiveTokenAccounts {
+        Ok(GiveTokenAccounts {
             payer: payer_and_payload.0,
             message_payload_pda: payer_and_payload.1,
             system_account: next_account_info(accounts_iter)?,
@@ -779,10 +776,7 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             program_ata: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_program: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_account: next_account_info(accounts_iter).ok(),
-        };
-        obj.validate()?;
-
-        Ok(obj)
+        })
     }
 }
 
@@ -809,7 +803,7 @@ impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
 impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a> {
     type Context = (GiveTokenAccounts<'a>, usize);
 
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         context: &Self::Context,
     ) -> Result<Self, ProgramError>
@@ -827,7 +821,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
             .get(destination_accounts_index..)
             .ok_or(ProgramError::NotEnoughAccountKeys)?;
 
-        let obj = Self {
+        Ok(Self {
             its_root_pda: give_token_accounts.its_root_pda,
             message_payload_pda: give_token_accounts.message_payload_pda,
             token_program: give_token_accounts.token_program,
@@ -842,10 +836,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
                 .mpl_token_metadata_account
                 .ok_or(ProgramError::NotEnoughAccountKeys)?,
             destination_program_accounts,
-        };
-        obj.validate()?;
-
-        Ok(obj)
+        })
     }
 }
 

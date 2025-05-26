@@ -32,6 +32,18 @@ pub(crate) trait FromAccountInfoSlice<'a> {
         context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
+        Self: Sized + Validate,
+    {
+        let obj = Self::extract_accounts(accounts, context)?;
+        obj.validate()?;
+        Ok(obj)
+    }
+
+    fn extract_accounts(
+        accounts: &'a [AccountInfo<'a>],
+        context: &Self::Context,
+    ) -> Result<Self, ProgramError>
+    where
         Self: Sized + Validate;
 }
 

@@ -126,7 +126,7 @@ impl Validate for GmpAccounts<'_> {
 impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
     type Context = ();
 
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         _context: &Self::Context,
     ) -> Result<Self, ProgramError>
@@ -135,7 +135,7 @@ impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
     {
         let accounts_iter = &mut accounts.iter();
 
-        let obj = Self {
+        Ok(Self {
             gateway_root_account: next_account_info(accounts_iter)?,
             _gateway_program_id: next_account_info(accounts_iter)?,
             gas_service_config_account: next_account_info(accounts_iter)?,
@@ -144,10 +144,7 @@ impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
             its_root_account: next_account_info(accounts_iter)?,
             call_contract_signing_account: next_account_info(accounts_iter)?,
             program_account: next_account_info(accounts_iter)?,
-        };
-        obj.validate()?;
-
-        Ok(obj)
+        })
     }
 }
 

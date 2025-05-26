@@ -75,7 +75,7 @@ impl Validate for DeployInterchainTokenAccounts<'_> {
 
 impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
     type Context = ();
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         _context: &Self::Context,
     ) -> Result<Self, ProgramError>
@@ -84,7 +84,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
     {
         let accounts_iter = &mut accounts.iter();
 
-        let obj = Self {
+        Ok(Self {
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -100,10 +100,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
             payer_ata: next_account_info(accounts_iter)?,
             minter: next_account_info(accounts_iter).ok(),
             minter_roles_pda: next_account_info(accounts_iter).ok(),
-        };
-        obj.validate()?;
-
-        Ok(obj)
+        })
     }
 }
 
