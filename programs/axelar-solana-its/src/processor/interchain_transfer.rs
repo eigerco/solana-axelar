@@ -799,9 +799,6 @@ struct AxelarInterchainTokenExecutableAccounts<'a> {
 
 impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
-        if !spl_associated_token_account::check_id(self.program_ata.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
         if *self.mpl_token_metadata_program.key != mpl_token_metadata::ID {
             return Err(ProgramError::IncorrectProgramId);
         }
