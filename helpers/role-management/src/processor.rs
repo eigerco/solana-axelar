@@ -638,7 +638,6 @@ mod tests {
     use solana_program::{
         bpf_loader_upgradeable::{self, UpgradeableLoaderState},
         pubkey::Pubkey,
-        system_program,
     };
     use solana_sdk::account::Account;
 
