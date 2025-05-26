@@ -21,7 +21,8 @@ use crate::instruction::InterchainTokenServiceInstruction;
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
 use crate::{
-    assert_valid_its_root_pda, assert_valid_token_manager_pda, check_program_account, event, Roles,
+    assert_valid_its_root_pda, assert_valid_token_manager_pda, check_program_account, event,
+    FromAccountInfoSlice, Roles,
 };
 
 pub(crate) mod gmp;
@@ -185,7 +186,8 @@ pub fn process_instruction<'a>(
             signing_pda_bump,
         ),
         InterchainTokenServiceInstruction::SetFlowLimit { flow_limit } => {
-            let mut instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
+            let mut instruction_accounts =
+                SetFlowLimitAccounts::from_account_info_slice(accounts, &())?;
 
             msg!("Instruction: SetFlowLimit");
             ensure_signer_roles(
@@ -429,7 +431,7 @@ fn process_tm_set_flow_limit<'a>(
     accounts: &'a [AccountInfo<'a>],
     flow_limit: u64,
 ) -> ProgramResult {
-    let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
+    let instruction_accounts = SetFlowLimitAccounts::from_account_info_slice(accounts, &())?;
     if !instruction_accounts.flow_limiter.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }

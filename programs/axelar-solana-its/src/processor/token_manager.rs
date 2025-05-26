@@ -414,26 +414,32 @@ pub(crate) struct SetFlowLimitAccounts<'a> {
     pub(crate) system_account: &'a AccountInfo<'a>,
 }
 
-impl<'a> TryFrom<&'a [AccountInfo<'a>]> for SetFlowLimitAccounts<'a> {
-    type Error = ProgramError;
+impl<'a> FromAccountInfoSlice<'a> for SetFlowLimitAccounts<'a> {
+    type Context = ();
 
-    fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
-        let accounts_iter = &mut value.iter();
-        let flow_limiter = next_account_info(accounts_iter)?;
-        let its_root_pda = next_account_info(accounts_iter)?;
-        let token_manager_pda = next_account_info(accounts_iter)?;
-        let its_user_roles_pda = next_account_info(accounts_iter)?;
-        let token_manager_user_roles_pda = next_account_info(accounts_iter)?;
-        let system_account = next_account_info(accounts_iter)?;
-        validate_system_account_key(system_account.key)?;
+    fn extract_accounts(
+        accounts: &'a [AccountInfo<'a>],
+        _context: &Self::Context,
+    ) -> Result<Self, ProgramError>
+    where
+        Self: Sized + Validate,
+    {
+        let accounts_iter = &mut accounts.iter();
 
         Ok(Self {
-            flow_limiter,
-            its_root_pda,
-            token_manager_pda,
-            its_user_roles_pda,
-            token_manager_user_roles_pda,
-            system_account,
+            flow_limiter: next_account_info(accounts_iter)?,
+            its_root_pda: next_account_info(accounts_iter)?,
+            token_manager_pda: next_account_info(accounts_iter)?,
+            its_user_roles_pda: next_account_info(accounts_iter)?,
+            token_manager_user_roles_pda: next_account_info(accounts_iter)?,
+            system_account: next_account_info(accounts_iter)?,
         })
+    }
+}
+
+impl Validate for SetFlowLimitAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        Ok(())
     }
 }
