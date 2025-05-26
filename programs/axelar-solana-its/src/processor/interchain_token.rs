@@ -7,7 +7,10 @@ use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
 use mpl_token_metadata::types::TokenStandard;
-use program_utils::{validate_system_account_key, BorshPda};
+use program_utils::{
+    validate_mpl_token_metadata_key, validate_rent_key, validate_spl_associated_token_account_key,
+    validate_system_account_key, validate_sysvar_instructions_key, BorshPda,
+};
 use role_management::processor::{ensure_roles, ensure_signer_roles};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -17,7 +20,7 @@ use solana_program::program_pack::Pack as _;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_instruction, sysvar};
+use solana_program::{msg, system_instruction};
 use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
@@ -56,19 +59,10 @@ impl Validate for DeployInterchainTokenAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
         validate_system_account_key(self.system_account.key)?;
         check_spl_token_program_account(self.token_program.key)?;
-        if !spl_associated_token_account::check_id(self.ata_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !sysvar::rent::check_id(self.rent_sysvar.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !sysvar::instructions::check_id(self.sysvar_instructions.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-
-        if *self.mpl_token_metadata_program.key != mpl_token_metadata::ID {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_spl_associated_token_account_key(self.ata_program.key)?;
+        validate_rent_key(self.rent_sysvar.key)?;
+        validate_sysvar_instructions_key(self.sysvar_instructions.key)?;
+        validate_mpl_token_metadata_key(self.mpl_token_metadata_program.key)?;
         Ok(())
     }
 }

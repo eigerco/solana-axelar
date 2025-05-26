@@ -1,7 +1,10 @@
 //! Processor for [`TokenManager`] related requests.
 
 use event_utils::Event as _;
-use program_utils::{validate_system_account_key, BorshPda, ValidPDA};
+use program_utils::{
+    validate_rent_key, validate_spl_associated_token_account_key, validate_system_account_key,
+    BorshPda, ValidPDA,
+};
 use role_management::processor::ensure_roles;
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -10,7 +13,7 @@ use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
 use solana_program::pubkey::Pubkey;
-use solana_program::{msg, system_program, sysvar};
+use solana_program::{msg, system_program};
 use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::instruction::AuthorityType;
@@ -367,12 +370,8 @@ impl Validate for DeployTokenManagerAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
         validate_system_account_key(self.system_account.key)?;
         check_spl_token_program_account(self.token_program.key)?;
-        if !spl_associated_token_account::check_id(self.ata_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !sysvar::rent::check_id(self.rent_sysvar.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_spl_associated_token_account_key(self.ata_program.key)?;
+        validate_rent_key(self.rent_sysvar.key)?;
         Ok(())
     }
 }

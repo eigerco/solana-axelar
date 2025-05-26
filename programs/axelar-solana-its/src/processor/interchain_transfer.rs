@@ -5,17 +5,20 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
-use program_utils::{validate_system_account_key, BorshPda};
+use program_utils::{
+    validate_mpl_token_metadata_key, validate_rent_key, validate_spl_associated_token_account_key,
+    validate_system_account_key, BorshPda,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
+use solana_program::msg;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, sysvar};
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
@@ -735,16 +738,10 @@ struct GiveTokenAccounts<'a> {
 impl Validate for GiveTokenAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
         validate_system_account_key(self.system_account.key)?;
-        if !spl_associated_token_account::check_id(self.ata_program.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        if !sysvar::rent::check_id(self.rent_sysvar.key) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_spl_associated_token_account_key(self.ata_program.key)?;
+        validate_rent_key(self.rent_sysvar.key)?;
         if let Some(val) = self.mpl_token_metadata_program {
-            if *val.key != mpl_token_metadata::ID {
-                return Err(ProgramError::IncorrectProgramId);
-            }
+            validate_mpl_token_metadata_key(val.key)?;
         }
         Ok(())
     }
@@ -793,9 +790,7 @@ struct AxelarInterchainTokenExecutableAccounts<'a> {
 
 impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
-        if *self.mpl_token_metadata_program.key != mpl_token_metadata::ID {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        validate_mpl_token_metadata_key(self.mpl_token_metadata_program.key)?;
         Ok(())
     }
 }
