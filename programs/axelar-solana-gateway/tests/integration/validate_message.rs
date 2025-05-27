@@ -2,7 +2,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::validate_message;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
-use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda, get_message_payload_pda};
+use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{make_messages, GetGatewayError};
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
@@ -10,7 +10,6 @@ use solana_program_test::tokio;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Signer;
 
 #[tokio::test]
 async fn fail_if_message_pda_does_not_exist() {

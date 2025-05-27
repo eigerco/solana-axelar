@@ -142,7 +142,7 @@ pub async fn initialize_message_payload_pda(
         usize::try_from(buffer_size).unwrap()
     );
     assert!(message_payload.raw_payload.iter().all(|&x| x == 0));
-    assert!(message_payload.payload_hash.iter().all(|&x| x == 0));
+    assert!(message_payload.payload_hash == &message.payload_hash);
 
     // Check the bump too
     let (_, bump) = get_message_payload_pda(&command_id, runner.payer.pubkey());

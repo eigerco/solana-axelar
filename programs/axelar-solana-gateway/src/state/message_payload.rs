@@ -54,6 +54,8 @@ where
     pub payload_hash: R::Ref<[u8; 32]>,
     /// The full message payload contents.
     pub raw_payload: R::Ref<[u8]>,
+    /// Whether the message is committed or
+    pub committed: R::Ref<u8>,
 }
 
 /// Trait to abstract over reference mutability
@@ -81,7 +83,7 @@ impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
     /// Prefix bytes
     ///
     /// 1 byte for the bump plus 32 bytes for the payload hash
-    const HEADER_SIZE: usize = size_of::<u8>() + size_of::<[u8; 32]>();
+    const HEADER_SIZE: usize = size_of::<u8>() + size_of::<u8>() + size_of::<[u8; 32]>();
 
     /// Adds the header prefix space  the given offset.
     #[inline]
@@ -92,7 +94,7 @@ impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
 
     /// Returns `true` if the `payload_hash` section have been modified before.
     pub fn committed(&self) -> bool {
-        !self.payload_hash.iter().all(|&x| x == 0)
+        *self.committed != 0
     }
 
     /// Asserts this message payload account haven't been committed yet.
@@ -126,11 +128,14 @@ impl<'a> TryFrom<&'a mut [u8]> for MessagePayload<'a, Mut> {
         }
 
         let (bump_slice, rest) = bytes.split_at_mut(1);
+        let (committed_slice, rest) = rest.split_at_mut(1);
         let (payload_hash_slice, raw_payload) = rest.split_at_mut(32);
         debug_assert!(!raw_payload.is_empty(), "raw payload slice can't be empty");
 
         // Unwrap: we just checked that the bump slice is large enough
         let bump = bump_slice.first_mut().unwrap();
+        // In order to parse 
+        let committed = committed_slice.first_mut().unwrap();
         // Unwrap: we just checked that the slice bounds fits the expected array size
         let payload_hash = payload_hash_slice.try_into().unwrap();
 
@@ -138,6 +143,7 @@ impl<'a> TryFrom<&'a mut [u8]> for MessagePayload<'a, Mut> {
             bump,
             payload_hash,
             raw_payload,
+            committed,
         })
     }
 }
@@ -176,6 +182,14 @@ impl<'a> MessagePayload<'a, Mut> {
 
         Ok(())
     }
+
+    pub fn commit(&mut self) -> ProgramResult {
+        self.assert_uncommitted()?;
+
+        *self.committed = 1;
+
+        Ok(())
+    }
 }
 
 // Immutable only methods
@@ -192,11 +206,13 @@ impl<'a> TryFrom<&'a [u8]> for MessagePayload<'a, Immut> {
         }
 
         let (bump_slice, rest) = bytes.split_at(1);
+        let (committed_slice, rest) = rest.split_at(1);
         let (payload_hash_slice, raw_payload) = rest.split_at(32);
         debug_assert!(!raw_payload.is_empty(), "raw payload slice can't be empty");
 
         // Unwrap: we just checked that the bump slice is large enough
         let bump = bump_slice.first().unwrap();
+        let committed = committed_slice.first().unwrap();
         // Unwrap: we just checked that the slice bounds fits the expected array size
         let payload_hash = payload_hash_slice.try_into().unwrap();
 
@@ -204,6 +220,7 @@ impl<'a> TryFrom<&'a [u8]> for MessagePayload<'a, Immut> {
             bump,
             payload_hash,
             raw_payload,
+            committed,
         })
     }
 }
@@ -222,8 +239,9 @@ mod tests {
         let message_payload: ImmutMessagePayload<'_> = account_data.as_slice().try_into().unwrap();
 
         assert_eq!(*message_payload.bump, account_data[0]);
-        assert_eq!(*message_payload.payload_hash, account_data[1..33]);
-        assert_eq!(*message_payload.raw_payload, account_data[33..]);
+        assert_eq!(*message_payload.committed, account_data[1]);
+        assert_eq!(*message_payload.payload_hash, account_data[2..34]);
+        assert_eq!(*message_payload.raw_payload, account_data[34..]);
     }
 
     #[test]
@@ -234,10 +252,8 @@ mod tests {
         let mut message_payload: MutMessagePayload<'_> =
             account_data.as_mut_slice().try_into().unwrap();
 
-        message_payload.hash_raw_payload_bytes();
-
         let expected_hash = Keccak256::digest(&message_payload.raw_payload).to_vec();
-        assert_eq!(*expected_hash, *message_payload.payload_hash);
+        assert_eq!(expected_hash, message_payload.hash_raw_payload_bytes().to_bytes());
         assert_ne!(expected_hash, vec![0_u8; 32]); // confidence check
     }
 }
