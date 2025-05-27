@@ -58,8 +58,12 @@ impl Processor {
         // Check: Message payload PDA must not be committed.
         message_payload.assert_uncommitted()?;
 
-        // Finally, calculate the hash and commit it.
-        message_payload.hash_raw_payload_bytes();
+        // Finally, calculate the hash check that it matches the incoming message hash.
+        let payload_hash = message_payload.hash_raw_payload_bytes();
+        if &payload_hash.to_bytes() != message_payload.payload_hash {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
         Ok(())
     }
 }

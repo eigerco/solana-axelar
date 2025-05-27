@@ -25,7 +25,7 @@ use core::mem::size_of;
 use core::ops::Deref;
 
 use solana_program::entrypoint::ProgramResult;
-use solana_program::keccak::hashv;
+use solana_program::keccak::{Hash, hashv};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
@@ -145,9 +145,8 @@ impl<'a> TryFrom<&'a mut [u8]> for MessagePayload<'a, Mut> {
 // Mutable-only methods
 impl<'a> MessagePayload<'a, Mut> {
     /// Hashes the contents of `raw_payload` and stores it under `payload_hash`.
-    pub fn hash_raw_payload_bytes(&mut self) {
-        let digest = hashv(&[(self.raw_payload)]);
-        self.payload_hash.copy_from_slice(&(digest.to_bytes()));
+    pub fn hash_raw_payload_bytes(&mut self) -> Hash {
+        hashv(&[(self.raw_payload)])
     }
 
     /// Writes bytes to the raw payload buffer at the specified offset

@@ -15,9 +15,8 @@ use super::Processor;
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use crate::{
-    assert_valid_message_payload_pda, assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
+    assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
 };
-use crate::state::message_payload::ImmutMessagePayload;
 
 impl Processor {
     /// Validate a message approval, and mark it as used
@@ -42,7 +41,6 @@ impl Processor {
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let incoming_message_pda = next_account_info(accounts_iter)?;
-        let message_payload_account = next_account_info(accounts_iter)?;
         let caller = next_account_info(accounts_iter)?;
 
         // compute the message hash
@@ -72,25 +70,6 @@ impl Processor {
         }
         let destination_address = Pubkey::from_str(&message.destination_address)
             .map_err(|_err| GatewayError::InvalidDestinationAddress)?;
-
-        // Read the raw payload from the MessagePayload PDA account
-        let message_payload_account_data = message_payload_account.try_borrow_data()?;
-        let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
-        assert_valid_message_payload_pda(
-            &command_id,
-            *message_payload.bump,
-            message_payload_account.key,
-        )?;
-
-        // Check: MessagePayload PDA is finalized
-        if !message_payload.committed() {
-            return Err(ProgramError::InvalidAccountData);
-        }
-
-        // Check: MessagePayload's payload hash matches IncomingMessage's
-        if *message_payload.payload_hash != message.payload_hash {
-            return Err(ProgramError::InvalidAccountData);
-        }
 
         // check that caller ir valid signing PDA
         let expected_signing_pda = create_validate_message_signing_pda(

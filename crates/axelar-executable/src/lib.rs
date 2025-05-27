@@ -136,7 +136,7 @@ fn validate_message_internal(
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let gateway_incoming_message = next_account_info(account_info_iter)?;
-    let message_payload_pda = next_account_info(account_info_iter)?; // skip this one, we don't need it
+    let _message_payload_pda = next_account_info(account_info_iter)?; // skip this one, we don't need it
     let signing_pda = next_account_info(account_info_iter)?;
     let _gateway_program_id = next_account_info(account_info_iter)?;
 
@@ -146,7 +146,6 @@ fn validate_message_internal(
     invoke_signed(
         &axelar_solana_gateway::instructions::validate_message(
             gateway_incoming_message.key,
-            message_payload_pda.key,
             signing_pda.key,
             message.clone(),
         )?,
