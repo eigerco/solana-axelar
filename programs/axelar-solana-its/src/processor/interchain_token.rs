@@ -30,7 +30,9 @@ use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInterna
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_deploy_approval_pda, event, Validate};
+use crate::{
+    assert_valid_deploy_approval_pda, event, find_its_root_pda, find_token_manager_pda, Validate,
+};
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
@@ -590,6 +592,13 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     )?;
 
     let token_id = crate::interchain_token_id(&deployer, &salt);
+    let (its_root_pda, _) = find_its_root_pda();
+    let (token_manager_check, _) = find_token_manager_pda(&its_root_pda, &token_id);
+    if *token_manager_account.key != token_manager_check {
+        msg!("Failed to validate token manager account");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let (_, bump) = crate::find_deployment_approval_pda(payer.key, &token_id, &destination_chain);
 
     let approval = DeployApproval {
