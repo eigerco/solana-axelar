@@ -394,9 +394,9 @@ pub struct DeployInterchainToken<'info> {
     metadata_account: AccountInfo<'info>,
     #[account(mut)]
     payer_ata: AccountInfo<'info>,
-    // optional_minter: AccountInfo<'info>,
-    // #[account(mut)]
-    // optional_minter_roles_pda: AccountInfo<'info>,
+    optional_minter: AccountInfo<'info>,
+    #[account(mut)]
+    optional_minter_roles_pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -473,10 +473,10 @@ pub struct RegisterCustomToken<'info> {
     #[account(mut)]
     its_user_roles_pda: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
-    // #[account(mut)]
-    // optional_operator: AccountInfo<'info>,
-    // #[account(mut)]
-    // optional_operator_roles_pda: AccountInfo<'info>,
+    #[account(mut)]
+    optional_operator: AccountInfo<'info>,
+    #[account(mut)]
+    optional_operator_roles_pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -821,22 +821,22 @@ pub enum Type {
     MintBurn,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct InterchainTokenService {
-    /// The address of the Axelar ITS Hub contract.
-    pub its_hub_address: String,
-    /// Name of the chain ITS is running on.
-    pub chain_name: String,
-
-    /// Whether the ITS is paused.
-    pub paused: bool,
-
-    /// Trusted chains
-    pub trusted_chains: HashSet<String>,
-
-    /// Bump used to derive the ITS PDA.
-    pub bump: u8,
-}
+//#[derive(AnchorSerialize, AnchorDeserialize)]
+//pub struct InterchainTokenService {
+//    /// The address of the Axelar ITS Hub contract.
+//    pub its_hub_address: String,
+//    /// Name of the chain ITS is running on.
+//    pub chain_name: String,
+//
+//    /// Whether the ITS is paused.
+//    pub paused: bool,
+//
+//    /// Trusted chains
+//    pub trusted_chains: HashSet<String>,
+//
+//    /// Bump used to derive the ITS PDA.
+//    pub bump: u8,
+//}
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DeployApproval {

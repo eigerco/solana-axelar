@@ -14,9 +14,8 @@ describe("Ping Memo Program", () => {
       [],
       payer.publicKey
     );
-    const bump = 0;
-    let counterPdaPublicKey = PublicKey.createProgramAddressSync(
-      [gatewayRootPdaPublicKey.toBuffer(), Buffer.from([bump])],
+    let [counterPdaPublicKey, bump] = PublicKey.findProgramAddressSync(
+      [],
       AXELAR_SOLANA_MEMO_PROGRAM_PROGRAM_ID
     );
 
