@@ -22,7 +22,7 @@ describe("Ping ITS", () => {
         "Test OK: Program throws error, but data is properly sent through bindings."
       );
     } else {
-      console.log(
+      throw new Error(
         "Test FAIL: Program throws error and data is not properly sent. Check bindings."
       );
     }
@@ -409,6 +409,7 @@ describe("Ping ITS", () => {
           tokenManagerAta: payer.publicKey,
           tokenProgram: payer.publicKey,
           flowSlotPda: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
@@ -445,6 +446,7 @@ describe("Ping ITS", () => {
           tokenManagerAta: payer.publicKey,
           tokenProgram: payer.publicKey,
           flowSlotPda: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
@@ -492,7 +494,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "Operator");
+      processError(error, "TransferOperatorship");
     }
   });
 
@@ -512,7 +514,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "Operator");
+      processError(error, "ProposeOperatorship");
     }
   });
 
@@ -532,7 +534,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "Operator");
+      processError(error, "AcceptOperatorship");
     }
   });
 
@@ -551,7 +553,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM AddFlowLimiter");
+      processError(error, "AddTokenManagerFlowLimiter");
     }
   });
 
@@ -570,7 +572,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM RemoveFlowLimiter");
+      processError(error, "RemoveTokenManagerFlowLimiter");
     }
   });
 
@@ -589,7 +591,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM SetFlowLimit");
+      processError(error, "SetTokenManagerFlowLimit");
     }
   });
 
@@ -609,7 +611,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "TransferTokenManagerOperatorship");
     }
   });
 
@@ -630,7 +632,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "ProposeTokenManagerOperatorship");
     }
   });
 
@@ -651,11 +653,11 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "AcceptTokenManagerOperatorship");
     }
   });
 
-  it("TM Flow Limiter", async () => {
+  it("Handover Mint Authority", async () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
@@ -671,7 +673,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Hand Over Mint Authority");
+      processError(error, "HandoverMintAuthority");
     }
   });
 
@@ -691,7 +693,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "IT Mint");
+      processError(error, "MintInterchainToken");
     }
   });
 
@@ -711,7 +713,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "TransferInterchainTokenMintership");
     }
   });
 
@@ -732,7 +734,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "ProposeInterchainTokenMintership");
     }
   });
 
@@ -753,7 +755,7 @@ describe("Ping ITS", () => {
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "AcceptInterchainTokenMintership");
     }
   });
 });

@@ -1052,7 +1052,7 @@ type AxelarSolanaIts = {
         {
           name: "authority";
           isMut: false;
-          isSigner: true;
+          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -1082,6 +1082,11 @@ type AxelarSolanaIts = {
         {
           name: "flowSlotPda";
           isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
           isSigner: false;
         },
         {
@@ -1164,7 +1169,7 @@ type AxelarSolanaIts = {
         {
           name: "authority";
           isMut: false;
-          isSigner: true;
+          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -1194,6 +1199,11 @@ type AxelarSolanaIts = {
         {
           name: "flowSlotPda";
           isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
           isSigner: false;
         },
         {
@@ -1900,83 +1910,7 @@ type AxelarSolanaIts = {
       args: [];
     }
   ];
-  accounts: [
-    {
-      name: "tokenManager";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "ty";
-            type: {
-              defined: "Type";
-            };
-          },
-          {
-            name: "tokenId";
-            type: {
-              array: ["u8", 32];
-            };
-          },
-          {
-            name: "tokenAddress";
-            type: "publicKey";
-          },
-          {
-            name: "associatedTokenAccount";
-            type: "publicKey";
-          },
-          {
-            name: "flowLimit";
-            type: "u64";
-          },
-          {
-            name: "bump";
-            type: "u8";
-          }
-        ];
-      };
-    }
-  ];
   types: [
-    {
-      name: "DeployApproval";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "approvedDestinationMinter";
-            type: {
-              array: ["u8", 32];
-            };
-          },
-          {
-            name: "bump";
-            type: "u8";
-          }
-        ];
-      };
-    },
-    {
-      name: "FlowSlot";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "flowIn";
-            type: "u64";
-          },
-          {
-            name: "flowOut";
-            type: "u64";
-          },
-          {
-            name: "bump";
-            type: "u8";
-          }
-        ];
-      };
-    },
     {
       name: "Type";
       type: {
@@ -3032,7 +2966,7 @@ const IDL: AxelarSolanaIts = {
         {
           name: "authority",
           isMut: false,
-          isSigner: true,
+          isSigner: false,
         },
         {
           name: "sourceAccount",
@@ -3062,6 +2996,11 @@ const IDL: AxelarSolanaIts = {
         {
           name: "flowSlotPda",
           isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
           isSigner: false,
         },
         {
@@ -3144,7 +3083,7 @@ const IDL: AxelarSolanaIts = {
         {
           name: "authority",
           isMut: false,
-          isSigner: true,
+          isSigner: false,
         },
         {
           name: "sourceAccount",
@@ -3174,6 +3113,11 @@ const IDL: AxelarSolanaIts = {
         {
           name: "flowSlotPda",
           isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
           isSigner: false,
         },
         {
@@ -3880,83 +3824,7 @@ const IDL: AxelarSolanaIts = {
       args: [],
     },
   ],
-  accounts: [
-    {
-      name: "tokenManager",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "ty",
-            type: {
-              defined: "Type",
-            },
-          },
-          {
-            name: "tokenId",
-            type: {
-              array: ["u8", 32],
-            },
-          },
-          {
-            name: "tokenAddress",
-            type: "publicKey",
-          },
-          {
-            name: "associatedTokenAccount",
-            type: "publicKey",
-          },
-          {
-            name: "flowLimit",
-            type: "u64",
-          },
-          {
-            name: "bump",
-            type: "u8",
-          },
-        ],
-      },
-    },
-  ],
   types: [
-    {
-      name: "DeployApproval",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "approvedDestinationMinter",
-            type: {
-              array: ["u8", 32],
-            },
-          },
-          {
-            name: "bump",
-            type: "u8",
-          },
-        ],
-      },
-    },
-    {
-      name: "FlowSlot",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "flowIn",
-            type: "u64",
-          },
-          {
-            name: "flowOut",
-            type: "u64",
-          },
-          {
-            name: "bump",
-            type: "u8",
-          },
-        ],
-      },
-    },
     {
       name: "Type",
       type: {

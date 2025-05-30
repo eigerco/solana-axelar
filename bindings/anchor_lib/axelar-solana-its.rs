@@ -498,7 +498,7 @@ pub struct LinkToken<'info> {
 #[derive(Accounts)]
 pub struct CallContractWithInterchainToken<'info> {
     payer: Signer<'info>,
-    authority: Signer<'info>,
+    authority: AccountInfo<'info>,
     #[account(mut)]
     source_account: AccountInfo<'info>,
     #[account(mut)]
@@ -509,6 +509,7 @@ pub struct CallContractWithInterchainToken<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -522,7 +523,7 @@ pub struct CallContractWithInterchainToken<'info> {
 #[derive(Accounts)]
 pub struct CallContractWithInterchainTokenOffchainData<'info> {
     payer: Signer<'info>,
-    authority: Signer<'info>,
+    authority: AccountInfo<'info>,
     #[account(mut)]
     source_account: AccountInfo<'info>,
     #[account(mut)]
@@ -533,6 +534,7 @@ pub struct CallContractWithInterchainTokenOffchainData<'info> {
     token_program: Program<'info, Token>,
     #[account(mut)]
     flow_slot_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -747,27 +749,6 @@ pub struct AcceptInterchainTokenMintership<'info> {
     proposal_pda: AccountInfo<'info>,
 }
 
-#[account]
-pub struct TokenManager {
-    /// The type of `TokenManager`.
-    pub ty: Type,
-
-    /// The interchain token id.
-    pub token_id: [u8; 32],
-
-    /// The token address within the Solana chain.
-    pub token_address: Pubkey,
-
-    /// The associated token account owned by the token manager.
-    pub associated_token_account: Pubkey,
-
-    /// The flow limit for the token manager
-    pub flow_limit: u64,
-
-    /// The token manager PDA bump seed.
-    pub bump: u8,
-}
-
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub enum Type {
     /// For tokens that are deployed directly from ITS itself they use a native
@@ -819,34 +800,4 @@ pub enum Type {
     /// manager will need to be granted the role to be able to execute the
     /// `mint` and `burn` function on the token.
     MintBurn,
-}
-
-//#[derive(AnchorSerialize, AnchorDeserialize)]
-//pub struct InterchainTokenService {
-//    /// The address of the Axelar ITS Hub contract.
-//    pub its_hub_address: String,
-//    /// Name of the chain ITS is running on.
-//    pub chain_name: String,
-//
-//    /// Whether the ITS is paused.
-//    pub paused: bool,
-//
-//    /// Trusted chains
-//    pub trusted_chains: HashSet<String>,
-//
-//    /// Bump used to derive the ITS PDA.
-//    pub bump: u8,
-//}
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct DeployApproval {
-    pub approved_destination_minter: [u8; 32],
-    pub bump: u8,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct FlowSlot {
-    pub flow_in: u64,
-    pub flow_out: u64,
-    pub bump: u8,
 }

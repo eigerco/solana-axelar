@@ -34,7 +34,7 @@ describe("Ping Memo Program", () => {
           "Initializing failed, probably it has been already initialized. Skipping..."
         );
       } else {
-        console.log("Test FAILED: Check if program is loaded");
+        throw new Error("Test FAILED: Check if program is loaded");
       }
     }
     program.methods

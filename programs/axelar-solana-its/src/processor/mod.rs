@@ -2,7 +2,6 @@
 //! Program state processor
 use borsh::BorshDeserialize;
 use event_utils::Event as _;
-use interchain_token::process_mint;
 use program_utils::{
     pda::{BorshPda, ValidPDA},
     validate_system_account_key,
@@ -230,7 +229,7 @@ pub fn process_instruction<'a>(
             handover_mint_authority(accounts, token_id)
         }
         InterchainTokenServiceInstruction::MintInterchainToken { amount } => {
-            process_mint(accounts, amount)
+            interchain_token::process_mint(accounts, amount)
         }
         InterchainTokenServiceInstruction::TransferInterchainTokenMintership => {
             interchain_token::process_transfer_mintership(accounts)

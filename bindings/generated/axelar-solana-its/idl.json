@@ -1051,7 +1051,7 @@
         {
           "name": "authority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "sourceAccount",
@@ -1081,6 +1081,11 @@
         {
           "name": "flowSlotPda",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -1166,7 +1171,7 @@
         {
           "name": "authority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "sourceAccount",
@@ -1196,6 +1201,11 @@
         {
           "name": "flowSlotPda",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -1911,89 +1921,7 @@
       "args": []
     }
   ],
-  "accounts": [
-    {
-      "name": "TokenManager",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "ty",
-            "type": {
-              "defined": "Type"
-            }
-          },
-          {
-            "name": "tokenId",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "tokenAddress",
-            "type": "publicKey"
-          },
-          {
-            "name": "associatedTokenAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "flowLimit",
-            "type": "u64"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    }
-  ],
   "types": [
-    {
-      "name": "DeployApproval",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "approvedDestinationMinter",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "FlowSlot",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "flowIn",
-            "type": "u64"
-          },
-          {
-            "name": "flowOut",
-            "type": "u64"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
     {
       "name": "Type",
       "type": {

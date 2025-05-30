@@ -395,7 +395,7 @@ pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> 
     let minter_roles_pda = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
 
-    msg!("Instruction: IT Mint");
+    msg!("Instruction: MintInterchainToken");
     let token_manager = TokenManager::load(token_manager_pda)?;
     assert_valid_token_manager_pda(
         token_manager_pda,

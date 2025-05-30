@@ -293,7 +293,7 @@ pub(crate) fn handover_mint_authority(
     let system_account = next_account_info(accounts_iter)?;
 
     validate_system_account_key(system_account.key)?;
-    msg!("Instruction: TM Hand Over Mint Authority");
+    msg!("Instruction: HandoverMintAuthority");
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
 
