@@ -1,12 +1,16 @@
 //! Program state processor.
 
 use borsh::BorshDeserialize;
-use solana_program::account_info::AccountInfo;
+use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::msg;
+use solana_program::program::invoke_signed;
 use solana_program::pubkey::Pubkey;
+use solana_program::rent::Rent;
+use solana_program::sysvar::Sysvar;
+use solana_program::{msg, system_instruction};
 
 use crate::instructions::DummyGatewayInstruction;
+use crate::seed_prefixes;
 
 /// Program state handler.
 pub struct Processor;
@@ -14,14 +18,38 @@ pub struct Processor;
 impl Processor {
     /// Processes an instruction.
     pub fn process_instruction(
-        _program_id: &Pubkey,
-        _accounts: &[AccountInfo<'_>],
+        program_id: &Pubkey,
+        accounts: &[AccountInfo<'_>],
         input: &[u8],
     ) -> ProgramResult {
         let instruction = DummyGatewayInstruction::try_from_slice(input)?;
         match instruction {
             DummyGatewayInstruction::Echo { message } => {
                 msg!("Echo: {}", message);
+                Ok(())
+            }
+            DummyGatewayInstruction::RawPDACreation { bump } => {
+                let accounts_iter = &mut accounts.iter();
+
+                let payer = next_account_info(accounts_iter)?;
+                let a_pda = next_account_info(accounts_iter)?;
+                let system_account = next_account_info(accounts_iter)?;
+
+                let rent = Rent::get()?;
+                let ix = &system_instruction::create_account(
+                    payer.key,
+                    a_pda.key,
+                    rent.minimum_balance(1).max(1),
+                    1,
+                    program_id,
+                );
+                invoke_signed(
+                    ix,
+                    &[payer.clone(), a_pda.clone(), system_account.clone()],
+                    &[&[seed_prefixes::A_PDA, &[bump]]],
+                )?;
+                let mut account_data = a_pda.try_borrow_mut_data()?;
+                account_data.fill(0); // Initialize the account data to zero
                 Ok(())
             }
         }
