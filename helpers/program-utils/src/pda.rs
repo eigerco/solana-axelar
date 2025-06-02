@@ -131,6 +131,133 @@ pub fn close_pda(
     Ok(())
 }
 
+/// Initialize a PDA by writing borsh serialisable data to the buffer
+// TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
+pub fn init_pda_v2<'a, 'b, T: solana_program::program_pack::Pack>(
+    funder_info: &'a AccountInfo<'b>,
+    to_create: &'a AccountInfo<'b>,
+    program_id: &Pubkey,
+    system_program_info: &'a AccountInfo<'b>,
+    data: T,
+    signer_seeds: &[&[u8]],
+) -> Result<(), ProgramError> {
+    prepare_pda_structure(
+        funder_info,
+        to_create,
+        program_id,
+        system_program_info,
+        T::get_packed_len() as u64,
+        signer_seeds,
+    )?;
+
+    let mut account_data = to_create.try_borrow_mut_data()?;
+    T::pack(data, &mut account_data)?;
+
+    Ok(())
+}
+
+/// Prepare a PDA structure by transferring funds, allocating space, and assigning the program ID
+fn prepare_pda_structure<'a, 'b>(
+    funder_info: &'a AccountInfo<'b>,
+    to_create: &'a AccountInfo<'b>,
+    program_id: &Pubkey,
+    system_program_info: &'a AccountInfo<'b>,
+    space: u64,
+    signer_seeds: &[&[u8]],
+) -> Result<(), ProgramError> {
+    // Calculate the minimum rent required for the account
+    let rent = Rent::get()?
+        .minimum_balance(space.try_into().expect("u64 fits into sbf word size"))
+        .max(1);
+
+    // Check if the account already has enough lamports to cover rent
+    let required_funds_for_rent = if to_create.lamports() >= rent {
+        0
+    } else {
+        rent.checked_sub(to_create.lamports())
+            .expect("To not underflow when calculating needed rent")
+    };
+
+    // Create the instructions to transfer funds, allocate space, and assign the program ID
+    let transfer_ix =
+        &system_instruction::transfer(funder_info.key, to_create.key, required_funds_for_rent);
+    let alloc_ix = &system_instruction::allocate(to_create.key, space);
+    let assign_ix = &system_instruction::assign(to_create.key, program_id);
+
+    // Invoke the instructions to transfer funds, allocate space, and assign the program ID
+    invoke_signed(
+        transfer_ix,
+        &[
+            funder_info.clone(),
+            to_create.clone(),
+            system_program_info.clone(),
+        ],
+        &[signer_seeds],
+    )?;
+    invoke_signed(
+        alloc_ix,
+        &[
+            funder_info.clone(),
+            to_create.clone(),
+            system_program_info.clone(),
+        ],
+        &[signer_seeds],
+    )?;
+    invoke_signed(
+        assign_ix,
+        &[
+            funder_info.clone(),
+            to_create.clone(),
+            system_program_info.clone(),
+        ],
+        &[signer_seeds],
+    )
+}
+
+/// Initialize an associated account, with raw bytes.
+pub fn init_pda_raw_bytes_v2<'a, 'b>(
+    funder_info: &'a AccountInfo<'b>,
+    to_create: &'a AccountInfo<'b>,
+    program_id: &Pubkey,
+    system_program_info: &'a AccountInfo<'b>,
+    data: &[u8],
+    signer_seeds: &[&[u8]],
+) -> Result<(), ProgramError> {
+    init_pda_raw_v2(
+        funder_info,
+        to_create,
+        program_id,
+        system_program_info,
+        data.len() as u64,
+        signer_seeds,
+    )?;
+
+    let mut account_data = to_create.try_borrow_mut_data()?;
+    account_data.write_all(data).map_err(|err| {
+        msg!("Cannot write data to account: {}", err);
+        ProgramError::InvalidArgument
+    })
+}
+
+/// Initializes a PDA without writing anything to the data storage
+pub fn init_pda_raw_v2<'a, 'b>(
+    funder_info: &'a AccountInfo<'b>,
+    to_create: &'a AccountInfo<'b>,
+    program_id: &Pubkey,
+    system_program_info: &'a AccountInfo<'b>,
+    data_len: u64,
+    signer_seeds: &[&[u8]],
+) -> Result<(), ProgramError> {
+    prepare_pda_structure(
+        funder_info,
+        to_create,
+        program_id,
+        system_program_info,
+        data_len,
+        signer_seeds,
+    )
+}
+
 /// Extension trait for AccountInfo to check if the account is an initialized
 /// PDA
 pub trait ValidPDA {

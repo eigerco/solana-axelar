@@ -23,6 +23,9 @@ pub enum DummyGatewayInstruction {
     RawPDACreation {
         bump: u8,
     },
+    PDACreation {
+        bump: u8,
+    },
 }
 
 /// Creates a echo instruction.
@@ -46,6 +49,23 @@ pub fn create_raw_pda(payer: &Pubkey) -> (Instruction, (Pubkey, u8)) {
                 AccountMeta::new_readonly(system_program::id(), false),
             ],
             data: to_vec(&DummyGatewayInstruction::RawPDACreation { bump }).unwrap(),
+        },
+        (key, bump),
+    )
+}
+
+/// Creates a program PDA using the enhanced version.
+pub fn create_pda(payer: &Pubkey) -> (Instruction, (Pubkey, u8)) {
+    let (key, bump) = Pubkey::find_program_address(&[seed_prefixes::A_PDA], &crate::id());
+    (
+        Instruction {
+            program_id: crate::id(),
+            accounts: vec![
+                AccountMeta::new_readonly(*payer, true),
+                AccountMeta::new(key, false),
+                AccountMeta::new_readonly(system_program::id(), false),
+            ],
+            data: to_vec(&DummyGatewayInstruction::PDACreation { bump }).unwrap(),
         },
         (key, bump),
     )
