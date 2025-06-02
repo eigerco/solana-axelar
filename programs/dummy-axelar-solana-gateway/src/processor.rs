@@ -4,7 +4,7 @@ use std::any::type_name;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use core::mem::size_of;
-use program_utils::pda::init_pda_v2;
+use program_utils::pda::init_pda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -67,7 +67,7 @@ impl Processor {
 
                 let data = PDASampleData { number: 1 };
 
-                init_pda_v2(
+                init_pda(
                     payer,
                     a_pda,
                     &crate::ID,

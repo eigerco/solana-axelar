@@ -25,122 +25,6 @@ pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     data: T,
     signer_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
-    let rent = Rent::get()?;
-    let ix = &system_instruction::create_account(
-        funder_info.key,
-        to_create.key,
-        rent.minimum_balance(T::LEN).max(1),
-        T::get_packed_len() as u64,
-        program_id,
-    );
-    invoke_signed(
-        ix,
-        &[
-            funder_info.clone(),
-            to_create.clone(),
-            system_program_info.clone(),
-        ],
-        &[signer_seeds],
-    )?;
-    let mut account_data = to_create.try_borrow_mut_data()?;
-    T::pack(data, &mut account_data)?;
-    Ok(())
-}
-
-/// Initialize an associated account, with raw bytes.
-pub fn init_pda_raw_bytes<'a, 'b>(
-    funder_info: &'a AccountInfo<'b>,
-    to_create: &'a AccountInfo<'b>,
-    program_id: &Pubkey,
-    system_program_info: &'a AccountInfo<'b>,
-    data: &[u8],
-    signer_seeds: &[&[u8]],
-) -> Result<(), ProgramError> {
-    let rent = Rent::get()?;
-    let ix = &system_instruction::create_account(
-        funder_info.key,
-        to_create.key,
-        rent.minimum_balance(data.len()).max(1),
-        data.len() as u64,
-        program_id,
-    );
-    invoke_signed(
-        ix,
-        &[
-            funder_info.clone(),
-            to_create.clone(),
-            system_program_info.clone(),
-        ],
-        &[signer_seeds],
-    )?;
-    let mut account_data = to_create.try_borrow_mut_data()?;
-    account_data.write_all(data).map_err(|err| {
-        msg!("Cannot write data to account: {}", err);
-        ProgramError::InvalidArgument
-    })
-}
-
-/// Initializes a PDA without writing anything to the data storage
-pub fn init_pda_raw<'a, 'b>(
-    funder_info: &'a AccountInfo<'b>,
-    to_create: &'a AccountInfo<'b>,
-    program_id: &Pubkey,
-    system_program_info: &'a AccountInfo<'b>,
-    data_len: u64,
-    signer_seeds: &[&[u8]],
-) -> Result<(), ProgramError> {
-    let rent = Rent::get()?;
-    let ix = &system_instruction::create_account(
-        funder_info.key,
-        to_create.key,
-        rent.minimum_balance(data_len.try_into().expect("u64 fits into sbf word size"))
-            .max(1),
-        data_len,
-        program_id,
-    );
-    invoke_signed(
-        ix,
-        &[
-            funder_info.clone(),
-            to_create.clone(),
-            system_program_info.clone(),
-        ],
-        &[signer_seeds],
-    )?;
-    Ok(())
-}
-
-/// Close an associated account
-pub fn close_pda(
-    lamport_destination: &AccountInfo<'_>,
-    pda_to_close: &AccountInfo<'_>,
-) -> Result<(), solana_program::program_error::ProgramError> {
-    // Transfer the lamports to the destination account
-    let dest_starting_lamports = lamport_destination.lamports();
-    **lamport_destination.lamports.borrow_mut() = dest_starting_lamports
-        .checked_add(pda_to_close.lamports())
-        .unwrap();
-    **pda_to_close.lamports.borrow_mut() = 0;
-
-    // Downgrade the PDA's account to the system program
-    pda_to_close.assign(&system_program::ID);
-
-    // Downsize the PDA's account to 0
-    pda_to_close.realloc(0, false)?;
-
-    Ok(())
-}
-
-/// Initialize a PDA by writing borsh serialisable data to the buffer
-// TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
-pub fn init_pda_v2<'a, 'b, T: solana_program::program_pack::Pack>(
-    funder_info: &'a AccountInfo<'b>,
-    to_create: &'a AccountInfo<'b>,
-    program_id: &Pubkey,
-    system_program_info: &'a AccountInfo<'b>,
-    data: T,
-    signer_seeds: &[&[u8]],
-) -> Result<(), ProgramError> {
     prepare_pda_structure(
         funder_info,
         to_create,
@@ -215,7 +99,7 @@ fn prepare_pda_structure<'a, 'b>(
 }
 
 /// Initialize an associated account, with raw bytes.
-pub fn init_pda_raw_bytes_v2<'a, 'b>(
+pub fn init_pda_raw_bytes<'a, 'b>(
     funder_info: &'a AccountInfo<'b>,
     to_create: &'a AccountInfo<'b>,
     program_id: &Pubkey,
@@ -223,7 +107,7 @@ pub fn init_pda_raw_bytes_v2<'a, 'b>(
     data: &[u8],
     signer_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
-    init_pda_raw_v2(
+    init_pda_raw(
         funder_info,
         to_create,
         program_id,
@@ -240,7 +124,7 @@ pub fn init_pda_raw_bytes_v2<'a, 'b>(
 }
 
 /// Initializes a PDA without writing anything to the data storage
-pub fn init_pda_raw_v2<'a, 'b>(
+pub fn init_pda_raw<'a, 'b>(
     funder_info: &'a AccountInfo<'b>,
     to_create: &'a AccountInfo<'b>,
     program_id: &Pubkey,
@@ -256,6 +140,27 @@ pub fn init_pda_raw_v2<'a, 'b>(
         data_len,
         signer_seeds,
     )
+}
+
+/// Close an associated account
+pub fn close_pda(
+    lamport_destination: &AccountInfo<'_>,
+    pda_to_close: &AccountInfo<'_>,
+) -> Result<(), solana_program::program_error::ProgramError> {
+    // Transfer the lamports to the destination account
+    let dest_starting_lamports = lamport_destination.lamports();
+    **lamport_destination.lamports.borrow_mut() = dest_starting_lamports
+        .checked_add(pda_to_close.lamports())
+        .unwrap();
+    **pda_to_close.lamports.borrow_mut() = 0;
+
+    // Downgrade the PDA's account to the system program
+    pda_to_close.assign(&system_program::ID);
+
+    // Downsize the PDA's account to 0
+    pda_to_close.realloc(0, false)?;
+
+    Ok(())
 }
 
 /// Extension trait for AccountInfo to check if the account is an initialized
