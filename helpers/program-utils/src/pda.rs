@@ -25,7 +25,7 @@ pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     data: T,
     signer_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
-    prepare_pda_structure(
+    prepare_account_structure(
         funder_info,
         to_create,
         program_id,
@@ -40,8 +40,8 @@ pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     Ok(())
 }
 
-/// Prepare a PDA structure by transferring funds, allocating space, and assigning the program ID
-fn prepare_pda_structure<'a, 'b>(
+/// Prepare an account structure by transferring funds, allocating space, and assigning the program ID
+fn prepare_account_structure<'a, 'b>(
     funder_info: &'a AccountInfo<'b>,
     to_create: &'a AccountInfo<'b>,
     program_id: &Pubkey,
@@ -132,7 +132,7 @@ pub fn init_pda_raw<'a, 'b>(
     data_len: u64,
     signer_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
-    prepare_pda_structure(
+    prepare_account_structure(
         funder_info,
         to_create,
         program_id,
