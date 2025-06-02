@@ -1,4 +1,3 @@
-use crate::assert_valid_incoming_message_pda;
 use crate::error::GatewayError;
 use crate::state::incoming_message::IncomingMessage;
 use crate::state::message_payload::MutMessagePayload;
@@ -47,19 +46,7 @@ impl Processor {
         let gateway_root_pda = next_account_info(accounts_iter)?;
         let incoming_message_account = next_account_info(accounts_iter)?;
         let message_payload_account = next_account_info(accounts_iter)?;
-        let incoming_message_pda = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
-
-        // Check: Gateway Root PDA is initialized.
-        incoming_message_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let incoming_message =
-            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        assert_valid_incoming_message_pda(
-            &command_id,
-            incoming_message.bump,
-            incoming_message_pda.key,
-        )?;
 
         // Check: Payer is the signer
         if !payer.is_signer {

@@ -551,7 +551,6 @@ pub fn initialize_message_payload(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
-        AccountMeta::new(incoming_message_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 

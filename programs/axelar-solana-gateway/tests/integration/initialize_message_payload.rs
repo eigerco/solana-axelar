@@ -8,7 +8,7 @@ use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway::{
-    get_message_payload_pda, get_incoming_message_pda, get_validate_message_signing_pda,
+    find_message_payload_pda, get_incoming_message_pda, get_validate_message_signing_pda,
 };
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, random_message, ProgramInvocationState,
