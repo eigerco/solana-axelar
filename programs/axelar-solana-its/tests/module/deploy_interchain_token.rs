@@ -543,10 +543,12 @@ async fn test_prevent_deploy_approval_created_by_anyone(
         )
         .await;
     assert!(res.is_err());
-    assert!(res
-        .as_ref()
-        .expect_err("Expected to fail")
-        .find_log("Failed to validate token manager account")
-        .is_some());
+    let err = res.as_ref().expect_err("Expected to fail");
+    assert!(
+        err.find_log("Invalid TokenManager PDA provided").is_some()
+            || err
+                .find_log("Provided seeds do not result in a valid address")
+                .is_some()
+    );
     Ok(())
 }
