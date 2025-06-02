@@ -267,8 +267,6 @@ export class ItsInstructions {
         payer: params.payer,
         mint: params.mint,
         metadataAccount: tokenMetadataAccount,
-        sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -343,8 +341,8 @@ export class ItsInstructions {
         mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
         metadataAccount: tokenMetadataAccount,
         payerAta,
-        minter: params.minter,
-        minterRolesPda,
+        optionalMinter: params.minter,
+        optionalMinterRolesPda: minterRolesPda,
       });
   }
 
@@ -376,8 +374,6 @@ export class ItsInstructions {
         payer: params.payer,
         mint: interchainTokenPda,
         metadataAccount: tokenMetadataAccount,
-        sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -430,8 +426,6 @@ export class ItsInstructions {
         deployApproval: deployApprovalPda,
         minterRolesPda,
         tokenManagerPda,
-        sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -493,7 +487,7 @@ export class ItsInstructions {
     );
     const operatorRolesPda = params.operator
       ? findUserRolesPda(tokenManagerPda, params.operator)[0]
-      : null;
+      : undefined;
 
     return this.program.methods
       .registerCustomToken(
@@ -513,8 +507,8 @@ export class ItsInstructions {
         splAssociatedTokenAccount: ASSOCIATED_TOKEN_PROGRAM_ID,
         itsUserRolesPda,
         rent: SYSVAR_RENT_PUBKEY,
-        operator: params.operator,
-        operatorRolesPda,
+        optionalOperator: params.operator || undefined,
+        optionalOperatorRolesPda: operatorRolesPda,
       });
   }
 
@@ -800,99 +794,72 @@ export class ItsInstructions {
     payer: PublicKey;
     newOperator: PublicKey;
   }): ReturnType<Program["methods"]["operatorTransferOperatorship"]> {
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [destinationUserRolesPda, _] = findUserRolesPda(
       this.itsRootPda,
       params.newOperator
     );
     const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
 
-    return this.program.methods
-      .operatorTransferOperatorship({
-        roles: { operator: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump: null,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.newOperator,
-        destinationRolesAccount: destinationUserRolesPda,
-        originUserAccount: params.payer,
-        originRolesAccount: payerRolesPda,
-      });
+    return this.program.methods.transferOperatorship().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      itsRootPda: this.itsRootPda,
+      to: params.newOperator,
+      destinationRolesPda: destinationUserRolesPda,
+    });
   }
 
   proposeOperatorship(params: {
     payer: PublicKey;
     newOperator: PublicKey;
   }): ReturnType<Program["methods"]["operatorProposeOperatorship"]> {
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [destinationRolesPda] = findUserRolesPda(
       this.itsRootPda,
       params.newOperator
     );
     const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
-    const [proposalPda, proposalPdaBump] = findProposalPda(
+    const [proposalPda] = findProposalPda(
       this.itsRootPda,
       params.payer,
       params.newOperator
     );
 
-    return this.program.methods
-      .operatorProposeOperatorship({
-        roles: { operator: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.newOperator,
-        destinationRolesAccount: destinationUserRolesPda,
-        originUserAccount: params.payer,
-        originRolesAccount: payerRolesPda,
-        proposalAccount: proposalPda,
-      });
+    return this.program.methods.proposeOperatorship().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      itsRootPda: this.itsRootPda,
+      to: params.newOperator,
+      destinationRolesPda,
+      proposalPda,
+    });
   }
 
   acceptOperatorship(params: {
     payer: PublicKey;
     oldOperator: PublicKey;
   }): ReturnType<Program["methods"]["operatorAcceptOperatorship"]> {
-    const [payerRolesPda, payerRolesPdaBump] = findUserRolesPda(
-      this.itsRootPda,
-      params.payer
-    );
+    const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
     const [oldOperatorRolesPda] = findUserRolesPda(
       this.itsRootPda,
       params.oldOperator
     );
-    const [proposalPda, proposalPdaBump] = findProposalPda(
+    const [proposalPda] = findProposalPda(
       this.itsRootPda,
       params.oldOperator,
       params.payer
     );
 
-    return this.program.methods
-      .operatorAcceptOperatorship({
-        roles: { operator: {} },
-        destinationRolesPdaBump: payerRolesPdaBump,
-        proposalPdaBump,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.payer,
-        destinationRolesAccount: payerRolesPda,
-        originUserAccount: params.oldOperator,
-        originRolesAccount: oldOperatorRolesPda,
-        proposalAccount: proposalPda,
-      });
+    return this.program.methods.acceptOperatorship().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      itsRootPda: this.itsRootPda,
+      from: params.oldOperator,
+      originRolesPda: oldOperatorRolesPda,
+      proposalPda,
+    });
   }
 }
 
@@ -930,14 +897,14 @@ export class InterchainTokenInstructions {
     );
     const [minterRolesPda] = findUserRolesPda(tokenManagerPda, params.minter);
 
-    return this.program.methods.interchainTokenMint(params.amount).accounts({
+    return this.program.methods.mintInterchainToken(params.amount).accounts({
       mint: params.mint,
-      destinationAccount: params.to,
+      to: params.to,
       itsRootPda: this.itsRootPda,
       tokenManagerPda,
       minter: params.minter,
       minterRolesPda,
-      systemProgram: params.tokenProgram, // TODO: Fix the name, it's not systemProgram.
+      tokenProgram: params.tokenProgram,
     });
   }
 
@@ -950,28 +917,20 @@ export class InterchainTokenInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [destinationRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.newMinter
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
-    return this.program.methods
-      .interchainTokenTransferMintership({
-        roles: { minter: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump: null,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.newMinter,
-        destinationRolesAccount: destinationUserRolesPda,
-        originUserAccount: params.payer,
-        originRolesAccount: payerRolesPda,
-      });
+    return this.program.methods.transferInterchainTokenMintership().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      to: params.newMinter,
+      destinationRolesPda,
+    });
   }
 
   proposeMintership(params: {
@@ -983,34 +942,26 @@ export class InterchainTokenInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [destinationRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.newMinter
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
-    const [proposalPda, proposalPdaBump] = findProposalPda(
+    const [proposalPda] = findProposalPda(
       tokenManagerPda,
       params.payer,
       params.newMinter
     );
 
-    return this.program.methods
-      .interchainTokenProposeMintership({
-        roles: { minter: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.newMinter,
-        destinationRolesAccount: destinationUserRolesPda,
-        originUserAccount: params.payer,
-        originRolesAccount: payerRolesPda,
-        proposalAccount: proposalPda,
-      });
+    return this.program.methods.proposeInterchainTokenMintership().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      to: params.newMinter,
+      destinationRolesPda,
+      proposalPda,
+    });
   }
 
   acceptMintership(params: {
@@ -1022,37 +973,26 @@ export class InterchainTokenInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [payerRolesPda, payerRolesPdaBump] = findUserRolesPda(
-      tokenManagerPda,
-      params.payer
-    );
+    const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
     const [oldMinterRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.oldMinter
     );
-    const [proposalPda, proposalPdaBump] = findProposalPda(
+    const [proposalPda] = findProposalPda(
       tokenManagerPda,
       params.oldMinter,
       params.payer
     );
 
-    return this.program.methods
-      .interchainTokenAcceptMintership({
-        roles: { minter: {} },
-        destinationRolesPdaBump: payerRolesPdaBump,
-        proposalPdaBump,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.payer,
-        destinationRolesAccount: payerRolesPda,
-        originUserAccount: params.oldMinter,
-        originRolesAccount: oldMinterRolesPda,
-        proposalAccount: proposalPda,
-      });
+    return this.program.methods.acceptInterchainTokenMintership().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      from: params.oldMinter,
+      originRolesPda: oldMinterRolesPda,
+      proposalPda,
+    });
   }
 }
 
@@ -1088,17 +1028,15 @@ export class TokenManagerInstructions {
     );
     const [minterRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
-    return this.program.methods
-      .tokenManagerHandOverMintAuthority(params.tokenId)
-      .accounts({
-        payer: params.payer,
-        mint: params.mint,
-        itsRootPda: this.itsRootPda,
-        tokenManagerPda,
-        minterRolesPda,
-        tokenProgram: params.tokenProgram,
-        systemProgram: SystemProgram.programId,
-      });
+    return this.program.methods.handoverMintAuthority(params.tokenId).accounts({
+      payer: params.payer,
+      mint: params.mint,
+      itsRootPda: this.itsRootPda,
+      tokenManagerPda,
+      minterRolesPda,
+      tokenProgram: params.tokenProgram,
+      systemProgram: SystemProgram.programId,
+    });
   }
 
   setFlowLimit(params: {
@@ -1117,7 +1055,7 @@ export class TokenManagerInstructions {
     const [itsUserRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
 
     return this.program.methods
-      .tokenManagerSetFlowLimit(params.flowLimit)
+      .setTokenManagerFlowLimit(params.flowLimit)
       .accounts({
         payer: params.payer,
         itsRootPda: this.itsRootPda,
@@ -1137,26 +1075,20 @@ export class TokenManagerInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [flowLimiterRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.flowLimiter
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
-    return this.program.methods
-      .tokenManagerAddFlowLimiter({
-        roles: { flowLimiter: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump: null,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: tokenManagerPda,
-        destinationUserAccount: params.flowLimiter,
-        destinationRolesAccount: destinationUserRolesPda,
-      });
+    return this.program.methods.addTokenManagerFlowLimiter().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      flowLimiter: params.flowLimiter,
+      flowLimiterRolesPda,
+    });
   }
 
   removeFlowLimiter(params: {
@@ -1168,25 +1100,19 @@ export class TokenManagerInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [flowLimiterRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.flowLimiter
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
-    return this.program.methods
-      .tokenManagerRemoveFlowLimiter({
-        roles: { flowLimiter: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump: null,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: tokenManagerPda,
-        destinationUserAccount: params.flowLimiter,
-        destinationRolesAccount: destinationUserRolesPda,
-      });
+    return this.program.methods.removeTokenManagerFlowLimiter().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      flowLimiter: params.flowLimiter,
+      flowLimiterRolesPda,
+    });
   }
 
   transferOperatorship(params: {
@@ -1198,28 +1124,20 @@ export class TokenManagerInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [destinationRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.newOperator
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
-    return this.program.methods
-      .tokenManagerTransferOperatorship({
-        roles: { operator: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump: null,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.newOperator,
-        destinationRolesAccount: destinationUserRolesPda,
-        originUserAccount: params.payer,
-        originRolesAccount: payerRolesPda,
-      });
+    return this.program.methods.transferTokenManagerOperatorship().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      to: params.newOperator,
+      destinationRolesPda,
+    });
   }
 
   proposeOperatorship(params: {
@@ -1231,34 +1149,26 @@ export class TokenManagerInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
+    const [destinationRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.newOperator
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
-    const [proposalPda, proposalPdaBump] = findProposalPda(
+    const [proposalPda] = findProposalPda(
       tokenManagerPda,
       params.payer,
       params.newOperator
     );
 
-    return this.program.methods
-      .tokenManagerProposeOperatorship({
-        roles: { operator: {} },
-        destinationRolesPdaBump,
-        proposalPdaBump,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.newOperator,
-        destinationRolesAccount: destinationUserRolesPda,
-        originUserAccount: params.payer,
-        originRolesAccount: payerRolesPda,
-        proposalAccount: proposalPda,
-      });
+    return this.program.methods.proposeTokenManagerOperatorship().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      to: params.newOperator,
+      destinationRolesPda,
+      proposalPda,
+    });
   }
 
   acceptOperatorship(params: {
@@ -1270,36 +1180,25 @@ export class TokenManagerInstructions {
       this.itsRootPda,
       Buffer.from(params.tokenId)
     );
-    const [payerRolesPda, payerRolesPdaBump] = findUserRolesPda(
-      tokenManagerPda,
-      params.payer
-    );
+    const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
     const [oldOperatorRolesPda] = findUserRolesPda(
       tokenManagerPda,
       params.oldOperator
     );
-    const [proposalPda, proposalPdaBump] = findProposalPda(
+    const [proposalPda] = findProposalPda(
       tokenManagerPda,
       params.oldOperator,
       params.payer
     );
 
-    return this.program.methods
-      .tokenManagerAcceptOperatorship({
-        roles: { operator: {} },
-        destinationRolesPdaBump: payerRolesPdaBump,
-        proposalPdaBump,
-      })
-      .accounts({
-        systemProgram: SystemProgram.programId,
-        payer: params.payer,
-        payerRolesAccount: payerRolesPda,
-        resource: this.itsRootPda,
-        destinationUserAccount: params.payer,
-        destinationRolesAccount: payerRolesPda,
-        originUserAccount: params.oldOperator,
-        originRolesAccount: oldOperatorRolesPda,
-        proposalAccount: proposalPda,
-      });
+    return this.program.methods.acceptTokenManagerOperatorship().accounts({
+      systemProgram: SystemProgram.programId,
+      payer: params.payer,
+      payerRolesPda,
+      tokenManagerPda,
+      from: params.oldOperator,
+      originRolesPda: oldOperatorRolesPda,
+      proposalPda,
+    });
   }
 }

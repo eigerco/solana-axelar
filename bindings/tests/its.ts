@@ -1,9 +1,20 @@
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import { axelarSolanaItsProgram } from "../generated/axelar-solana-its/src";
 import { BN } from "@coral-xyz/anchor";
+import {
+  SystemProgram,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+} from "@solana/web3.js";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+} from "@solana/spl-token";
+import { TOKEN_METADATA_PROGRAM_ID } from "../axelar-solana-its/src/pda";
 
 describe("Ping ITS", () => {
   const program = axelarSolanaItsProgram();
+  const systemAccount = SystemProgram.programId.toBase58();
   const processError = (error: any, functionName: string) => {
     const errorMessage = "Program log: Instruction: " + functionName;
     if (error.logs.includes(errorMessage)) {
@@ -11,7 +22,7 @@ describe("Ping ITS", () => {
         "Test OK: Program throws error, but data is properly sent through bindings."
       );
     } else {
-      console.log(
+      throw new Error(
         "Test FAIL: Program throws error and data is not properly sent. Check bindings."
       );
     }
@@ -28,7 +39,7 @@ describe("Ping ITS", () => {
           itsRootPda: payer.publicKey,
           operator: payer.publicKey,
           userRolesPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -61,7 +72,7 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -78,6 +89,7 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -115,6 +127,7 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           deployApprovalPda: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -130,18 +143,19 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           tokenMetadataAccount: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerAta: payer.publicKey,
-          tokenProgram: payer.publicKey,
-          splAssociatedTokenAccount: payer.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          splAssociatedTokenAccount: ASSOCIATED_TOKEN_PROGRAM_ID,
           itsUserRolesPda: payer.publicKey,
+          rent: SYSVAR_RENT_PUBKEY,
         })
         .rpc();
     } catch (error) {
-      processError(error, "RegisterCanonicalInterchainToken");
+      processError(error, "RegisterToken");
     }
   });
 
@@ -154,12 +168,11 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           mint: payer.publicKey,
           metadataAccount: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -195,7 +208,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -213,21 +226,21 @@ describe("Ping ITS", () => {
         .deployInterchainToken([1, 2], "name", "symbol", 2, new BN(0))
         .accounts({
           payer: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerAta: payer.publicKey,
-          tokenProgram: payer.publicKey,
-          splAssociatedTokenAccount: payer.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          splAssociatedTokenAccount: ASSOCIATED_TOKEN_PROGRAM_ID,
           itsUserRolesPda: payer.publicKey,
-          rent: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          rent: SYSVAR_RENT_PUBKEY,
+          sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+          mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
           metadataAccount: payer.publicKey,
           payerAta: payer.publicKey,
-          minter: payer.publicKey,
-          minterRolesPda: payer.publicKey,
+          optionalMinterRolesPda: payer.publicKey,
+          optionalMinter: payer.publicKey,
         })
         .rpc();
     } catch (error) {
@@ -244,12 +257,11 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           mint: payer.publicKey,
           metadataAccount: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -279,12 +291,11 @@ describe("Ping ITS", () => {
           deployApproval: payer.publicKey,
           minterRolesPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -308,7 +319,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -327,17 +338,17 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           tokenMetadataAccount: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerAta: payer.publicKey,
-          tokenProgram: payer.publicKey,
-          splAssociatedTokenAccount: payer.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          splAssociatedTokenAccount: ASSOCIATED_TOKEN_PROGRAM_ID,
           itsUserRolesPda: payer.publicKey,
-          rent: payer.publicKey,
-          operator: payer.publicKey,
-          operatorRolesPda: payer.publicKey,
+          rent: SYSVAR_RENT_PUBKEY,
+          optionalOperator: payer.publicKey,
+          optionalOperatorRolesPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
@@ -365,7 +376,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -402,7 +413,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -439,7 +450,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -472,25 +483,18 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .operatorTransferOperatorship({
-          roles: { minter: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .transferOperatorship()
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          to: payer.publicKey,
+          destinationRolesPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "Operator");
+      processError(error, "TransferOperatorship");
     }
   });
 
@@ -498,25 +502,19 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .operatorProposeOperatorship({
-          roles: { operator: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .proposeOperatorship()
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          to: payer.publicKey,
+          destinationRolesPda: payer.publicKey,
+          proposalPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "Operator");
+      processError(error, "ProposeOperatorship");
     }
   });
 
@@ -524,25 +522,19 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .operatorAcceptOperatorship({
-          roles: { flowLimiter: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .acceptOperatorship()
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          from: payer.publicKey,
+          originRolesPda: payer.publicKey,
+          proposalPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "Operator");
+      processError(error, "AcceptOperatorship");
     }
   });
 
@@ -550,25 +542,18 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .tokenManagerAddFlowLimiter({
-          roles: { flowLimiter: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .addTokenManagerFlowLimiter()
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          flowLimiter: payer.publicKey,
+          flowLimiterRolesPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM AddFlowLimiter");
+      processError(error, "AddTokenManagerFlowLimiter");
     }
   });
 
@@ -576,25 +561,18 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .tokenManagerRemoveFlowLimiter({
-          roles: { flowLimiter: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .removeTokenManagerFlowLimiter()
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          flowLimiter: payer.publicKey,
+          flowLimiterRolesPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM RemoveFlowLimiter");
+      processError(error, "RemoveTokenManagerFlowLimiter");
     }
   });
 
@@ -602,18 +580,18 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .tokenManagerSetFlowLimit(new BN(1))
+        .setTokenManagerFlowLimit(new BN(1))
         .accounts({
           payer: payer.publicKey,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           tokenManagerUserRolesPda: payer.publicKey,
           itsUserRolesPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM SetFlowLimit");
+      processError(error, "SetTokenManagerFlowLimit");
     }
   });
 
@@ -621,25 +599,19 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .tokenManagerTransferOperatorship({
-          roles: { operator: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .transferTokenManagerOperatorship()
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          to: payer.publicKey,
+          destinationRolesPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "TransferTokenManagerOperatorship");
     }
   });
 
@@ -647,25 +619,20 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .tokenManagerProposeOperatorship({
-          roles: { operator: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .proposeTokenManagerOperatorship()
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          to: payer.publicKey,
+          destinationRolesPda: payer.publicKey,
+          proposalPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "ProposeTokenManagerOperatorship");
     }
   });
 
@@ -673,33 +640,28 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .tokenManagerAcceptOperatorship({
-          roles: { operator: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .acceptTokenManagerOperatorship()
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          from: payer.publicKey,
+          originRolesPda: payer.publicKey,
+          proposalPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "AcceptTokenManagerOperatorship");
     }
   });
 
-  it("TM Flow Limiter", async () => {
+  it("Handover Mint Authority", async () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .tokenManagerHandOverMintAuthority([1, 2])
+        .handoverMintAuthority([1, 2])
         .accounts({
           payer: payer.publicKey,
           mint: payer.publicKey,
@@ -707,11 +669,11 @@ describe("Ping ITS", () => {
           tokenManagerPda: payer.publicKey,
           minterRolesPda: payer.publicKey,
           tokenProgram: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Hand Over Mint Authority");
+      processError(error, "HandoverMintAuthority");
     }
   });
 
@@ -719,19 +681,19 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .interchainTokenMint(new BN(1))
+        .mintInterchainToken(new BN(1))
         .accounts({
           mint: payer.publicKey,
-          destinationAccount: payer.publicKey,
+          to: payer.publicKey,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           minter: payer.publicKey,
           minterRolesPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          tokenProgram: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "IT Mint");
+      processError(error, "MintInterchainToken");
     }
   });
 
@@ -739,25 +701,19 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .interchainTokenTransferMintership({
-          roles: { minter: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .transferInterchainTokenMintership()
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          to: payer.publicKey,
+          destinationRolesPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "TransferInterchainTokenMintership");
     }
   });
 
@@ -765,25 +721,20 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .interchainTokenProposeMintership({
-          roles: { minter: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .proposeInterchainTokenMintership()
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          to: payer.publicKey,
+          destinationRolesPda: payer.publicKey,
+          proposalPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "ProposeInterchainTokenMintership");
     }
   });
 
@@ -791,25 +742,20 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods
-        .interchainTokenAcceptMintership({
-          roles: { minter: {} },
-          destinationRolesPdaBump: 2,
-          proposalPdaBump: null,
-        })
+        .acceptInterchainTokenMintership()
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
-          payerRolesAccount: payer.publicKey,
-          resource: payer.publicKey,
-          destinationUserAccount: payer.publicKey,
-          destinationRolesAccount: payer.publicKey,
-          originUserAccount: payer.publicKey,
-          originRolesAccount: payer.publicKey,
-          proposalAccount: payer.publicKey,
+          payerRolesPda: payer.publicKey,
+          tokenManagerPda: payer.publicKey,
+          from: payer.publicKey,
+          originRolesPda: payer.publicKey,
+          proposalPda: payer.publicKey,
         })
         .rpc();
     } catch (error) {
-      processError(error, "TM Operator");
+      processError(error, "AcceptInterchainTokenMintership");
     }
   });
 });

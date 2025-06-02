@@ -8,7 +8,7 @@ use axelar_solana_its::executable::{
 };
 use borsh::BorshDeserialize;
 use mpl_token_metadata::accounts::Metadata;
-use program_utils::{check_program_account, ValidPDA};
+use program_utils::{check_program_account, pda::ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -138,8 +138,7 @@ pub fn process_native_ix(
                     *gateway_program.key,
                     *gateway_root_pda.key,
                     crate::ID,
-                    signing_pda.0,
-                    signing_pda.1,
+                    Some(signing_pda),
                     destination_chain,
                     destination_address,
                     memo.into_bytes(),
@@ -179,8 +178,7 @@ pub fn process_native_ix(
                     *gateway_program.key,
                     *gateway_root_pda.key,
                     crate::ID,
-                    signing_pda.0,
-                    signing_pda.1,
+                    Some(signing_pda),
                     destination_chain,
                     destination_address,
                     memo_hash,
@@ -272,7 +270,7 @@ pub fn process_initialize_memo_program_counter(
     // Check: counter PDA account uses the canonical bump.
     assert_counter_pda_seeds(&counter, counter_pda.key);
 
-    program_utils::init_pda(
+    program_utils::pda::init_pda(
         payer,
         counter_pda,
         program_id,

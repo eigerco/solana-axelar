@@ -331,12 +331,7 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "sysvarInstructions";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "mplTokenMetadata";
+          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -578,16 +573,14 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "minter";
+          name: "optionalMinter";
           isMut: false;
           isSigner: false;
-          isOptional: true;
         },
         {
-          name: "minterRolesPda";
+          name: "optionalMinterRolesPda";
           isMut: true;
           isSigner: false;
-          isOptional: true;
         }
       ];
       args: [
@@ -634,12 +627,7 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "sysvarInstructions";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "mplTokenMetadata";
+          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -739,12 +727,7 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "sysvarInstructions";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "mplTokenMetadata";
+          name: "gatewayRootPda";
           isMut: false;
           isSigner: false;
         },
@@ -938,16 +921,14 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "operator";
+          name: "optionalOperator";
           isMut: true;
           isSigner: false;
-          isOptional: true;
         },
         {
-          name: "operatorRolesPda";
+          name: "optionalOperatorRolesPda";
           isMut: true;
           isSigner: false;
-          isOptional: true;
         }
       ];
       args: [
@@ -1338,7 +1319,7 @@ type AxelarSolanaIts = {
       ];
     },
     {
-      name: "operatorTransferOperatorship";
+      name: "transferOperatorship";
       accounts: [
         {
           name: "systemProgram";
@@ -1351,52 +1332,30 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "resource";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationUserAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "payerRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
+          name: "itsRootPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "proposalAccount";
+          name: "to";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "operatorProposeOperatorship";
+      name: "proposeOperatorship";
       accounts: [
         {
           name: "systemProgram";
@@ -1409,52 +1368,35 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
+          name: "payerRolesPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "resource";
+          name: "itsRootPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationUserAccount";
+          name: "to";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationRolesAccount";
+          name: "destinationRolesPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "originUserAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "originRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "proposalAccount";
+          name: "proposalPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "operatorAcceptOperatorship";
+      name: "acceptOperatorship";
       accounts: [
         {
           name: "systemProgram";
@@ -1467,52 +1409,35 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "resource";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationUserAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "payerRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
+          name: "itsRootPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "proposalAccount";
+          name: "from";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originRolesPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "proposalPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "tokenManagerAddFlowLimiter";
+      name: "addTokenManagerFlowLimiter";
       accounts: [
         {
           name: "systemProgram";
@@ -1525,52 +1450,30 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
+          name: "payerRolesPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "resource";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationUserAccount";
+          name: "flowLimiter";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "originRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "proposalAccount";
+          name: "flowLimiterRolesPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "tokenManagerRemoveFlowLimiter";
+      name: "removeTokenManagerFlowLimiter";
       accounts: [
         {
           name: "systemProgram";
@@ -1583,52 +1486,30 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
+          name: "payerRolesPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "resource";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationUserAccount";
+          name: "flowLimiter";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "originRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "proposalAccount";
+          name: "flowLimiterRolesPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "tokenManagerSetFlowLimit";
+      name: "setTokenManagerFlowLimit";
       accounts: [
         {
           name: "payer";
@@ -1669,8 +1550,13 @@ type AxelarSolanaIts = {
       ];
     },
     {
-      name: "tokenManagerTransferOperatorship";
+      name: "transferTokenManagerOperatorship";
       accounts: [
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
         {
           name: "systemProgram";
           isMut: false;
@@ -1682,53 +1568,36 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "resource";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationUserAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "payerRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "proposalAccount";
+          name: "to";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "tokenManagerProposeOperatorship";
+      name: "proposeTokenManagerOperatorship";
       accounts: [
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
         {
           name: "systemProgram";
           isMut: false;
@@ -1740,53 +1609,41 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
+          name: "payerRolesPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "resource";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationUserAccount";
+          name: "to";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "destinationRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "proposalAccount";
+          name: "proposalPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "tokenManagerAcceptOperatorship";
+      name: "acceptTokenManagerOperatorship";
       accounts: [
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
         {
           name: "systemProgram";
           isMut: false;
@@ -1798,56 +1655,39 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "resource";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationUserAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "payerRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "proposalAccount";
+          name: "from";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originRolesPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "proposalPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "tokenManagerHandOverMintAuthority";
+      name: "handoverMintAuthority";
       accounts: [
         {
           name: "payer";
-          isMut: false;
+          isMut: true;
           isSigner: true;
         },
         {
@@ -1891,7 +1731,7 @@ type AxelarSolanaIts = {
       ];
     },
     {
-      name: "interchainTokenMint";
+      name: "mintInterchainToken";
       accounts: [
         {
           name: "mint";
@@ -1899,7 +1739,7 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "destinationAccount";
+          name: "to";
           isMut: true;
           isSigner: false;
         },
@@ -1916,7 +1756,7 @@ type AxelarSolanaIts = {
         {
           name: "minter";
           isMut: false;
-          isSigner: false;
+          isSigner: true;
         },
         {
           name: "minterRolesPda";
@@ -1924,7 +1764,7 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "systemProgram";
+          name: "tokenProgram";
           isMut: false;
           isSigner: false;
         }
@@ -1937,8 +1777,13 @@ type AxelarSolanaIts = {
       ];
     },
     {
-      name: "interchainTokenTransferMintership";
+      name: "transferInterchainTokenMintership";
       accounts: [
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
         {
           name: "systemProgram";
           isMut: false;
@@ -1950,53 +1795,36 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "resource";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationUserAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "payerRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "proposalAccount";
+          name: "to";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "interchainTokenProposeMintership";
+      name: "proposeInterchainTokenMintership";
       accounts: [
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
         {
           name: "systemProgram";
           isMut: false;
@@ -2008,53 +1836,41 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
+          name: "payerRolesPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "resource";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationUserAccount";
+          name: "to";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "destinationRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "proposalAccount";
+          name: "proposalPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     },
     {
-      name: "interchainTokenAcceptMintership";
+      name: "acceptInterchainTokenMintership";
       accounts: [
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
         {
           name: "systemProgram";
           isMut: false;
@@ -2066,76 +1882,35 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "payerRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "resource";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationUserAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "destinationRolesAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "originUserAccount";
+          name: "payerRolesPda";
           isMut: true;
           isSigner: false;
         },
         {
-          name: "originRolesAccount";
+          name: "tokenManagerPda";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "proposalAccount";
+          name: "from";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originRolesPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "proposalPda";
           isMut: true;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "inputs";
-          type: {
-            defined: "RoleManagementInstructionInputs";
-          };
-        }
-      ];
+      args: [];
     }
   ];
   types: [
-    {
-      name: "RoleManagementInstructionInputs";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "roles";
-            type: {
-              defined: "Roles";
-            };
-          },
-          {
-            name: "destinationRolesPdaBump";
-            type: "u8";
-          },
-          {
-            name: "proposalPdaBump";
-            type: {
-              option: "u8";
-            };
-          }
-        ];
-      };
-    },
     {
       name: "Type";
       type: {
@@ -2155,23 +1930,6 @@ type AxelarSolanaIts = {
           },
           {
             name: "MintBurn";
-          }
-        ];
-      };
-    },
-    {
-      name: "Roles";
-      type: {
-        kind: "enum";
-        variants: [
-          {
-            name: "Minter";
-          },
-          {
-            name: "Operator";
-          },
-          {
-            name: "FlowLimiter";
           }
         ];
       };
@@ -2487,12 +2245,7 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "sysvarInstructions",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "mplTokenMetadata",
+          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },
@@ -2734,16 +2487,14 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "minter",
+          name: "optionalMinter",
           isMut: false,
           isSigner: false,
-          isOptional: true,
         },
         {
-          name: "minterRolesPda",
+          name: "optionalMinterRolesPda",
           isMut: true,
           isSigner: false,
-          isOptional: true,
         },
       ],
       args: [
@@ -2790,12 +2541,7 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "sysvarInstructions",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "mplTokenMetadata",
+          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },
@@ -2895,12 +2641,7 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "sysvarInstructions",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "mplTokenMetadata",
+          name: "gatewayRootPda",
           isMut: false,
           isSigner: false,
         },
@@ -3094,16 +2835,14 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "operator",
+          name: "optionalOperator",
           isMut: true,
           isSigner: false,
-          isOptional: true,
         },
         {
-          name: "operatorRolesPda",
+          name: "optionalOperatorRolesPda",
           isMut: true,
           isSigner: false,
-          isOptional: true,
         },
       ],
       args: [
@@ -3494,7 +3233,7 @@ const IDL: AxelarSolanaIts = {
       ],
     },
     {
-      name: "operatorTransferOperatorship",
+      name: "transferOperatorship",
       accounts: [
         {
           name: "systemProgram",
@@ -3507,52 +3246,30 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "resource",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationUserAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "payerRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
+          name: "itsRootPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "proposalAccount",
+          name: "to",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "operatorProposeOperatorship",
+      name: "proposeOperatorship",
       accounts: [
         {
           name: "systemProgram",
@@ -3565,52 +3282,35 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
+          name: "payerRolesPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "resource",
+          name: "itsRootPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationUserAccount",
+          name: "to",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationRolesAccount",
+          name: "destinationRolesPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "originUserAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "originRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "proposalAccount",
+          name: "proposalPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "operatorAcceptOperatorship",
+      name: "acceptOperatorship",
       accounts: [
         {
           name: "systemProgram",
@@ -3623,52 +3323,35 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "resource",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationUserAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "payerRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
+          name: "itsRootPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "proposalAccount",
+          name: "from",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originRolesPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "proposalPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "tokenManagerAddFlowLimiter",
+      name: "addTokenManagerFlowLimiter",
       accounts: [
         {
           name: "systemProgram",
@@ -3681,52 +3364,30 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
+          name: "payerRolesPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "resource",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationUserAccount",
+          name: "flowLimiter",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "originRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "proposalAccount",
+          name: "flowLimiterRolesPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "tokenManagerRemoveFlowLimiter",
+      name: "removeTokenManagerFlowLimiter",
       accounts: [
         {
           name: "systemProgram",
@@ -3739,52 +3400,30 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
+          name: "payerRolesPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "resource",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationUserAccount",
+          name: "flowLimiter",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "originRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "proposalAccount",
+          name: "flowLimiterRolesPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "tokenManagerSetFlowLimit",
+      name: "setTokenManagerFlowLimit",
       accounts: [
         {
           name: "payer",
@@ -3825,8 +3464,13 @@ const IDL: AxelarSolanaIts = {
       ],
     },
     {
-      name: "tokenManagerTransferOperatorship",
+      name: "transferTokenManagerOperatorship",
       accounts: [
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
         {
           name: "systemProgram",
           isMut: false,
@@ -3838,53 +3482,36 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "resource",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationUserAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "payerRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "proposalAccount",
+          name: "to",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "tokenManagerProposeOperatorship",
+      name: "proposeTokenManagerOperatorship",
       accounts: [
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
         {
           name: "systemProgram",
           isMut: false,
@@ -3896,53 +3523,41 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
+          name: "payerRolesPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "resource",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationUserAccount",
+          name: "to",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "destinationRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "proposalAccount",
+          name: "proposalPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "tokenManagerAcceptOperatorship",
+      name: "acceptTokenManagerOperatorship",
       accounts: [
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
         {
           name: "systemProgram",
           isMut: false,
@@ -3954,56 +3569,39 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "resource",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationUserAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "payerRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "proposalAccount",
+          name: "from",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originRolesPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "proposalPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "tokenManagerHandOverMintAuthority",
+      name: "handoverMintAuthority",
       accounts: [
         {
           name: "payer",
-          isMut: false,
+          isMut: true,
           isSigner: true,
         },
         {
@@ -4047,7 +3645,7 @@ const IDL: AxelarSolanaIts = {
       ],
     },
     {
-      name: "interchainTokenMint",
+      name: "mintInterchainToken",
       accounts: [
         {
           name: "mint",
@@ -4055,7 +3653,7 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "destinationAccount",
+          name: "to",
           isMut: true,
           isSigner: false,
         },
@@ -4072,7 +3670,7 @@ const IDL: AxelarSolanaIts = {
         {
           name: "minter",
           isMut: false,
-          isSigner: false,
+          isSigner: true,
         },
         {
           name: "minterRolesPda",
@@ -4080,7 +3678,7 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "systemProgram",
+          name: "tokenProgram",
           isMut: false,
           isSigner: false,
         },
@@ -4093,8 +3691,13 @@ const IDL: AxelarSolanaIts = {
       ],
     },
     {
-      name: "interchainTokenTransferMintership",
+      name: "transferInterchainTokenMintership",
       accounts: [
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
         {
           name: "systemProgram",
           isMut: false,
@@ -4106,53 +3709,36 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "resource",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationUserAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "payerRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "proposalAccount",
+          name: "to",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "interchainTokenProposeMintership",
+      name: "proposeInterchainTokenMintership",
       accounts: [
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
         {
           name: "systemProgram",
           isMut: false,
@@ -4164,53 +3750,41 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
+          name: "payerRolesPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "resource",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationUserAccount",
+          name: "to",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "destinationRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "proposalAccount",
+          name: "proposalPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
     {
-      name: "interchainTokenAcceptMintership",
+      name: "acceptInterchainTokenMintership",
       accounts: [
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
         {
           name: "systemProgram",
           isMut: false,
@@ -4222,76 +3796,35 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "payerRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "resource",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationUserAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "destinationRolesAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "originUserAccount",
+          name: "payerRolesPda",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "originRolesAccount",
+          name: "tokenManagerPda",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "proposalAccount",
+          name: "from",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originRolesPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "proposalPda",
           isMut: true,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "inputs",
-          type: {
-            defined: "RoleManagementInstructionInputs",
-          },
-        },
-      ],
+      args: [],
     },
   ],
   types: [
-    {
-      name: "RoleManagementInstructionInputs",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "roles",
-            type: {
-              defined: "Roles",
-            },
-          },
-          {
-            name: "destinationRolesPdaBump",
-            type: "u8",
-          },
-          {
-            name: "proposalPdaBump",
-            type: {
-              option: "u8",
-            },
-          },
-        ],
-      },
-    },
     {
       name: "Type",
       type: {
@@ -4311,23 +3844,6 @@ const IDL: AxelarSolanaIts = {
           },
           {
             name: "MintBurn",
-          },
-        ],
-      },
-    },
-    {
-      name: "Roles",
-      type: {
-        kind: "enum",
-        variants: [
-          {
-            name: "Minter",
-          },
-          {
-            name: "Operator",
-          },
-          {
-            name: "FlowLimiter",
           },
         ],
       },

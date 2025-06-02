@@ -1,8 +1,13 @@
 //! Processor for [`TokenManager`] related requests.
 
 use event_utils::Event as _;
-use program_utils::{BorshPda, ValidPDA};
-use role_management::processor::ensure_roles;
+use program_utils::{
+    pda::{BorshPda, ValidPDA},
+    validate_rent_key, validate_spl_associated_token_account_key, validate_system_account_key,
+};
+use role_management::processor::{
+    ensure_roles, RoleAddAccounts, RoleRemoveAccounts, RoleTransferWithProposalAccounts,
+};
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -11,13 +16,14 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
+use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, event};
+use crate::{assert_valid_its_root_pda, event, Validate};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
 
 pub(crate) fn set_flow_limit(
@@ -286,7 +292,8 @@ pub(crate) fn handover_mint_authority(
     let token_program = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
-    msg!("Instruction: TM Hand Over Mint Authority");
+    validate_system_account_key(system_account.key)?;
+    msg!("Instruction: HandoverMintAuthority");
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
 
@@ -297,6 +304,11 @@ pub(crate) fn handover_mint_authority(
         &token_id,
         token_manager_config.bump,
     )?;
+
+    if token_manager_config.token_address != *mint.key {
+        msg!("TokenManager PDA does not match the provided Mint account");
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     let mint_authority = {
         let mint_data = mint.try_borrow_data()?;
@@ -346,6 +358,7 @@ pub(crate) fn handover_mint_authority(
     Ok(())
 }
 
+#[derive(Debug)]
 pub(crate) struct DeployTokenManagerAccounts<'a> {
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
@@ -355,20 +368,30 @@ pub(crate) struct DeployTokenManagerAccounts<'a> {
     pub(crate) token_program: &'a AccountInfo<'a>,
     pub(crate) ata_program: &'a AccountInfo<'a>,
     pub(crate) its_roles_pda: &'a AccountInfo<'a>,
-    pub(crate) _rent_sysvar: &'a AccountInfo<'a>,
+    pub(crate) rent_sysvar: &'a AccountInfo<'a>,
     pub(crate) operator: Option<&'a AccountInfo<'a>>,
     pub(crate) operator_roles_pda: Option<&'a AccountInfo<'a>>,
+}
+
+impl Validate for DeployTokenManagerAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        check_spl_token_program_account(self.token_program.key)?;
+        validate_spl_associated_token_account_key(self.ata_program.key)?;
+        validate_rent_key(self.rent_sysvar.key)?;
+        Ok(())
+    }
 }
 
 impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
     type Context = ();
 
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         _context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
 
@@ -381,13 +404,14 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
             token_program: next_account_info(accounts_iter)?,
             ata_program: next_account_info(accounts_iter)?,
             its_roles_pda: next_account_info(accounts_iter)?,
-            _rent_sysvar: next_account_info(accounts_iter)?,
+            rent_sysvar: next_account_info(accounts_iter)?,
             operator: next_account_info(accounts_iter).ok(),
             operator_roles_pda: next_account_info(accounts_iter).ok(),
         })
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct SetFlowLimitAccounts<'a> {
     pub(crate) flow_limiter: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
@@ -397,11 +421,17 @@ pub(crate) struct SetFlowLimitAccounts<'a> {
     pub(crate) system_account: &'a AccountInfo<'a>,
 }
 
-impl<'a> TryFrom<&'a [AccountInfo<'a>]> for SetFlowLimitAccounts<'a> {
-    type Error = ProgramError;
+impl<'a> FromAccountInfoSlice<'a> for SetFlowLimitAccounts<'a> {
+    type Context = ();
 
-    fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
-        let accounts_iter = &mut value.iter();
+    fn extract_accounts(
+        accounts: &'a [AccountInfo<'a>],
+        _context: &Self::Context,
+    ) -> Result<Self, ProgramError>
+    where
+        Self: Sized + Validate,
+    {
+        let accounts_iter = &mut accounts.iter();
 
         Ok(Self {
             flow_limiter: next_account_info(accounts_iter)?,
@@ -412,4 +442,222 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for SetFlowLimitAccounts<'a> {
             system_account: next_account_info(accounts_iter)?,
         })
     }
+}
+
+impl Validate for SetFlowLimitAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        Ok(())
+    }
+}
+
+pub(crate) fn process_add_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: AddTokenManagerFlowLimiter");
+
+    let accounts_iter = &mut accounts.iter();
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let resource = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
+
+    let role_management_accounts = RoleAddAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource,
+        destination_user_account,
+        destination_roles_account,
+    };
+
+    role_management::processor::add(
+        &crate::id(),
+        role_management_accounts,
+        Roles::FLOW_LIMITER,
+        Roles::OPERATOR,
+    )
+}
+
+pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: RemoveTokenManagerFlowLimiter");
+
+    let accounts_iter = &mut accounts.iter();
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let resource = next_account_info(accounts_iter)?;
+    let origin_user_account = next_account_info(accounts_iter)?;
+    let origin_roles_account = next_account_info(accounts_iter)?;
+
+    let role_management_accounts = RoleRemoveAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource,
+        origin_user_account,
+        origin_roles_account,
+    };
+
+    role_management::processor::remove(
+        &crate::id(),
+        role_management_accounts,
+        Roles::FLOW_LIMITER,
+        Roles::OPERATOR,
+    )
+}
+
+pub(crate) fn process_set_flow_limit<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    flow_limit: u64,
+) -> ProgramResult {
+    msg!("Instruction: SetTokenManagerFlowLimit");
+
+    let instruction_accounts = SetFlowLimitAccounts::from_account_info_slice(accounts, &())?;
+    if !instruction_accounts.flow_limiter.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    set_flow_limit(&instruction_accounts, flow_limit)
+}
+
+pub(crate) fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: TransferTokenManagerOperatorship");
+
+    let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    let token_manager = TokenManager::load(token_manager_account)?;
+
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_token_manager_pda(
+        token_manager_account,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    let role_add_accounts = RoleAddAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        destination_user_account,
+        destination_roles_account,
+    };
+    let role_remove_accounts = RoleRemoveAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        origin_user_account: payer,
+        origin_roles_account: payer_roles_account,
+    };
+
+    role_management::processor::add(
+        &crate::id(),
+        role_add_accounts,
+        Roles::OPERATOR,
+        Roles::OPERATOR,
+    )?;
+
+    role_management::processor::remove(
+        &crate::id(),
+        role_remove_accounts,
+        Roles::OPERATOR,
+        Roles::OPERATOR,
+    )
+}
+
+pub(crate) fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: ProposeTokenManagerOperatorship");
+
+    let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
+    let proposal_account = next_account_info(accounts_iter)?;
+
+    let role_management_accounts = RoleTransferWithProposalAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        destination_user_account,
+        destination_roles_account,
+        origin_user_account: payer,
+        origin_roles_account: payer_roles_account,
+        proposal_account,
+    };
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    let token_manager = TokenManager::load(role_management_accounts.resource)?;
+    assert_valid_token_manager_pda(
+        role_management_accounts.resource,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        Roles::OPERATOR,
+        Roles::OPERATOR,
+    )
+}
+
+pub(crate) fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: AcceptTokenManagerOperatorship");
+
+    let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
+    let origin_user_account = next_account_info(accounts_iter)?;
+    let origin_roles_account = next_account_info(accounts_iter)?;
+    let proposal_account = next_account_info(accounts_iter)?;
+
+    let role_management_accounts = RoleTransferWithProposalAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        destination_user_account: payer,
+        destination_roles_account: payer_roles_account,
+        origin_user_account,
+        origin_roles_account,
+        proposal_account,
+    };
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    let token_manager = TokenManager::load(role_management_accounts.resource)?;
+    assert_valid_token_manager_pda(
+        role_management_accounts.resource,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        Roles::OPERATOR,
+        Roles::empty(),
+    )
 }

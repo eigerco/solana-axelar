@@ -3,6 +3,7 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L17).
 
+use program_utils::validate_system_account_key;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -32,18 +33,20 @@ pub(crate) fn process(
     let proposal_pda = next_account_info(accounts_iter)?;
     let operator_proposal_pda = next_account_info(accounts_iter)?;
 
+    validate_system_account_key(system_account.key)?;
+
     let bump = operator::ensure_correct_managed_proposal_pda(
         proposal_pda,
         operator_proposal_pda,
         &ctx.proposal_hash,
     )?;
 
-    program_utils::init_pda_raw(
+    program_utils::pda::init_pda_raw(
         payer,
         operator_proposal_pda,
         program_id,
         system_account,
-        0,
+        1,
         &[
             seed_prefixes::OPERATOR_MANAGED_PROPOSAL,
             &ctx.proposal_hash,
