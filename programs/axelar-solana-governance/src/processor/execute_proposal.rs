@@ -46,6 +46,8 @@ pub(crate) fn process(
 
     let proposal = ExecutableProposal::load_from(program_id, proposal_account)?;
 
+    proposal.ensure_correct_payer(payer)?;
+
     // Only invoke with target program accounts.
     let mut target_program_accounts = accounts
         .get(4..)

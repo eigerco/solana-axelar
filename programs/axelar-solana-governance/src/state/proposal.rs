@@ -39,17 +39,20 @@ pub struct ExecutableProposal {
     bump: u8,
     /// The bump seed for the operator managed proposal PDA.
     managed_bump: u8,
+    /// The payer who payed to create the proposal to refund properly later.
+    payer: Pubkey,
 }
 
 impl ExecutableProposal {
     /// Creates a new proposal. Currently only the timelock value (ETA) is
     /// stored.
     #[must_use]
-    pub const fn new(eta: u64, bump: u8, managed_bump: u8) -> Self {
+    pub const fn new(eta: u64, bump: u8, managed_bump: u8, payer: Pubkey) -> Self {
         Self {
             eta,
             bump,
             managed_bump,
+            payer,
         }
     }
 
@@ -377,6 +380,20 @@ impl ExecutableProposal {
             target_native_value_account_info,
             native_value,
         )
+    }
+
+    pub fn ensure_correct_payer(self: Self, payer: &AccountInfo<'_>) -> Result<(), ProgramError>{
+        if &self.payer != payer.key {
+            msg!(
+                "Error: provided payer account {} does not match original payer {}",
+                &self.payer,
+                payer.key,
+            );
+            Err(ProgramError::InvalidAccountData)
+        } else {
+            Ok(())
+        }
+
     }
 
     /// Removes the proposal by closing the PDA and transferring the remaining

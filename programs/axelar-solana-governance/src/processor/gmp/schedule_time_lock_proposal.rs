@@ -48,7 +48,7 @@ pub(crate) fn process(
         return Err(ProgramError::InvalidArgument);
     }
     let managed_bump = operator::derive_managed_proposal_pda(&ctx.proposal_hash).1;
-    let proposal = ExecutableProposal::new(proposal_time, bump, managed_bump);
+    let proposal = ExecutableProposal::new(proposal_time, bump, managed_bump, *payer.key);
 
     // Store proposal
     proposal.store(
