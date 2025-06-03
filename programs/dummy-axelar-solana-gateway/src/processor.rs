@@ -23,6 +23,7 @@ pub struct Processor;
 
 impl Processor {
     /// Processes an instruction.
+    #[allow(clippy::disallowed_methods)]
     pub fn process_instruction(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
