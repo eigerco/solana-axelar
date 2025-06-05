@@ -112,6 +112,11 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
+          name: "payerRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "programDataAddress";
           isMut: false;
           isSigner: false;
@@ -141,6 +146,11 @@ type AxelarSolanaIts = {
           name: "payer";
           isMut: true;
           isSigner: true;
+        },
+        {
+          name: "payerRolesPda";
+          isMut: false;
+          isSigner: false;
         },
         {
           name: "programDataAddress";
@@ -393,11 +403,6 @@ type AxelarSolanaIts = {
           name: "payer";
           isMut: false;
           isSigner: true;
-        },
-        {
-          name: "authority";
-          isMut: false;
-          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -1050,11 +1055,6 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "authority";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "sourceAccount";
           isMut: true;
           isSigner: false;
@@ -1165,11 +1165,6 @@ type AxelarSolanaIts = {
           name: "payer";
           isMut: false;
           isSigner: true;
-        },
-        {
-          name: "authority";
-          isMut: false;
-          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -2026,6 +2021,11 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
+          name: "payerRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "programDataAddress",
           isMut: false,
           isSigner: false,
@@ -2055,6 +2055,11 @@ const IDL: AxelarSolanaIts = {
           name: "payer",
           isMut: true,
           isSigner: true,
+        },
+        {
+          name: "payerRolesPda",
+          isMut: false,
+          isSigner: false,
         },
         {
           name: "programDataAddress",
@@ -2307,11 +2312,6 @@ const IDL: AxelarSolanaIts = {
           name: "payer",
           isMut: false,
           isSigner: true,
-        },
-        {
-          name: "authority",
-          isMut: false,
-          isSigner: false,
         },
         {
           name: "sourceAccount",
@@ -2964,11 +2964,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "authority",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "sourceAccount",
           isMut: true,
           isSigner: false,
@@ -3079,11 +3074,6 @@ const IDL: AxelarSolanaIts = {
           name: "payer",
           isMut: false,
           isSigner: true,
-        },
-        {
-          name: "authority",
-          isMut: false,
-          isSigner: false,
         },
         {
           name: "sourceAccount",

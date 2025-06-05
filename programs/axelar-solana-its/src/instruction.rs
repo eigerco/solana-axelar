@@ -809,11 +809,14 @@ pub fn set_trusted_chain(payer: Pubkey, chain_name: String) -> Result<Instructio
         Pubkey::find_program_address(&[crate::ID.as_ref()], &bpf_loader_upgradeable::ID);
 
     let (its_root_pda, _) = crate::find_its_root_pda();
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &payer);
 
     let data = to_vec(&InterchainTokenServiceInstruction::SetTrustedChain { chain_name })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -838,11 +841,14 @@ pub fn remove_trusted_chain(
     let (program_data_address, _) =
         Pubkey::find_program_address(&[crate::ID.as_ref()], &bpf_loader_upgradeable::ID);
     let (its_root_pda, _) = crate::find_its_root_pda();
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &payer);
 
     let data = to_vec(&InterchainTokenServiceInstruction::RemoveTrustedChain { chain_name })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -1398,7 +1404,6 @@ pub fn link_token(
 pub fn interchain_transfer(
     payer: Pubkey,
     source_account: Pubkey,
-    authority: Option<Pubkey>,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -1415,7 +1420,6 @@ pub fn interchain_transfer(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
     let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
-    let authority = authority.unwrap_or(token_manager_pda);
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
@@ -1423,7 +1427,6 @@ pub fn interchain_transfer(
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(authority, false),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new_readonly(token_manager_pda, false),
@@ -1465,7 +1468,6 @@ pub fn interchain_transfer(
 pub fn call_contract_with_interchain_token(
     payer: Pubkey,
     source_account: Pubkey,
-    authority: Option<Pubkey>,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -1482,7 +1484,6 @@ pub fn call_contract_with_interchain_token(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
     let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
-    let (authority, signer) = authority.map_or((token_manager_pda, false), |key| (key, true));
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
@@ -1490,7 +1491,6 @@ pub fn call_contract_with_interchain_token(
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(authority, signer),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new_readonly(token_manager_pda, false),
@@ -1534,7 +1534,6 @@ pub fn call_contract_with_interchain_token(
 pub fn call_contract_with_interchain_token_offchain_data(
     payer: Pubkey,
     source_account: Pubkey,
-    authority: Option<Pubkey>,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -1551,7 +1550,6 @@ pub fn call_contract_with_interchain_token_offchain_data(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
     let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
-    let (authority, signer) = authority.map_or((token_manager_pda, false), |key| (key, true));
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
@@ -1559,7 +1557,6 @@ pub fn call_contract_with_interchain_token_offchain_data(
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(authority, signer),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new_readonly(token_manager_pda, false),

@@ -70,6 +70,7 @@ describe("Ping ITS", () => {
         .setTrustedChain("chain")
         .accounts({
           payer: payer.publicKey,
+          payerRolesPda: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
           systemProgram: systemAccount,
@@ -87,6 +88,7 @@ describe("Ping ITS", () => {
         .removeTrustedChain("chain")
         .accounts({
           payer: payer.publicKey,
+          payerRolesPda: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
           systemProgram: systemAccount,
@@ -197,7 +199,6 @@ describe("Ping ITS", () => {
         )
         .accounts({
           payer: payer.publicKey,
-          authority: payer.publicKey,
           sourceAccount: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerPda: payer.publicKey,
@@ -402,7 +403,6 @@ describe("Ping ITS", () => {
         )
         .accounts({
           payer: payer.publicKey,
-          authority: payer.publicKey,
           sourceAccount: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerPda: payer.publicKey,
@@ -439,7 +439,6 @@ describe("Ping ITS", () => {
         )
         .accounts({
           payer: payer.publicKey,
-          authority: payer.publicKey,
           sourceAccount: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerPda: payer.publicKey,

@@ -87,6 +87,11 @@
           "isSigner": true
         },
         {
+          "name": "payerRolesPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "programDataAddress",
           "isMut": false,
           "isSigner": false
@@ -116,6 +121,11 @@
           "name": "payer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "payerRolesPda",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "programDataAddress",
@@ -374,11 +384,6 @@
           "name": "payer",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "sourceAccount",
@@ -1049,11 +1054,6 @@
           "isSigner": true
         },
         {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "sourceAccount",
           "isMut": true,
           "isSigner": false
@@ -1167,11 +1167,6 @@
           "name": "payer",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "sourceAccount",

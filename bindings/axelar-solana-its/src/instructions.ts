@@ -130,8 +130,11 @@ export class ItsInstructions {
     payer: PublicKey;
     chainName: string;
   }): ReturnType<Program["methods"]["setTrustedChain"]> {
+    const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
+
     return this.program.methods.setTrustedChain(params.chainName).accounts({
       payer: params.payer,
+      payerRolesPda,
       programDataAddress: this.programDataAddress,
       itsRootPda: this.itsRootPda,
       systemProgram: SystemProgram.programId,
@@ -142,8 +145,10 @@ export class ItsInstructions {
     payer: PublicKey;
     chainName: string;
   }): ReturnType<Program["methods"]["removeTrustedChain"]> {
+    const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
     return this.program.methods.removeTrustedChain(params.chainName).accounts({
       payer: params.payer,
+      payerRolesPda,
       programDataAddress: this.programDataAddress,
       itsRootPda: this.itsRootPda,
       systemProgram: SystemProgram.programId,
@@ -554,7 +559,6 @@ export class ItsInstructions {
   interchainTransfer(params: {
     payer: PublicKey;
     sourceAccount: PublicKey;
-    authority: PublicKey | null;
     tokenId: number[];
     destinationChain: string;
     destinationAddress: Uint8Array;
@@ -574,7 +578,6 @@ export class ItsInstructions {
     const flowEpoch = flowEpochWithTimestamp(timestamp);
     const [flowSlotPda] = findFlowSlotPda(tokenManagerPda, flowEpoch);
 
-    const authority = params.authority ? params.authority! : tokenManagerPda;
     const tokenManagerAta = getAssociatedTokenAddressSync(
       params.mint,
       tokenManagerPda,
@@ -595,7 +598,6 @@ export class ItsInstructions {
       )
       .accounts({
         payer: params.payer,
-        authority,
         sourceAccount: params.sourceAccount,
         mint: params.mint,
         tokenManagerPda,
@@ -615,7 +617,6 @@ export class ItsInstructions {
   callContractWithInterchainToken(params: {
     payer: PublicKey;
     sourceAccount: PublicKey;
-    authority: PublicKey | null;
     tokenId: number[];
     destinationChain: string;
     destinationAddress: Uint8Array;
@@ -636,7 +637,6 @@ export class ItsInstructions {
     const flowEpoch = flowEpochWithTimestamp(timestamp);
     const [flowSlotPda] = findFlowSlotPda(tokenManagerPda, flowEpoch);
 
-    const authority = params.authority ? params.authority : tokenManagerPda;
     const tokenManagerAta = getAssociatedTokenAddressSync(
       params.mint,
       tokenManagerPda,
@@ -659,7 +659,6 @@ export class ItsInstructions {
       )
       .accounts({
         payer: params.payer,
-        authority,
         sourceAccount: params.sourceAccount,
         mint: params.mint,
         tokenManagerPda,
@@ -679,7 +678,6 @@ export class ItsInstructions {
   callContractWithInterchainTokenOffchainData(params: {
     payer: PublicKey;
     sourceAccount: PublicKey;
-    authority: PublicKey | null;
     tokenId: number[];
     destinationChain: string;
     destinationAddress: Uint8Array;
@@ -703,7 +701,6 @@ export class ItsInstructions {
     const flowEpoch = flowEpochWithTimestamp(timestamp);
     const [flowSlotPda] = findFlowSlotPda(tokenManagerPda, flowEpoch);
 
-    const authority = params.authority ? params.authority : tokenManagerPda;
     const tokenManagerAta = getAssociatedTokenAddressSync(
       params.mint,
       tokenManagerPda,
@@ -746,7 +743,6 @@ export class ItsInstructions {
         )
         .accounts({
           payer: params.payer,
-          authority,
           sourceAccount: params.sourceAccount,
           mint: params.mint,
           tokenManagerPda,

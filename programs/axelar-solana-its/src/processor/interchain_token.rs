@@ -7,6 +7,7 @@ use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
 use mpl_token_metadata::types::TokenStandard;
+use program_utils::pda::init_pda_raw;
 use program_utils::{
     pda::BorshPda, validate_mpl_token_metadata_key, validate_rent_key,
     validate_spl_associated_token_account_key, validate_system_account_key,
@@ -18,13 +19,11 @@ use role_management::processor::{
 };
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program::{invoke, invoke_signed, set_return_data};
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack as _;
 use solana_program::pubkey::Pubkey;
-use solana_program::rent::Rent;
-use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_instruction};
 use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
@@ -34,7 +33,7 @@ use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInterna
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_deploy_approval_pda, event, Validate};
+use crate::{assert_valid_deploy_approval_pda, event, find_its_root_pda, Validate};
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
@@ -286,6 +285,12 @@ pub(crate) fn process_outbound_deploy<'a>(
 
     let token_metadata = Metadata::from_bytes(&metadata.try_borrow_data()?)?;
     let mint_data = Mint::unpack(&mint.try_borrow_data()?)?;
+
+    if token_metadata.mint != *mint.key {
+        msg!("The metadata and mint accounts passed don't match");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     let name = token_metadata.name.trim_end_matches('\0').to_owned();
     let symbol = token_metadata.symbol.trim_end_matches('\0').to_owned();
 
@@ -453,31 +458,20 @@ fn setup_mint<'a>(
     token_manager_pda_bump: u8,
     initial_supply: u64,
 ) -> ProgramResult {
-    let rent = Rent::get()?;
-
-    invoke_signed(
-        &system_instruction::create_account(
-            payer.key,
-            accounts.token_mint.key,
-            rent.minimum_balance(spl_token_2022::state::Mint::LEN),
-            spl_token_2022::state::Mint::LEN
-                .try_into()
-                .map_err(|_err| ProgramError::ArithmeticOverflow)?,
-            accounts.token_program.key,
-        ),
+    init_pda_raw(
+        payer,
+        accounts.token_mint,
+        accounts.token_program.key,
+        accounts.system_account,
+        spl_token_2022::state::Mint::LEN
+            .try_into()
+            .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         &[
-            payer.clone(),
-            accounts.token_mint.clone(),
-            accounts.system_account.clone(),
-            accounts.token_program.clone(),
-            accounts.token_manager_pda.clone(),
-        ],
-        &[&[
             seed_prefixes::INTERCHAIN_TOKEN_SEED,
             accounts.its_root_pda.key.as_ref(),
             token_id,
             &[interchain_token_pda_bump],
-        ]],
+        ],
     )?;
 
     invoke(
@@ -594,6 +588,15 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     )?;
 
     let token_id = crate::interchain_token_id(&deployer, &salt);
+    let (its_root_pda, _) = find_its_root_pda();
+    let token_manager = TokenManager::load(token_manager_account)?;
+    assert_valid_token_manager_pda(
+        token_manager_account,
+        &its_root_pda,
+        &token_id,
+        token_manager.bump,
+    )?;
+
     let (_, bump) = crate::find_deployment_approval_pda(payer.key, &token_id, &destination_chain);
 
     let approval = DeployApproval {
