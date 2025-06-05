@@ -9,7 +9,6 @@ use core::str::FromStr;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::{AccountMeta, Instruction};
-use solana_program::msg;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -49,7 +48,6 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
         accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
     let accounts_iter = &mut relayer_prepended_accs.iter();
 
-    let incoming_message_payload_hash;
     let signing_pda_bump = {
         // scope to drop the account borrow after reading the data we want
         let incoming_message_pda = next_account_info(accounts_iter)?;
@@ -62,29 +60,15 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
         let incoming_message_data = incoming_message_pda.try_borrow_data()?;
         let incoming_message = IncomingMessage::read(&incoming_message_data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        incoming_message_payload_hash = incoming_message.payload_hash;
         incoming_message.signing_pda_bump
     };
 
-    // Check: Message Payload account is owned by the Gateway
+    // Get the message_payload pda
     let message_payload_account = next_account_info(accounts_iter)?;
-    if message_payload_account.owner != &axelar_solana_gateway::ID {
-        return Err(ProgramError::InvalidAccountOwner);
-    }
 
     // Read the raw payload from the MessagePayload PDA account
     let message_payload_account_data = message_payload_account.try_borrow_data()?;
     let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
-
-    // Check: MessagePayload PDA is finalized
-    if !message_payload.committed() {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    // Check: MessagePayload's payload hash matches IncomingMessage's
-    if *message_payload.payload_hash != incoming_message_payload_hash {
-        return Err(ProgramError::InvalidAccountData);
-    }
 
     // Decode the raw payload
     let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;
@@ -100,7 +84,6 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
     validate_message_internal(
         accounts,
         message,
-        message_payload.payload_hash,
         signing_pda_bump,
     )
 }
@@ -139,32 +122,9 @@ pub fn validate_with_gmp_metadata(
         incoming_message.signing_pda_bump
     };
 
-    // Check: Message Payload account is owned by the Gateway
-    let message_payload_account = next_account_info(accounts_iter)?;
-    if message_payload_account.owner != &axelar_solana_gateway::ID {
-        return Err(ProgramError::InvalidAccountOwner);
-    }
-
-    // Read the raw payload from the MessagePayload PDA account
-    let message_payload_account_data = message_payload_account.try_borrow_data()?;
-    let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
-
-    // Check: MessagePayload PDA is finalized
-    if !message_payload.committed() {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    let axelar_raw_payload = message_payload.raw_payload;
-    let payload_hash = solana_program::keccak::hash(axelar_raw_payload).to_bytes();
-
-    if payload_hash != *message_payload.payload_hash {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
     validate_message_internal(
         accounts,
         message,
-        message_payload.payload_hash,
         signing_pda_bump,
     )
 }
@@ -172,7 +132,6 @@ pub fn validate_with_gmp_metadata(
 fn validate_message_internal(
     accounts: &[AccountInfo<'_>],
     message: &Message,
-    payload_hash: &[u8; 32],
     signing_pda_derived_bump: u8,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
@@ -183,13 +142,6 @@ fn validate_message_internal(
 
     // Build the actual Message we are going to use
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-
-    // Check: Original message's payload_hash is equivalent to provided payload's
-    // hash
-    if &message.payload_hash != payload_hash {
-        msg!("Invalid payload hash");
-        return Err(ProgramError::InvalidInstructionData);
-    }
 
     invoke_signed(
         &axelar_solana_gateway::instructions::validate_message(
