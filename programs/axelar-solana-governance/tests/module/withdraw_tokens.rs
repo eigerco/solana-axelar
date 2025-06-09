@@ -70,19 +70,13 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     // Send the proposal execution instruction
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     println!("{res:?}");
     assert!(res.is_ok());
 
-    // Assert the contract has less funds
-    let post_withdraw_governance_pda_funds = sol_integration.get_balance(&config_pda).await;
-
-    assert_eq!(
-        post_withdraw_governance_pda_funds,
-        initial_governance_pda_funds - amount_to_withdraw
-    );
+    // We used to check that the config pda lost an exact amount of funds, but since rent is added to it this is now impossible.
 
     // Assert the receiver has the initial funds + the gov module funds
     let new_receiver_funds = sol_integration.get_balance(&fund_receiver.pubkey()).await;
@@ -125,7 +119,7 @@ async fn test_cannot_withdraw_surpassing_rent_exemption() {
     // Send the proposal execution instruction
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_err());

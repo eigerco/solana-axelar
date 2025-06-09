@@ -43,7 +43,7 @@ async fn test_successfully_process_gmp_schedule_time_proposal() {
     let managed_bump = operator::derive_managed_proposal_pda(&ix_builder.proposal_hash()).1;
 
     let expected_proposal =
-        ExecutableProposal::new(ix_builder.prop_eta.unwrap(), bump, managed_bump, sol_integration.fixture.payer.pubkey());
+        ExecutableProposal::new(ix_builder.prop_eta.unwrap(), bump, managed_bump);
     assert_eq!(expected_proposal, got_proposal);
 
     // Assert event was emitted

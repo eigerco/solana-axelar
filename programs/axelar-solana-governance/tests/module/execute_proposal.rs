@@ -46,7 +46,7 @@ async fn test_time_lock_is_enforced() {
     // Send execute proposal instruction
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
@@ -93,7 +93,7 @@ async fn test_proposal_can_be_executed_and_reached_memo_program() {
     // Send execute proposal instruction
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
@@ -142,7 +142,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     // The runtime detects the wrong PDA and returns an error.
@@ -215,7 +215,7 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
 
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
@@ -270,7 +270,7 @@ async fn test_proposal_is_deleted_after_execution() {
 
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
@@ -323,7 +323,7 @@ async fn test_same_proposal_can_be_created_after_execution() {
     // Send execute proposal instruction
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
