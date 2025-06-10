@@ -7,7 +7,7 @@ pub mod state;
 
 pub use bytemuck;
 pub use num_traits;
-pub use program_utils::pda::BytemuckedPda;
+pub use program_utils::BytemuckedPda;
 
 // Export current sdk types for downstream users building with a different sdk
 // version.
@@ -334,18 +334,52 @@ pub fn create_call_contract_signing_pda(
 /// using [`create_message_payload_pda`] instead.
 #[inline]
 #[must_use]
-pub fn find_message_payload_pda(incoming_message_pda: Pubkey) -> (Pubkey, u8) {
+pub fn get_message_payload_pda(command_id: &[u8; 32], authority: Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
             seed_prefixes::MESSAGE_PAYLOAD_SEED,
-            incoming_message_pda.as_ref(),
+            command_id,
+            authority.as_ref(),
         ],
         &crate::ID,
     )
 }
 
+/// Assert that the signature verification PDA has been derived correctly.
+///
+/// # Errors
+///
+/// Returns [`ProgramError::IncorrectProgramId`] if the derived PDA
+/// pubkey does not match the expected pubkey.
+///
+/// # Panics
+///
+/// Panics if PDA creation fails due to an invalid bump seed.
+#[inline]
+#[track_caller]
+pub fn assert_valid_message_payload_pda(
+    command_id: &[u8; 32],
+    bump: u8,
+    expected_pubkey: &Pubkey,
+) -> Result<(), ProgramError> {
+    let derived_pubkey = Pubkey::create_program_address(
+        &[
+            seed_prefixes::MESSAGE_PAYLOAD_SEED,
+            command_id,
+            &[bump],
+        ],
+        &crate::ID,
+    )
+    .expect("invalid bump for the pda");
+    if &derived_pubkey != expected_pubkey {
+        solana_program::msg!("Error: Invalid Message Payload PDA ");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
 /// Creates the `MessagePayload` PDA from a bump previously calculated
-/// by [`find_message_payload_pda`].
+/// by [`get_message_payload_pda`].
 ///
 /// # Errors
 ///
@@ -353,13 +387,15 @@ pub fn find_message_payload_pda(incoming_message_pda: Pubkey) -> (Pubkey, u8) {
 /// a valid program derived address.
 #[inline]
 pub fn create_message_payload_pda(
-    incoming_message_pda: Pubkey,
+    command_id: [u8; 32],
+    authority: Pubkey,
     bump: u8,
 ) -> Result<Pubkey, PubkeyError> {
     Pubkey::create_program_address(
         &[
             seed_prefixes::MESSAGE_PAYLOAD_SEED,
-            incoming_message_pda.as_ref(),
+            &command_id,
+            authority.as_ref(),
             &[bump],
         ],
         &crate::ID,
@@ -381,13 +417,14 @@ mod tests {
         assert_eq!(found_pda, created_pda);
     }
 
-    /// Test that the bump from `find_message_payload_pda` generates the same public key when
+    /// Test that the bump from `get_message_payload_pda` generates the same public key when
     /// used with the same inputs by `create_message_payload_pda`.
     #[test]
     fn test_find_and_create_message_payload_pda_bump_reuse() {
-        let incoming_message_pda = Pubkey::new_unique();
-        let (found_pda, bump) = find_message_payload_pda(incoming_message_pda);
-        let created_pda = create_message_payload_pda(incoming_message_pda, bump).unwrap();
+        let authority = Pubkey::new_unique();
+        let command_id = rand::random();
+        let (found_pda, bump) = get_message_payload_pda(&command_id, authority);
+        let created_pda = create_message_payload_pda(command_id, authority, bump).unwrap();
         assert_eq!(found_pda, created_pda);
     }
 

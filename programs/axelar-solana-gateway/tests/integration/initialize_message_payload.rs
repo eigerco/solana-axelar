@@ -34,9 +34,8 @@ pub async fn get_message_account(
     message: &Message,
 ) -> Option<Account> {
     let command_id = message_to_command_id(message);
-    let (incoming_message_pda, _) = get_incoming_message_pda(&command_id);
     let (message_payload_pda, _bump) =
-        axelar_solana_gateway::find_message_payload_pda(incoming_message_pda);
+        get_message_payload_pda(&command_id, runner.payer.pubkey());
     runner
         .try_get_account(&message_payload_pda, &axelar_solana_gateway::ID)
         .await
@@ -143,11 +142,10 @@ pub async fn initialize_message_payload_pda(
         usize::try_from(buffer_size).unwrap()
     );
     assert!(message_payload.raw_payload.iter().all(|&x| x == 0));
-    assert!(message_payload.payload_hash.iter().all(|&x| x == 0));
+    assert!(message_payload.payload_hash == &message.payload_hash);
 
     // Check the bump too
-    let (incoming_message_pda, _) = get_incoming_message_pda(&command_id);
-    let (_, bump) = find_message_payload_pda(incoming_message_pda);
+    let (_, bump) = get_message_payload_pda(&command_id, runner.payer.pubkey());
     assert_eq!(*message_payload.bump, bump);
 }
 

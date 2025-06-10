@@ -3,11 +3,14 @@ use crate::state::incoming_message::IncomingMessage;
 use crate::state::message_payload::MutMessagePayload;
 
 use super::Processor;
-use program_utils::pda::{init_pda_raw, BytemuckedPda, ValidPDA};
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::rent::Rent;
+use solana_program::sysvar::Sysvar;
 
 impl Processor {
     /// Initializes a Program Derived Address (PDA) account to store message raw payload data.
@@ -41,7 +44,6 @@ impl Processor {
         let accounts_iter = &mut accounts.iter();
         let payer = next_account_info(accounts_iter)?;
         let gateway_root_pda = next_account_info(accounts_iter)?;
-        let incoming_message_account = next_account_info(accounts_iter)?;
         let message_payload_account = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
 
@@ -74,25 +76,9 @@ impl Processor {
             .check_uninitialized_pda()
             .map_err(|_err| GatewayError::MessagePayloadAlreadyInitialized)?;
 
-        // Check: Incoming Message PDA account is initialized and validate it
-        incoming_message_account.check_initialized_pda_without_deserialization(program_id)?;
-        let incoming_message_data = incoming_message_account.try_borrow_data()?;
-        let incoming_message = IncomingMessage::read(&incoming_message_data).ok_or_else(|| {
-            solana_program::msg!("Error: failed to read incoming message account data");
-            ProgramError::InvalidAccountData
-        })?;
-
-        // Validate the IncomingMessage PDA using the stored bump
-        crate::assert_valid_incoming_message_pda(
-            &command_id,
-            incoming_message.bump,
-            incoming_message_account.key,
-        )?;
-
         // Check: Buffer PDA can be derived from provided seeds.
-        let incoming_message_pda = *incoming_message_account.key;
         let (message_payload_pda, bump_seed) =
-            crate::find_message_payload_pda(incoming_message_pda);
+            crate::get_message_payload_pda(&command_id, *payer.key);
         if message_payload_account.key != &message_payload_pda {
             solana_program::msg!("Error: failed to derive message payload account address");
             return Err(ProgramError::InvalidArgument);
@@ -108,25 +94,42 @@ impl Processor {
             return Err(ProgramError::InvalidInstructionData);
         };
 
+        let lamports_required =
+            Rent::get()?.minimum_balance(adjusted_account_size.try_into().map_err(|_err| {
+                solana_program::msg!("Unexpected usize overflow in account size");
+                ProgramError::ArithmeticOverflow
+            })?);
+        let create_pda_account_ix = solana_program::system_instruction::create_account(
+            payer.key,
+            message_payload_account.key,
+            lamports_required,
+            adjusted_account_size,
+            program_id,
+        );
+        // Use the same seeds as `[crate::get_message_payload_pda]`, plus the bump seed.
         let signers_seeds = &[
             crate::seed_prefixes::MESSAGE_PAYLOAD_SEED,
-            incoming_message_pda.as_ref(),
+            &command_id,
+            payer.key.as_ref(),
             &[bump_seed],
         ];
 
-        init_pda_raw(
-            payer,
-            message_payload_account,
-            program_id,
-            system_program,
-            adjusted_account_size,
-            signers_seeds,
+        // Create the empty message payload account.
+        invoke_signed(
+            &create_pda_account_ix,
+            &[
+                payer.clone(),
+                message_payload_account.clone(),
+                system_program.clone(),
+            ],
+            &[signers_seeds],
         )?;
 
         // Set the bump seed into account data
         let mut message_payload_account_data = message_payload_account.try_borrow_mut_data()?;
         let message_payload: MutMessagePayload<'_> = (*message_payload_account_data).try_into()?;
         *message_payload.bump = bump_seed;
+        *message_payload.payload_hash = incoming_message.payload_hash;
 
         Ok(())
     }
