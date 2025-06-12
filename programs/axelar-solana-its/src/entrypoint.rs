@@ -7,7 +7,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::pubkey::Pubkey;
 
 use crate::processor;
-
+// Test comment to start CI
 solana_program::entrypoint!(process_instruction);
 
 fn process_instruction<'a: 'b, 'b>(
