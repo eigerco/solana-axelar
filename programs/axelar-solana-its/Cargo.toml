@@ -13,6 +13,8 @@ workspace = true
 [features]
 no-entrypoint = []
 test-sbf = []
+custom-heap = []
+custom-panic = []
 
 [dependencies]
 alloy-primitives.workspace = true

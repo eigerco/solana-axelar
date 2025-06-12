@@ -99,9 +99,6 @@ rust_2018_idioms = { level = "allow", priority = 0 }
 unreachable_pub = { level = "warn", priority = -1 }
 unused_imports = { level = "warn", priority = -1 }
 unused_must_use = { level = "deny", priority = -1 }
-unexpected_cfgs = { level = "warn", check-cfg = [
-    'cfg(feature, values("custom-heap", "custom-panic"))'
-] }
 
 [workspace.dependencies]
 alloy-primitives = "0.7"
