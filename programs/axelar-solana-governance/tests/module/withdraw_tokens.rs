@@ -70,7 +70,7 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     // Send the proposal execution instruction
     let ix = ix_builder
         .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .execute_proposal(&config_pda)
         .build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     println!("{res:?}");

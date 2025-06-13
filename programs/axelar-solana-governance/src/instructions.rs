@@ -512,12 +512,10 @@ pub mod builder {
         /// proposal.
         pub fn execute_proposal(
             self,
-            payer: &Pubkey,
             config_pda: &Pubkey,
         ) -> IxBuilder<ExecuteProposalBuild> {
             let mut accounts = vec![
                 AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new_readonly(*payer, true),
                 AccountMeta::new(*config_pda, false),
                 AccountMeta::new(self.prop_pda.unwrap(), false),
             ];
@@ -1102,7 +1100,7 @@ pub mod builder {
                     &gmp_proposal_target_accounts,
                     data,
                 )
-                .execute_proposal(&Pubkey::new_unique(), &Pubkey::new_unique())
+                .execute_proposal(&Pubkey::new_unique())
                 .build();
             // Send ix
         }
@@ -1139,7 +1137,7 @@ pub mod builder {
 
             // Execute the proposal, no need to replay the data.
             let _ix = base_ix_builder
-                .execute_proposal(&Pubkey::new_unique(), &Pubkey::new_unique())
+                .execute_proposal(&Pubkey::new_unique())
                 .build();
         }
 
@@ -1170,7 +1168,7 @@ pub mod builder {
 
             // Executing the proposal, no need to replay data.
             let _ix = base_ix_builder
-                .execute_proposal(&Pubkey::new_unique(), &config_pda)
+                .execute_proposal(&config_pda)
                 .build();
             // Send ix
         }
@@ -1223,7 +1221,7 @@ pub mod builder {
         fn other_func(ix_builder: &IxBuilder<ProposalRelated>) {
             let _ix = ix_builder
                 .clone()
-                .execute_proposal(&Pubkey::new_unique(), &Pubkey::new_unique())
+                .execute_proposal(&Pubkey::new_unique())
                 .build();
 
             // Send ix
