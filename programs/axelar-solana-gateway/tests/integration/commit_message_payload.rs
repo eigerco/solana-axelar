@@ -13,7 +13,7 @@ use solana_sdk::transaction::TransactionError;
 
 #[tokio::test]
 #[allow(clippy::as_conversions)]
-async fn fail_commit_message_payload_pda_payload_hash_missmatch() {
+async fn fail_commit_message_payload_pda_payload_hash_mismatch() {
     const PAYLOAD_SIZE: usize = 1024;
 
     // Setup: Test runner
