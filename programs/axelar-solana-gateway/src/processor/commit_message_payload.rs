@@ -73,7 +73,6 @@ impl Processor {
             return Err(ProgramError::InvalidSeeds);
         }
 
-
         // Finally, calculate the hash check that it matches the incoming message hash.
         let payload_hash = message_payload.hash_raw_payload_bytes();
         if &payload_hash.to_bytes() != message_payload.payload_hash {

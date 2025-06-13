@@ -25,7 +25,7 @@ use core::mem::size_of;
 use core::ops::Deref;
 
 use solana_program::entrypoint::ProgramResult;
-use solana_program::keccak::{Hash, hashv};
+use solana_program::keccak::{hashv, Hash};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
@@ -134,7 +134,7 @@ impl<'a> TryFrom<&'a mut [u8]> for MessagePayload<'a, Mut> {
 
         // Unwrap: we just checked that the bump slice is large enough
         let bump = bump_slice.first_mut().unwrap();
-        // In order to parse 
+        // In order to parse
         let committed = committed_slice.first_mut().unwrap();
         // Unwrap: we just checked that the slice bounds fits the expected array size
         let payload_hash = payload_hash_slice.try_into().unwrap();
@@ -253,7 +253,10 @@ mod tests {
             account_data.as_mut_slice().try_into().unwrap();
 
         let expected_hash = Keccak256::digest(&message_payload.raw_payload).to_vec();
-        assert_eq!(expected_hash, message_payload.hash_raw_payload_bytes().to_bytes());
+        assert_eq!(
+            expected_hash,
+            message_payload.hash_raw_payload_bytes().to_bytes()
+        );
         assert_ne!(expected_hash, vec![0_u8; 32]); // confidence check
     }
 }

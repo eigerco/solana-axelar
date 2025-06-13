@@ -58,7 +58,10 @@ async fn fail_commit_message_payload_pda_payload_hash_mismatch() {
     .unwrap();
     let tx = runner.send_tx(&[ix]).await.unwrap_err();
     let error = tx.result.unwrap_err();
-    assert_eq!(error, TransactionError::InstructionError(0, InstructionError::InvalidAccountData));
+    assert_eq!(
+        error,
+        TransactionError::InstructionError(0, InstructionError::InvalidAccountData)
+    );
 }
 
 #[tokio::test]
