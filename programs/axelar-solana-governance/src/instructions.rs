@@ -510,10 +510,7 @@ pub mod builder {
 
         /// Creates an instruction for executing the previously provided
         /// proposal.
-        pub fn execute_proposal(
-            self,
-            config_pda: &Pubkey,
-        ) -> IxBuilder<ExecuteProposalBuild> {
+        pub fn execute_proposal(self, config_pda: &Pubkey) -> IxBuilder<ExecuteProposalBuild> {
             let mut accounts = vec![
                 AccountMeta::new_readonly(system_program::ID, false),
                 AccountMeta::new(*config_pda, false),
@@ -1167,9 +1164,7 @@ pub mod builder {
             // Send ix
 
             // Executing the proposal, no need to replay data.
-            let _ix = base_ix_builder
-                .execute_proposal(&config_pda)
-                .build();
+            let _ix = base_ix_builder.execute_proposal(&config_pda).build();
             // Send ix
         }
 
