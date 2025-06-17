@@ -12,9 +12,9 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-#[cfg(not(feature = "devnet"))]
+#[cfg(not(feature = "testnet"))]
 solana_program::declare_id!("gasFkyvr4LjK3WwnMGbao3Wzr67F88TmhKmi4ZCXF9K");
-#[cfg(feature = "devnet")]
+#[cfg(feature = "testnet")]
 solana_program::declare_id!("gaspfz1SLfPr1zmackMVMgShjkuCGPZ5taN8wAfwreW");
 
 /// Seed prefixes for PDAs created by this program
