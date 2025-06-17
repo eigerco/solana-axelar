@@ -13,7 +13,7 @@ workspace = true
 [features]
 no-entrypoint = []
 test-sbf = []
-devnet = []
+testnet = []
 
 [dependencies]
 alloy-primitives.workspace = true

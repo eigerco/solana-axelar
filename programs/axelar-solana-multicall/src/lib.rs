@@ -7,9 +7,9 @@ mod entrypoint;
 pub mod instructions;
 pub mod processor;
 
-#[cfg(not(feature = "devnet"))]
+#[cfg(not(feature = "testnet"))]
 solana_program::declare_id!("mCWeJ5ajaV9nwR3eMAYRTt8UL2eRKnmV96ykbrWkA1q");
-#[cfg(feature = "devnet")]
+#[cfg(feature = "testnet")]
 solana_program::declare_id!("mcHYeFvgcAsQqQDesRjbNQ7viuJgyn726pCWti4YgAi");
 
 /// Checks that the supplied program ID is the correct one

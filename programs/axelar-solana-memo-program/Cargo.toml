@@ -10,7 +10,7 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 no-entrypoint = []
-devnet = []
+testnet = []
 
 [dependencies]
 axelar-executable = { workspace = true }
