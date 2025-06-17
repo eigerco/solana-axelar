@@ -53,7 +53,7 @@ enum Commands {
         only_sbf: bool,
     },
     Build {
-        /// This flag ensures building contracts with testnet ids
+        /// This flag ensures building contracts with proper ids
         #[clap(short, long, default_value_t = BuildEnv::Devnet)]
         environment: BuildEnv,
     },
