@@ -13,6 +13,7 @@ workspace = true
 [features]
 no-entrypoint = []
 test-sbf = []
+devnet = []
 
 [dependencies]
 alloy-sol-types.workspace = true
