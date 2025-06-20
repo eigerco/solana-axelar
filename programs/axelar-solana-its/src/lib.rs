@@ -16,7 +16,11 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 
+#[cfg(feature = "devnet")]
 solana_program::declare_id!("itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd");
+
+#[cfg(feature = "stagenet")]
+solana_program::declare_id!("itsediSVCwwKc6UuxfrsEiF8AEuEFk34RFAscPEDEpJ");
 
 pub(crate) const ITS_HUB_CHAIN_NAME: &str = "axelar";
 

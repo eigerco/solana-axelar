@@ -1,8 +1,8 @@
-use std::path::PathBuf;
 use std::str::FromStr;
+use std::{fmt::Display, path::PathBuf};
 
 use clap::{Parser, Subcommand};
-use eyre::OptionExt;
+use eyre::{eyre, OptionExt};
 use itertools::Itertools;
 use xshell::{cmd, Shell};
 
@@ -13,6 +13,32 @@ struct Args {
     command: Commands,
 }
 
+#[derive(Clone, Debug)]
+enum BuildEnv {
+    Devnet,
+    Stagenet,
+}
+
+impl FromStr for BuildEnv {
+    type Err = eyre::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "devnet" => Ok(Self::Devnet),
+            "stagenet" => Ok(Self::Stagenet),
+            _ => Err(eyre!("Should be either \"devnet\" or \"stagenet\"")),
+        }
+    }
+}
+
+impl Display for BuildEnv {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Devnet => write!(f, "devnet"),
+            Self::Stagenet => write!(f, "stagenet"),
+        }
+    }
+}
+
 #[derive(Subcommand, Debug)]
 enum Commands {
     Test {
@@ -21,7 +47,11 @@ enum Commands {
         #[clap(short, long, default_value_t = false)]
         only_sbf: bool,
     },
-    Build,
+    Build {
+        /// This flag ensures building contracts with proper ids
+        #[clap(short, long, default_value_t = BuildEnv::Devnet)]
+        environment: BuildEnv,
+    },
     Check,
     Fmt,
     UnusedDeps,
@@ -72,14 +102,23 @@ fn main() -> eyre::Result<()> {
                 cmd!(sh, "cargo test -p {normal_crate}").run()?;
             }
         }
-        Commands::Build => {
+        Commands::Build { environment } => {
             println!("cargo build");
             let (solana_programs, _auxiliary_crates) = workspace_crates_by_category(&sh)?;
-
             // build all solana programs (because they have internal inter-dependencies)
             for (_program, path) in solana_programs.iter() {
                 let manifest_path = path.join("Cargo.toml");
-                cmd!(sh, "cargo build-sbf --manifest-path {manifest_path}").run()?;
+                match environment {
+                    BuildEnv::Devnet => cmd!(
+                        sh,
+                        "cargo build-sbf --manifest-path {manifest_path} --features devnet"
+                    ),
+                    BuildEnv::Stagenet => cmd!(
+                        sh,
+                        "cargo build-sbf --manifest-path {manifest_path} --features stagenet"
+                    ),
+                }
+                .run()?;
             }
         }
         Commands::Check => {
