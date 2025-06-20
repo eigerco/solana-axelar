@@ -11,9 +11,10 @@ pub mod processor;
 pub mod sol_types;
 pub mod state;
 
-#[cfg(not(feature = "testnet"))]
+#[cfg(feature = "devnet")]
 solana_program::declare_id!("govuuGWCowvknaLm2jkViP54eHCoLLzRqstne5Dgwvj");
-#[cfg(feature = "testnet")]
+
+#[cfg(feature = "stagenet")]
 solana_program::declare_id!("govXsQZx7cZcMBWQWkk4gq8eoA4MKkYi3G1sCzLPcqa");
 
 /// Checks that the supplied program ID is the correct one

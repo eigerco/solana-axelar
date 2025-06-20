@@ -32,4 +32,5 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 no-entrypoint = []
-testnet = []
+devnet = []
+stagenet = []

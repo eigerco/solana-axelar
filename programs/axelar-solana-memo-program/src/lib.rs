@@ -15,9 +15,10 @@ pub use solana_program;
 use solana_program::pubkey::Pubkey;
 use state::Counter;
 
-#[cfg(not(feature = "testnet"))]
+#[cfg(feature = "devnet")]
 solana_program::declare_id!("mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG");
-#[cfg(feature = "testnet")]
+
+#[cfg(feature = "stagenet")]
 solana_program::declare_id!("memdp6koMvx6Bneq1BJvtf7YEKNQDiNmnMFfE6fP691");
 
 /// Derives interchain token service root PDA
