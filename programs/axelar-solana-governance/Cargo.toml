@@ -13,7 +13,8 @@ crate-type = ["cdylib", "lib"]
 [features]
 no-entrypoint = []
 test-sbf = []
-testnet = []
+devnet = []
+stagenet = []
 
 [dependencies]
 solana-program.workspace = true

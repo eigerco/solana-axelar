@@ -16,9 +16,10 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::{Pubkey, PubkeyError};
 
-#[cfg(not(feature = "testnet"))]
+#[cfg(feature = "devnet")]
 solana_program::declare_id!("gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe");
-#[cfg(feature = "testnet")]
+
+#[cfg(feature = "stagenet")]
 solana_program::declare_id!("gtwqQzBirGUVdAUDt17WWYnVfPoydn9eAazDJb7gFUs");
 
 /// Seed prefixes for different PDAs initialized by the Gateway

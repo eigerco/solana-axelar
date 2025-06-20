@@ -16,8 +16,7 @@ struct Args {
 #[derive(Clone, Debug)]
 enum BuildEnv {
     Devnet,
-    Testnet,
-    Mainnet,
+    Stagenet,
 }
 
 impl FromStr for BuildEnv {
@@ -25,11 +24,8 @@ impl FromStr for BuildEnv {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "devnet" => Ok(Self::Devnet),
-            "testnet" => Ok(Self::Testnet),
-            "mainnet" => Ok(Self::Mainnet),
-            _ => Err(eyre!(
-                "Should be either \"devnet\", \"testnet\" or \"mainnet\""
-            )),
+            "stagenet" => Ok(Self::Stagenet),
+            _ => Err(eyre!("Should be either \"devnet\" or \"stagenet\"")),
         }
     }
 }
@@ -38,8 +34,7 @@ impl Display for BuildEnv {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Devnet => write!(f, "devnet"),
-            Self::Testnet => write!(f, "testnet"),
-            Self::Mainnet => write!(f, "mainnet"),
+            Self::Stagenet => write!(f, "stagenet"),
         }
     }
 }
@@ -114,15 +109,14 @@ fn main() -> eyre::Result<()> {
             for (_program, path) in solana_programs.iter() {
                 let manifest_path = path.join("Cargo.toml");
                 match environment {
-                    BuildEnv::Devnet => cmd!(sh, "cargo build-sbf --manifest-path {manifest_path}"),
-                    BuildEnv::Testnet => cmd!(
+                    BuildEnv::Devnet => cmd!(
                         sh,
-                        "cargo build-sbf --manifest-path {manifest_path} --features testnet"
+                        "cargo build-sbf --manifest-path {manifest_path} --features devnet"
                     ),
-                    BuildEnv::Mainnet => {
-                        println!("Currently unsupported build for mainnet");
-                        return Ok(());
-                    }
+                    BuildEnv::Stagenet => cmd!(
+                        sh,
+                        "cargo build-sbf --manifest-path {manifest_path} --features stagenet"
+                    ),
                 }
                 .run()?;
             }
