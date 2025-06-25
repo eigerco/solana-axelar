@@ -801,6 +801,7 @@ dependencies = [
 name = "axelar-solana-gateway"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axelar-message-primitives",
  "axelar-solana-encoding",
  "axelar-solana-gateway-test-fixtures",
