@@ -37,9 +37,12 @@ macro_rules! log_everywhere {
 #[macro_export]
 macro_rules! program_id_selector {
     (devnet = $devnet_id:literal, stagenet = $stagenet_id:literal) => {
-        match option_env!("SOLANA_DEPLOYMENT") {
-            Some(_) => $stagenet_id,
-            None => $devnet_id,
+        match option_env!("DEVNET") {
+            Some(_) => $devnet_id,
+            None => match option_env!("STAGENET") {
+                Some(_) => $stagenet_id,
+                None => $devnet_id,
+            }
         }
     };
 }
