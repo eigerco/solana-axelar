@@ -11,17 +11,11 @@ mod entrypoint;
 pub mod instruction;
 pub mod processor;
 pub mod state;
-use program_utils::program_id_selector;
 pub use solana_program;
 use solana_program::pubkey::Pubkey;
 use state::Counter;
 
-const SELECTED_ID: &str = program_id_selector!(
-    devnet = "mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG",
-    stagenet = "memdp6koMvx6Bneq1BJvtf7YEKNQDiNmnMFfE6fP691"
-);
-
-solana_program::declare_id!(SELECTED_ID);
+solana_program::declare_id!("mem1111111111111111111111111111111111111111");
 
 /// Derives interchain token service root PDA
 pub(crate) fn get_counter_pda_internal(program_id: &Pubkey) -> (Pubkey, u8) {
