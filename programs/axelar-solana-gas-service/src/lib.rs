@@ -5,7 +5,6 @@ pub mod instructions;
 pub mod processor;
 pub mod state;
 
-use program_utils::program_id_selector;
 // Export current sdk types for downstream users building with a different sdk
 // version.
 pub use solana_program;
@@ -13,12 +12,7 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-const SELECTED_ID: &str = program_id_selector!(
-    devnet = "gasFkyvr4LjK3WwnMGbao3Wzr67F88TmhKmi4ZCXF9K",
-    stagenet = "gaspfz1SLfPr1zmackMVMgShjkuCGPZ5taN8wAfwreW"
-);
-
-solana_program::declare_id!(SELECTED_ID);
+solana_program::declare_id!("gas1111111111111111111111111111111111111111");
 
 /// Seed prefixes for PDAs created by this program
 pub mod seed_prefixes {
