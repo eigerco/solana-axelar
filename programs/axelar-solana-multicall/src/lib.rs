@@ -1,5 +1,4 @@
 //! # Multicall program
-use program_utils::program_id_selector;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -8,12 +7,7 @@ mod entrypoint;
 pub mod instructions;
 pub mod processor;
 
-const SELECTED_ID: &str = program_id_selector!(
-    devnet = "mCWeJ5ajaV9nwR3eMAYRTt8UL2eRKnmV96ykbrWkA1q",
-    stagenet = "mcHYeFvgcAsQqQDesRjbNQ7viuJgyn726pCWti4YgAi"
-);
-
-solana_program::declare_id!(SELECTED_ID);
+solana_program::declare_id!("mC11111111111111111111111111111111111111111");
 
 /// Checks that the supplied program ID is the correct one
 ///

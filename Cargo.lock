@@ -949,6 +949,7 @@ name = "axelar-solana-multicall"
 version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
+ "anyhow",
  "axelar-executable",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
