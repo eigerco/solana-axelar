@@ -958,7 +958,6 @@ dependencies = [
  "ethers-core",
  "evm-contracts-test-suite",
  "itertools 0.12.1",
- "program-utils",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
