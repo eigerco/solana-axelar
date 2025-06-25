@@ -1,6 +1,5 @@
 //! # Governance program
 
-use program_utils::program_id_selector;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -12,12 +11,7 @@ pub mod processor;
 pub mod sol_types;
 pub mod state;
 
-const SELECTED_ID: &str = program_id_selector!(
-    devnet = "govuuGWCowvknaLm2jkViP54eHCoLLzRqstne5Dgwvj",
-    stagenet = "govXsQZx7cZcMBWQWkk4gq8eoA4MKkYi3G1sCzLPcqa"
-);
-
-solana_program::declare_id!(SELECTED_ID);
+solana_program::declare_id!("gov1111111111111111111111111111111111111111");
 
 /// Checks that the supplied program ID is the correct one
 ///
