@@ -9,6 +9,7 @@ pub use bytemuck;
 pub use num_traits;
 pub use program_utils::pda::BytemuckedPda;
 
+use program_utils::program_id_selector;
 // Export current sdk types for downstream users building with a different sdk
 // version.
 pub use solana_program;
@@ -16,11 +17,13 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::{Pubkey, PubkeyError};
 
-#[cfg(feature = "devnet")]
-solana_program::declare_id!("gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe");
 
-#[cfg(feature = "stagenet")]
-solana_program::declare_id!("gtwqQzBirGUVdAUDt17WWYnVfPoydn9eAazDJb7gFUs");
+const SELECTED_ID: &str = program_id_selector!(
+    devnet = "gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe",
+    stagenet = "gtwqQzBirGUVdAUDt17WWYnVfPoydn9eAazDJb7gFUs"
+);
+
+solana_program::declare_id!(SELECTED_ID);
 
 /// Seed prefixes for different PDAs initialized by the Gateway
 pub mod seed_prefixes {

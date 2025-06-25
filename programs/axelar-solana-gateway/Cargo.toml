@@ -14,8 +14,6 @@ crate-type = ["cdylib", "lib"]
 [features]
 no-entrypoint = []
 test-sbf = []
-devnet = []
-stagenet = []
 
 [dependencies]
 axelar-message-primitives.workspace = true

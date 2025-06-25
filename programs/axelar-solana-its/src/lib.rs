@@ -1,6 +1,7 @@
 //! # `InterchainTokenService` program
 use bitflags::bitflags;
 use borsh::{BorshDeserialize, BorshSerialize};
+use program_utils::program_id_selector;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -16,11 +17,12 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 
-#[cfg(feature = "devnet")]
-solana_program::declare_id!("itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd");
+const SELECTED_ID: &str = program_id_selector!(
+    devnet = "itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd",
+    stagenet = "itsediSVCwwKc6UuxfrsEiF8AEuEFk34RFAscPEDEpJ"
+);
 
-#[cfg(feature = "stagenet")]
-solana_program::declare_id!("itsediSVCwwKc6UuxfrsEiF8AEuEFk34RFAscPEDEpJ");
+solana_program::declare_id!(SELECTED_ID);
 
 pub(crate) const ITS_HUB_CHAIN_NAME: &str = "axelar";
 

@@ -31,6 +31,19 @@ macro_rules! log_everywhere {
     }}
 }
 
+/// It is used to select proper program id based on the target network.
+/// If there is any value in environment variable SOLANA_DEPLOYMENT,
+/// stagenet_id is used. Otherwise, devnet_id is used
+#[macro_export]
+macro_rules! program_id_selector {
+    (devnet = $devnet_id:literal, stagenet = $stagenet_id:literal) => {
+        match option_env!("SOLANA_DEPLOYMENT") {
+            Some(_) => $stagenet_id,
+            None => $devnet_id,
+        }
+    };
+}
+
 /// Checks that the supplied program ID is the correct one
 pub fn check_program_account(program_id: &Pubkey, check_f: fn(&Pubkey) -> bool) -> ProgramResult {
     if !&check_f(program_id) {
