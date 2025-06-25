@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use clap::{Parser, Subcommand};
 use eyre::OptionExt;

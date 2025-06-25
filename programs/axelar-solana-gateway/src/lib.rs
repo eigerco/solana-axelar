@@ -17,7 +17,6 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::{Pubkey, PubkeyError};
 
-
 const SELECTED_ID: &str = program_id_selector!(
     devnet = "gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe",
     stagenet = "gtwqQzBirGUVdAUDt17WWYnVfPoydn9eAazDJb7gFUs"

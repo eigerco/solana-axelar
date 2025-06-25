@@ -42,7 +42,7 @@ macro_rules! program_id_selector {
             None => match option_env!("STAGENET") {
                 Some(_) => $stagenet_id,
                 None => $devnet_id,
-            }
+            },
         }
     };
 }
