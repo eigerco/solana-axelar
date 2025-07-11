@@ -4,11 +4,11 @@ use bytemuck::{Pod, Zeroable};
 use program_utils::pda::BytemuckedPda;
 use solana_program::pubkey::Pubkey;
 
-/// Keep track of the authority for aggregating gas payments
+/// Keep track of the gas collector for aggregating gas payments
 #[repr(C)]
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Config {
-    /// The authority with permission give refunds & withdraw funds
+    /// The authority with permission to give refunds & withdraw funds
     pub gas_collector: Pubkey,
     /// A 32-byte "salt" to ensure uniqueness in PDA derivation.
     pub salt: [u8; 32],
