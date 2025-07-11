@@ -46,7 +46,7 @@ async fn test_refund_native() {
             &[
                 // pays for tx
                 &test_fixture.payer.insecure_clone(),
-                // authority for config pda deduction
+                // gas collector for config pda deduction
                 &gas_utils.config_gas_collector,
             ],
         )

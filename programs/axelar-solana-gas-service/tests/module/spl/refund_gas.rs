@@ -72,7 +72,7 @@ async fn test_refund_spl_fees(#[case] token_program_id: Pubkey) {
             &[
                 // pays for transaction fees
                 &test_fixture.payer.insecure_clone(),
-                // authority must be a signer
+                // gas collector must be a signer
                 &gas_utils.config_gas_collector,
             ],
         )
