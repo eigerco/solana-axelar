@@ -35,13 +35,17 @@ pub fn check_program_account(program_id: Pubkey) -> Result<(), ProgramError> {
 
 /// Derives the configuration PDA for this program.
 ///
-/// Given a `program_id`, a `salt` (32-byte array), and an `authority` (`Pubkey`), this function
+/// Given a `program_id`, a `salt` (32-byte array), and an `gas_collector` (`Pubkey`), this function
 /// uses [`Pubkey::find_program_address`] to return the derived PDA and its associated bump seed.
 #[inline]
 #[must_use]
-pub fn get_config_pda(program_id: &Pubkey, salt: &[u8; 32], authority: &Pubkey) -> (Pubkey, u8) {
+pub fn get_config_pda(
+    program_id: &Pubkey,
+    salt: &[u8; 32],
+    gas_collector: &Pubkey,
+) -> (Pubkey, u8) {
     Pubkey::find_program_address(
-        &[seed_prefixes::CONFIG_SEED, salt, authority.as_ref()],
+        &[seed_prefixes::CONFIG_SEED, salt, gas_collector.as_ref()],
         program_id,
     )
 }
@@ -59,14 +63,14 @@ pub fn get_config_pda(program_id: &Pubkey, salt: &[u8; 32], authority: &Pubkey) 
 pub fn assert_valid_config_pda(
     bump: u8,
     salt: &[u8; 32],
-    authority: &Pubkey,
+    gas_collector: &Pubkey,
     expected_pubkey: &Pubkey,
 ) -> Result<(), ProgramError> {
     let derived_pubkey = Pubkey::create_program_address(
         &[
             seed_prefixes::CONFIG_SEED,
             salt,
-            authority.as_ref(),
+            gas_collector.as_ref(),
             &[bump],
         ],
         &crate::ID,
