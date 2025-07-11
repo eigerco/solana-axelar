@@ -18,7 +18,7 @@ pub(crate) fn process_initialize_config(
 ) -> ProgramResult {
     let accounts = &mut accounts.iter();
     let payer = next_account_info(accounts)?;
-    let authority = next_account_info(accounts)?;
+    let gas_collector = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
     let system_account = next_account_info(accounts)?;
 
@@ -27,14 +27,14 @@ pub(crate) fn process_initialize_config(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if !authority.is_signer {
+    if !gas_collector.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let (_, bump) = get_config_pda(program_id, &salt, authority.key);
+    let (_, bump) = get_config_pda(program_id, &salt, gas_collector.key);
 
     // Check: Gateway Config account uses the canonical bump.
-    assert_valid_config_pda(bump, &salt, authority.key, config_pda.key)?;
+    assert_valid_config_pda(bump, &salt, gas_collector.key, config_pda.key)?;
 
     // Initialize the account
     program_utils::pda::init_pda_raw(
@@ -46,7 +46,7 @@ pub(crate) fn process_initialize_config(
         &[
             seed_prefixes::CONFIG_SEED,
             &salt,
-            authority.key.as_ref(),
+            gas_collector.key.as_ref(),
             &[bump],
         ],
     )?;
@@ -55,7 +55,7 @@ pub(crate) fn process_initialize_config(
 
     *gateway_config = Config {
         bump,
-        authority: *authority.key,
+        gas_collector: *gas_collector.key,
         salt,
     };
 
