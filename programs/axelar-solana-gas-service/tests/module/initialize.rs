@@ -20,7 +20,7 @@ async fn test_successfully_initialize_config() {
     assert_eq!(
         config,
         Config {
-            authority: gas_utils.config_authority.pubkey(),
+            gas_collector: gas_utils.config_gas_collector.pubkey(),
             salt: gas_utils.salt,
             bump: config.bump
         }
@@ -41,11 +41,11 @@ async fn test_different_salts_give_new_configs() {
         let (config_pda, bump) = axelar_solana_gas_service::get_config_pda(
             &axelar_solana_gas_service::ID,
             &salt,
-            &gas_utils.config_authority.pubkey(),
+            &gas_utils.config_gas_collector.pubkey(),
         );
         let _res = test_fixture
             .init_gas_config_with_params(
-                gas_utils.config_authority.insecure_clone(),
+                gas_utils.config_gas_collector.insecure_clone(),
                 config_pda,
                 salt,
             )
@@ -56,7 +56,7 @@ async fn test_different_salts_give_new_configs() {
         assert_eq!(
             config,
             Config {
-                authority: gas_utils.config_authority.pubkey(),
+                gas_collector: gas_utils.config_gas_collector.pubkey(),
                 salt,
                 bump
             }
@@ -69,11 +69,11 @@ async fn test_different_salts_give_new_configs() {
         let (config_pda, _bump) = axelar_solana_gas_service::get_config_pda(
             &axelar_solana_gas_service::ID,
             &salt,
-            &gas_utils.config_authority.pubkey(),
+            &gas_utils.config_gas_collector.pubkey(),
         );
         let res = test_fixture
             .init_gas_config_with_params(
-                gas_utils.config_authority.insecure_clone(),
+                gas_utils.config_gas_collector.insecure_clone(),
                 config_pda,
                 salt,
             )

@@ -9,7 +9,7 @@ use solana_program::pubkey::Pubkey;
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Config {
     /// The authority with permission give refunds & withdraw funds
-    pub authority: Pubkey,
+    pub gas_collector: Pubkey,
     /// A 32-byte "salt" to ensure uniqueness in PDA derivation.
     pub salt: [u8; 32],
     /// The bump seed used to derive the PDA, ensuring the address is valid.

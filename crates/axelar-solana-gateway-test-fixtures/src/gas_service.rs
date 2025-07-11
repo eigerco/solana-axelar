@@ -17,7 +17,7 @@ pub struct GasServiceUtils {
     /// upgrade authority of the program
     pub upgrade_authority: Keypair,
     /// the config authorty
-    pub config_authority: Keypair,
+    pub config_gas_collector: Keypair,
     /// PDA of the gas service config
     pub config_pda: Pubkey,
     /// salt to derive the config pda
@@ -47,17 +47,17 @@ impl TestFixture {
 
     /// Initialise a new gas config and return a utility tracker struct for it
     pub fn setup_default_gas_config(&mut self, upgrade_authority: Keypair) -> GasServiceUtils {
-        let config_authority = Keypair::new();
+        let config_gas_collector = Keypair::new();
         let salt = keccak::hash(b"my gas service").0;
         let (config_pda, ..) = axelar_solana_gas_service::get_config_pda(
             &axelar_solana_gas_service::ID,
             &salt,
-            &config_authority.pubkey(),
+            &config_gas_collector.pubkey(),
         );
 
         GasServiceUtils {
             upgrade_authority,
-            config_authority,
+            config_gas_collector,
             config_pda,
             salt,
         }
@@ -69,7 +69,7 @@ impl TestFixture {
         utils: &GasServiceUtils,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
         self.init_gas_config_with_params(
-            utils.config_authority.insecure_clone(),
+            utils.config_gas_collector.insecure_clone(),
             utils.config_pda,
             utils.salt,
         )

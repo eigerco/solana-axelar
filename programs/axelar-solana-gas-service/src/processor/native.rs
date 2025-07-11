@@ -67,7 +67,7 @@ fn try_load_config(
     config_pda.check_initialized_pda_without_deserialization(program_id)?;
     let data = config_pda.try_borrow_data()?;
     let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
+    assert_valid_config_pda(config.bump, &config.salt, &config.gas_collector, config_pda.key)?;
     Ok(*config)
 }
 
@@ -122,7 +122,7 @@ pub(crate) fn collect_fees_native(
     }
 
     let accounts = &mut accounts.iter();
-    let authority = next_account_info(accounts)?;
+    let gas_collector = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
 
@@ -131,13 +131,13 @@ pub(crate) fn collect_fees_native(
         let config = try_load_config(program_id, config_pda)?;
 
         // Check: Authority mtaches
-        if authority.key != &config.authority {
+        if gas_collector.key != &config.gas_collector {
             return Err(ProgramError::InvalidAccountOwner);
         }
     }
 
     // Check: Authority is signer
-    if !authority.is_signer {
+    if !gas_collector.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -154,7 +154,7 @@ pub(crate) fn refund_native(
     fees: u64,
 ) -> ProgramResult {
     let accounts = &mut accounts.iter();
-    let authority = next_account_info(accounts)?;
+    let gas_collector = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
 
@@ -163,13 +163,13 @@ pub(crate) fn refund_native(
         let config = try_load_config(program_id, config_pda)?;
 
         // Check: Authority mtaches
-        if authority.key != &config.authority {
+        if gas_collector.key != &config.gas_collector {
             return Err(ProgramError::InvalidAccountOwner);
         }
     }
 
     // Check: Authority is signer
-    if !authority.is_signer {
+    if !gas_collector.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
