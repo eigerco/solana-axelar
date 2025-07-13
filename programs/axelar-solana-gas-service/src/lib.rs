@@ -39,11 +39,7 @@ pub fn check_program_account(program_id: Pubkey) -> Result<(), ProgramError> {
 /// uses [`Pubkey::find_program_address`] to return the derived PDA and its associated bump seed.
 #[inline]
 #[must_use]
-pub fn get_config_pda(
-    program_id: &Pubkey,
-    salt: &[u8; 32],
-    operator: &Pubkey,
-) -> (Pubkey, u8) {
+pub fn get_config_pda(program_id: &Pubkey, salt: &[u8; 32], operator: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[seed_prefixes::CONFIG_SEED, salt, operator.as_ref()],
         program_id,
@@ -67,12 +63,7 @@ pub fn assert_valid_config_pda(
     expected_pubkey: &Pubkey,
 ) -> Result<(), ProgramError> {
     let derived_pubkey = Pubkey::create_program_address(
-        &[
-            seed_prefixes::CONFIG_SEED,
-            salt,
-            operator.as_ref(),
-            &[bump],
-        ],
+        &[seed_prefixes::CONFIG_SEED, salt, operator.as_ref(), &[bump]],
         &crate::ID,
     )
     .expect("invalid bump for the config pda");

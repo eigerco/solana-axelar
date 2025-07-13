@@ -44,11 +44,7 @@ async fn test_different_salts_give_new_configs() {
             &gas_utils.operator.pubkey(),
         );
         let _res = test_fixture
-            .init_gas_config_with_params(
-                gas_utils.operator.insecure_clone(),
-                config_pda,
-                salt,
-            )
+            .init_gas_config_with_params(gas_utils.operator.insecure_clone(), config_pda, salt)
             .await
             .unwrap();
         // Assert
@@ -72,11 +68,7 @@ async fn test_different_salts_give_new_configs() {
             &gas_utils.operator.pubkey(),
         );
         let res = test_fixture
-            .init_gas_config_with_params(
-                gas_utils.operator.insecure_clone(),
-                config_pda,
-                salt,
-            )
+            .init_gas_config_with_params(gas_utils.operator.insecure_clone(), config_pda, salt)
             .await;
         assert!(res.is_err());
     }
