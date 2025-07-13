@@ -70,7 +70,7 @@ fn try_load_config(
     assert_valid_config_pda(
         config.bump,
         &config.salt,
-        &config.gas_collector,
+        &config.operator,
         config_pda.key,
     )?;
     Ok(*config)
@@ -127,7 +127,7 @@ pub(crate) fn collect_fees_native(
     }
 
     let accounts = &mut accounts.iter();
-    let gas_collector = next_account_info(accounts)?;
+    let operator = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
 
@@ -135,14 +135,14 @@ pub(crate) fn collect_fees_native(
         // Check: Valid Config PDA
         let config = try_load_config(program_id, config_pda)?;
 
-        // Check: Authority mtaches
-        if gas_collector.key != &config.gas_collector {
+        // Check: Operator matches
+        if operator.key != &config.operator {
             return Err(ProgramError::InvalidAccountOwner);
         }
     }
 
-    // Check: Authority is signer
-    if !gas_collector.is_signer {
+    // Check: Operator is signer
+    if !operator.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -159,7 +159,7 @@ pub(crate) fn refund_native(
     fees: u64,
 ) -> ProgramResult {
     let accounts = &mut accounts.iter();
-    let gas_collector = next_account_info(accounts)?;
+    let operator = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
 
@@ -167,14 +167,14 @@ pub(crate) fn refund_native(
         // Check: Valid Config PDA
         let config = try_load_config(program_id, config_pda)?;
 
-        // Check: Authority mtaches
-        if gas_collector.key != &config.gas_collector {
+        // Check: Operator matches
+        if operator.key != &config.operator {
             return Err(ProgramError::InvalidAccountOwner);
         }
     }
 
-    // Check: Authority is signer
-    if !gas_collector.is_signer {
+    // Check: Operator is signer
+    if !operator.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
