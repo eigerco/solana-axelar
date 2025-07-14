@@ -270,12 +270,7 @@ pub(crate) fn collect_fees_spl(
             receiver_account.clone(),
             token_program.clone(),
         ],
-        &[&[
-            seed_prefixes::CONFIG_SEED,
-            &config.salt,
-            config.operator.as_ref(),
-            &[config.bump],
-        ]],
+        &[&[seed_prefixes::CONFIG_SEED, &config.salt, &[config.bump]]],
     )?;
 
     Ok(())
@@ -342,12 +337,7 @@ pub(crate) fn refund_spl(
             receiver_account.clone(),
             token_program.clone(),
         ],
-        &[&[
-            seed_prefixes::CONFIG_SEED,
-            &config.salt,
-            config.operator.as_ref(),
-            &[config.bump],
-        ]],
+        &[&[seed_prefixes::CONFIG_SEED, &config.salt, &[config.bump]]],
     )?;
 
     // Emit an event

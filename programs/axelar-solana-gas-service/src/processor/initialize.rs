@@ -43,12 +43,7 @@ pub(crate) fn process_initialize_config(
         program_id,
         system_account,
         size_of::<Config>().try_into().expect("must be valid u64"),
-        &[
-            seed_prefixes::CONFIG_SEED,
-            &salt,
-            operator.key.as_ref(),
-            &[bump],
-        ],
+        &[seed_prefixes::CONFIG_SEED, &salt, &[bump]],
     )?;
     let mut data = config_pda.try_borrow_mut_data()?;
     let gateway_config = Config::read_mut(&mut data).ok_or(ProgramError::InvalidAccountData)?;
