@@ -31,10 +31,10 @@ pub(crate) fn process_initialize_config(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let (_, bump) = get_config_pda(program_id, &salt, operator.key);
+    let (_, bump) = get_config_pda(program_id, &salt);
 
     // Check: Gateway Config account uses the canonical bump.
-    assert_valid_config_pda(bump, &salt, operator.key, config_pda.key)?;
+    assert_valid_config_pda(bump, &salt, config_pda.key)?;
 
     // Initialize the account
     program_utils::pda::init_pda_raw(
