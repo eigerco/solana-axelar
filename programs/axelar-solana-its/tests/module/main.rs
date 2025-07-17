@@ -106,6 +106,10 @@ impl AsyncTestContext for ItsTestContext {
 
         let solana_wallet = solana_chain.fixture.payer.pubkey();
 
+        println!("gas service id: {}", axelar_solana_gas_service::id());
+        println!("gateway id: {}", axelar_solana_gateway::id());
+        println!("its id: {}", axelar_solana_its::id());
+
         let mut this = Self {
             solana_chain,
             solana_wallet,

@@ -21,7 +21,11 @@ enum Commands {
         #[clap(short, long, default_value_t = false)]
         only_sbf: bool,
     },
-    Build,
+    Build {
+        /// Network environment: devnet-amplifier, stagenet, testnet, or mainnet
+        #[clap(short, long)]
+        network: Option<String>,
+    },
     Check,
     Fmt,
     UnusedDeps,
@@ -72,14 +76,36 @@ fn main() -> eyre::Result<()> {
                 cmd!(sh, "cargo test -p {normal_crate}").run()?;
             }
         }
-        Commands::Build => {
+        Commands::Build { network } => {
             println!("cargo build");
+
+            // Validate network parameter if provided
+            let valid_networks = ["devnet-amplifier", "stagenet", "testnet", "mainnet"];
+            if let Some(ref net) = network {
+                if !valid_networks.contains(&net.as_str()) {
+                    return Err(eyre::eyre!(
+                        "Invalid network '{}'. Must be one of: devnet-amplifier, stagenet, testnet, mainnet",
+                        net
+                    ));
+                }
+            }
+
             let (solana_programs, _auxiliary_crates) = workspace_crates_by_category(&sh)?;
 
             // build all solana programs (because they have internal inter-dependencies)
             for (_program, path) in solana_programs.iter() {
                 let manifest_path = path.join("Cargo.toml");
-                cmd!(sh, "cargo build-sbf --manifest-path {manifest_path}").run()?;
+
+                if let Some(ref net) = network {
+                    println!("Building with network feature: {}", net);
+                    cmd!(
+                        sh,
+                        "cargo build-sbf --manifest-path {manifest_path} --features {net} --no-default-features"
+                    )
+                    .run()?;
+                } else {
+                    cmd!(sh, "cargo build-sbf --manifest-path {manifest_path}").run()?;
+                }
             }
         }
         Commands::Check => {
