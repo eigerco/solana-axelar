@@ -122,12 +122,12 @@ fn main() -> eyre::Result<()> {
             cmd!(sh, "cargo fmt --all").run()?;
             cmd!(
                 sh,
-                "cargo fix --allow-dirty --allow-staged --workspace --all-features --tests"
+                "cargo fix --allow-dirty --allow-staged --workspace --tests"
             )
             .run()?;
             cmd!(
                 sh,
-                "cargo clippy --fix --allow-dirty --allow-staged --workspace --all-features --tests"
+                "cargo clippy --fix --allow-dirty --allow-staged --workspace --tests"
             )
             .run()?;
         }
@@ -143,7 +143,7 @@ fn main() -> eyre::Result<()> {
         }
         Commands::Docs => {
             println!("cargo doc");
-            cmd!(sh, "cargo doc --workspace --no-deps --all-features").run()?;
+            cmd!(sh, "cargo doc --workspace --no-deps").run()?;
 
             if std::option_env!("CI").is_none() {
                 #[cfg(target_os = "macos")]
