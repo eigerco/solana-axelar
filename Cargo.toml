@@ -180,6 +180,7 @@ axelar-solana-multicall = { path = "programs/axelar-solana-multicall", default-f
 axelar-solana-gateway = { path = "programs/axelar-solana-gateway", default-features = false }
 dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway", default-features = false }
 axelar-solana-governance = { path = "programs/axelar-solana-governance", default-features = false }
+axelar-solana-executable = { path = "programs/axelar-solana-executable", default-features = false }
 
 # helper crates
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
@@ -200,6 +201,7 @@ interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp"
 its-instruction-builder = { path = "helpers/its-instruction-builder", default-features = false }
 program-utils = { path = "helpers/program-utils", default-features = false }
 role-management = { path = "helpers/role-management" }
+relayer-discovery = { path = "helpers/relayer-discovery" }
 
 [workspace.metadata.cargo-machete]
 ignored = ["num-traits"]

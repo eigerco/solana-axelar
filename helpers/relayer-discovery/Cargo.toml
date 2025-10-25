@@ -1,0 +1,37 @@
+[package]
+name = "relayer-discovery"
+version = "0.0.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+borsh.workspace = true
+bytemuck.workspace = true
+mpl-token-metadata.workspace = true
+solana-program.workspace = true
+spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
+program-utils.workspace = true
+axelar-solana-encoding.workspace = true
+axelar-solana-gateway.workspace = true
+ethers-core.workspace = true
+axelar-solana-gateway-test-fixtures.workspace = true
+solana-sdk.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+solana-sdk.workspace = true
+solana-program-test.workspace = true
+axelar-solana-gateway-test-fixtures = { workspace = true, default-features = false }
+dummy-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"], default-features = false }
+
+[features]
+devnet-amplifier = ["axelar-solana-gateway-test-fixtures/devnet-amplifier"]
+stagenet = ["axelar-solana-gateway-test-fixtures/stagenet"]
+testnet = ["axelar-solana-gateway-test-fixtures/testnet"]
+mainnet = ["axelar-solana-gateway-test-fixtures/mainnet"]
+default = ["devnet-amplifier"]
