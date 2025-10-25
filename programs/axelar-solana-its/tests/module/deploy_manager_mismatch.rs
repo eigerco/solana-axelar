@@ -100,7 +100,7 @@ async fn attempt_deployment_with_specific_token_manager(
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let fake_token_manager_pda =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &manager_token_id).0;
-    deploy_remote_ix.accounts[4].pubkey = fake_token_manager_pda;
+    deploy_remote_ix.accounts[5].pubkey = fake_token_manager_pda;
 
     ctx.solana_chain
         .fixture
@@ -211,7 +211,7 @@ async fn test_deployment_with_token_manager_mismatch(
 
         let error_tx = result.unwrap_err();
         assert!(
-            error_tx.find_log("Warning: failed to deserialize account as axelar_solana_its::state::deploy_approval::DeployApproval: Unexpected length of input. The account might not have been initialized.").is_some(),
+            error_tx.find_log("Warning: failed to deserialize account as axelar_solana_its::state::deploy_approval::DeployApproval: failed to fill whole buffer. The account might not have been initialized.").is_some(),
             "Expected deserialization error message because the account doesn't exist (because no approval was created for TokenB)"
         );
     }
