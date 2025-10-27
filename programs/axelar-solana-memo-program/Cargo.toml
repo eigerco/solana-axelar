@@ -50,6 +50,7 @@ mpl-token-metadata.workspace = true
 program-utils = { workspace = true, default-features = false }
 solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
+solana-sdk-ids.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

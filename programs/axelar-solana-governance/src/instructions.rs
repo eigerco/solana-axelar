@@ -64,6 +64,9 @@ pub enum GovernanceInstruction {
         /// The GMP message metadata. The payload is retrieved later from
         ///  its dedicated account.
         message: Message,
+        /// The GMP payload, abi encoded. See
+        /// [`governance_gmp::GovernanceCommandPayload`].
+        payload: Vec<u8>,
     },
 
     /// Execute a given proposal. Anyone from the Solana network can execute a
@@ -158,7 +161,9 @@ pub mod builder {
     use solana_program::keccak::hash;
     use solana_program::program_error::ProgramError;
     use solana_program::pubkey::Pubkey;
-    use solana_program::{bpf_loader_upgradeable, msg, system_program};
+    #[allow(deprecated)]
+    use solana_program::{bpf_loader_upgradeable, msg};
+    use solana_sdk_ids::system_program;
 
     use super::GovernanceInstruction;
     use crate::processor::{
@@ -1014,6 +1019,7 @@ pub mod builder {
 
             let gov_instruction = GovernanceInstruction::ProcessGmp {
                 message: gmp_msg_meta.clone(),
+                payload: payload.clone(),
             };
             let data = to_vec(&gov_instruction).unwrap();
 
@@ -1064,7 +1070,6 @@ pub mod builder {
     pub fn calculate_gmp_ix(
         payer: Pubkey,
         gateway_incoming_message_pda: Pubkey,
-        gateway_message_payload_pda: Pubkey,
         message: &Message,
         payload: &[u8],
     ) -> Result<Instruction, ProgramError> {
@@ -1118,13 +1123,7 @@ pub mod builder {
 
         let mut ix = ix_builder.build().ix;
 
-        prepend_gateway_accounts_to_ix(
-            &mut ix,
-            payer,
-            gateway_incoming_message_pda,
-            gateway_message_payload_pda,
-            message,
-        );
+        prepend_gateway_accounts_to_ix(&mut ix, gateway_incoming_message_pda, message);
 
         Ok(ix)
     }
@@ -1134,9 +1133,7 @@ pub mod builder {
     /// message verification in GMP flows.
     pub fn prepend_gateway_accounts_to_ix(
         ix: &mut Instruction,
-        payer: Pubkey,
         gw_incoming_message: Pubkey,
-        gw_message_payload: Pubkey,
         message: &Message,
     ) {
         let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
@@ -1156,9 +1153,7 @@ pub mod builder {
         );
 
         let mut new_accounts = vec![
-            AccountMeta::new_readonly(payer, false),
             AccountMeta::new(gw_incoming_message, false),
-            AccountMeta::new_readonly(gw_message_payload, false),
             AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
             AccountMeta::new_readonly(gateway_root_pda, false),
             AccountMeta::new_readonly(event_authority, false),

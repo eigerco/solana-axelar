@@ -21,7 +21,6 @@ use solana_sdk::pubkey::Pubkey;
 pub async fn build_execute_instruction<C>(
     payer: Pubkey,
     gateway_incoming_message_pda: Pubkey,
-    gateway_message_payload_pda: Pubkey,
     message: Message,
     abi_payload: Vec<u8>,
     rpc_client: C,
@@ -45,7 +44,6 @@ where
     let inputs = ExecuteInstructionInputs::builder()
         .payer(payer)
         .incoming_message_pda(gateway_incoming_message_pda)
-        .message_payload_pda(gateway_message_payload_pda)
         .message(message)
         .payload(payload)
         .token_program(token_program)

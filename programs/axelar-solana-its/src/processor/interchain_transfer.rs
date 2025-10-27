@@ -24,7 +24,7 @@ use crate::accounts::{
     AxelarInterchainTokenExecutableAccounts, FlowTrackingAccounts, GiveTokenAccounts,
     TakeTokenAccounts,
 };
-use crate::executable::{AxelarInterchainTokenExecuteInfo, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
+use crate::executable::AxelarInterchainTokenExecuteInstruction;
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::FlowDirection;
 use crate::state::token_manager::{self, TokenManager};
@@ -84,7 +84,7 @@ use super::gmp;
 pub(crate) fn process_inbound_transfer(
     accounts: GiveTokenAccounts,
     message: Message,
-    payload: &InterchainTransfer,
+    payload: InterchainTransfer,
     source_chain: String,
 ) -> ProgramResult {
     let token_manager = TokenManager::load(accounts.token_manager)?;
@@ -149,7 +149,6 @@ pub(crate) fn process_inbound_transfer(
                 axelar_executable_accounts
                     .interchain_transfer_execute
                     .clone(),
-                axelar_executable_accounts.gateway_message_payload.clone(),
                 axelar_executable_accounts.token_program.clone(),
                 axelar_executable_accounts.mint.clone(),
                 axelar_executable_accounts.destination_program_ata.clone(),
@@ -194,7 +193,7 @@ fn build_axelar_interchain_token_execute(
     axelar_its_executable_accounts: &AxelarInterchainTokenExecutableAccounts,
     program_id: Pubkey,
     mut program_accounts: Vec<AccountMeta>,
-    payload: &InterchainTransfer,
+    payload: InterchainTransfer,
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
@@ -204,37 +203,33 @@ fn build_axelar_interchain_token_execute(
     let token_id = payload.token_id.0;
 
     let mut accounts = vec![
+        AccountMeta::new(*axelar_its_executable_accounts.mint.key, false),
+        AccountMeta::new_readonly(*axelar_its_executable_accounts.token_program.key, false),
+        AccountMeta::new(
+            *axelar_its_executable_accounts.destination_program_ata.key,
+            false,
+        ),
         AccountMeta::new(
             *axelar_its_executable_accounts
                 .interchain_transfer_execute
                 .key,
             true,
         ),
-        AccountMeta::new_readonly(
-            *axelar_its_executable_accounts.gateway_message_payload.key,
-            false,
-        ),
-        AccountMeta::new_readonly(*axelar_its_executable_accounts.token_program.key, false),
-        AccountMeta::new(*axelar_its_executable_accounts.mint.key, false),
-        AccountMeta::new(
-            *axelar_its_executable_accounts.destination_program_ata.key,
-            false,
-        ),
     ];
     accounts.append(&mut program_accounts);
 
-    let executable_payload = AxelarInterchainTokenExecuteInfo {
+    let executable_payload = AxelarInterchainTokenExecuteInstruction {
         command_id,
         source_chain,
         source_address,
+        destination_address: program_id,
         token_id,
         token,
         amount,
+        data: payload.data.into(),
     };
 
-    let mut data = AXELAR_INTERCHAIN_TOKEN_EXECUTE.to_vec();
-    let bytes = borsh::to_vec(&executable_payload)?;
-    data.extend_from_slice(&bytes);
+    let data = executable_payload.try_into()?;
 
     Ok(Instruction {
         program_id,

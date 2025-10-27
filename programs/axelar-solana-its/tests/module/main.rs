@@ -166,12 +166,6 @@ impl ItsTestContext {
             .await
             .unwrap();
 
-        let message_payload_pda = self
-            .solana_chain
-            .upload_message_payload(&message, &encoded_payload)
-            .await
-            .unwrap();
-
         // Action: set message status as executed by calling the destination program
         let (incoming_message_pda, ..) = axelar_solana_gateway::get_incoming_message_pda(
             &command_id(&message.cc_id.chain, &message.cc_id.id),
@@ -186,7 +180,6 @@ impl ItsTestContext {
         let its_ix_inputs = ExecuteInstructionInputs::builder()
             .payer(self.solana_chain.fixture.payer.pubkey())
             .incoming_message_pda(incoming_message_pda)
-            .message_payload_pda(message_payload_pda)
             .message(merkelised_message.leaf.message)
             .payload(payload)
             .token_program(token_program)

@@ -208,6 +208,8 @@ fn main() -> eyre::Result<()> {
                 ("axelar-solana-gateway", "gtw"),
                 ("axelar-solana-its", "its"),
                 ("axelar-solana-gas-service", "gas"),
+                ("axelar-solana-gas-service-v2", "gas2"),
+                ("axelar-solana-operators", "opr"),
                 ("axelar-solana-multicall", "mc"),
                 ("axelar-solana-memo-program", "mem"),
                 ("axelar-solana-governance", "gov"),

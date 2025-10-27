@@ -1,0 +1,63 @@
+[package]
+name = "axelar-solana-gas-service-v2"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+anchor-lang.workspace = true
+axelar-solana-operators = { workspace = true, features = ["no-entrypoint"] }
+program-utils.workspace = true
+bytemuck.workspace = true
+
+[dev-dependencies]
+axelar-solana-gateway-test-fixtures.workspace = true
+axelar-solana-gas-service.workspace = true
+solana-sdk-ids.workspace = true
+mollusk-svm.workspace = true
+mollusk-test-utils.workspace = true
+solana-sdk.workspace = true
+borsh.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "axelar_solana_gas_service_v2"
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+
+cpi = ["no-entrypoint"]
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+devnet-amplifier = [
+	"axelar-solana-gateway-test-fixtures/devnet-amplifier",
+	"axelar-solana-operators/devnet-amplifier",
+	"program-utils/devnet-amplifier",
+]
+stagenet = [
+	"axelar-solana-gateway-test-fixtures/stagenet",
+	"axelar-solana-operators/stagenet",
+	"program-utils/stagenet",
+]
+testnet = [
+	"axelar-solana-gateway-test-fixtures/testnet",
+	"axelar-solana-operators/testnet",
+	"program-utils/testnet",
+]
+mainnet = [
+	"axelar-solana-gateway-test-fixtures/mainnet",
+	"axelar-solana-operators/mainnet",
+	"program-utils/mainnet",
+]
+default = ["devnet-amplifier"]

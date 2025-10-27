@@ -12,16 +12,12 @@ use crate::instructions::GatewayInstruction;
 
 mod approve_message;
 mod call_contract;
-mod close_message_payload;
-mod commit_message_payload;
 mod initialize_config;
-mod initialize_message_payload;
 mod initialize_payload_verification_session;
 mod rotate_signers;
 mod transfer_operatorship;
 mod validate_message;
 mod verify_signature;
-mod write_message_payload;
 
 #[allow(clippy::multiple_inherent_impl)]
 /// Program state handler.
@@ -120,36 +116,6 @@ impl Processor {
             GatewayInstruction::ValidateMessage { message } => {
                 msg!("Instruction: Validate Message");
                 Self::process_validate_message(program_id, accounts, message)
-            }
-            GatewayInstruction::InitializeMessagePayload {
-                buffer_size,
-                command_id,
-            } => {
-                msg!("Instruction: Initialize Message Payload");
-                Self::process_initialize_message_payload(
-                    program_id,
-                    accounts,
-                    buffer_size,
-                    command_id,
-                )
-            }
-            GatewayInstruction::WriteMessagePayload {
-                offset,
-                bytes,
-                command_id,
-            } => {
-                msg!("Instruction: Write Message Payload");
-                Self::process_write_message_payload(
-                    program_id, accounts, offset, &bytes, command_id,
-                )
-            }
-            GatewayInstruction::CloseMessagePayload { command_id } => {
-                msg!("Instruction: Close Message Payload");
-                Self::process_close_message_payload(program_id, accounts, command_id)
-            }
-            GatewayInstruction::CommitMessagePayload { command_id } => {
-                msg!("Instruction: Commit Message Payload");
-                Self::process_commit_message_payload(program_id, accounts, command_id)
             }
             GatewayInstruction::TransferOperatorship => {
                 msg!("Instruction: Transfer Operatorship");

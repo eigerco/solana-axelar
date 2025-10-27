@@ -1,0 +1,55 @@
+[package]
+name = "axelar-solana-memo-v2"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+anchor-lang.workspace = true
+axelar-solana-gateway-v2 = { workspace = true, features = ["cpi"] }
+
+[dev-dependencies]
+axelar-solana-gateway-v2-test-fixtures.workspace = true
+mollusk-svm.workspace = true
+solana-sdk.workspace = true
+bincode.workspace = true
+axelar-solana-encoding.workspace = true
+hex.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "axelar_solana_memo_v2"
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+
+cpi = ["no-entrypoint"]
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+# Network features - these pass through to the gateway dependency
+devnet-amplifier = [
+	"axelar-solana-gateway-v2/devnet-amplifier",
+]
+stagenet = [
+	"axelar-solana-gateway-v2/stagenet",
+
+]
+testnet = [
+	"axelar-solana-gateway-v2/testnet",
+]
+mainnet = [
+	"axelar-solana-gateway-v2/mainnet",
+]
+default = ["devnet-amplifier"]

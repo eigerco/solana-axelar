@@ -1,0 +1,72 @@
+[package]
+name = "axelar-solana-gateway-v2"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+udigest.workspace = true
+bytemuck.workspace = true
+anchor-lang.workspace = true
+borsh.workspace = true
+axelar-solana-encoding = { workspace = true, features = ["solana"] }
+libsecp256k1.workspace = true
+bitvec.workspace = true
+alloy-sol-types.workspace = true
+num-derive.workspace = true
+num-traits.workspace = true
+
+[dev-dependencies]
+axelar-message-primitives.workspace = true
+axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"], default-features = false }
+axelar-solana-gateway-v2-test-fixtures.workspace = true
+mollusk-svm.workspace = true
+solana-sdk.workspace = true
+rand.workspace = true
+hex.workspace = true
+# For testing ABI payloads
+evm-contracts-rs.workspace = true
+evm-contracts-test-suite.workspace = true
+rstest.workspace = true
+test-log.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "axelar_solana_gateway_v2"
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+
+cpi = ["no-entrypoint"]
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+
+# Network features - these pass through to the gateway dependency
+devnet-amplifier = [
+	"axelar-solana-gateway/devnet-amplifier",
+]
+stagenet = [
+	"axelar-solana-gateway/stagenet",
+
+]
+testnet = [
+	"axelar-solana-gateway/testnet",
+]
+mainnet = [
+	"axelar-solana-gateway/mainnet",
+]
+
+default = ["devnet-amplifier"]

@@ -1,6 +1,7 @@
 use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
+#[allow(deprecated)]
 use solana_program::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::pubkey::Pubkey;

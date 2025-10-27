@@ -90,8 +90,7 @@ impl GovernanceConfig {
 }
 
 /// Governance configuration update type.
-#[account]
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct GovernanceConfigUpdate {
     pub chain_hash: Option<Hash>,
     pub address_hash: Option<Hash>,

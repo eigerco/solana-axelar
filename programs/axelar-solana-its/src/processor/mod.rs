@@ -62,8 +62,8 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::SetPauseStatus { paused } => {
             process_set_pause_status(accounts, paused)
         }
-        InterchainTokenServiceInstruction::Execute { message } => {
-            gmp::process_execute(accounts.try_into()?, message)
+        InterchainTokenServiceInstruction::Execute { message, payload } => {
+            gmp::process_execute(accounts.try_into()?, message, &payload)
         }
         InterchainTokenServiceInstruction::SetTrustedChain { chain_name } => {
             process_set_trusted_chain(accounts.try_into()?, chain_name)

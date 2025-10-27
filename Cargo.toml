@@ -55,7 +55,7 @@ std_instead_of_alloc = "allow"
 wildcard_imports = "allow"
 shadow_unrelated = "allow"
 module_name_repetitions = "allow"
-semicolon_outside_block = "allow" # remove this after we update rust-toolchain.toml -- buggy lint
+semicolon_outside_block = "allow"           # remove this after we update rust-toolchain.toml -- buggy lint
 similar_names = "allow"
 allow_attributes_without_reason = "allow"
 allow_attributes = "allow"
@@ -94,14 +94,23 @@ unused_trait_names = "allow"
 unwrap_used = "allow"
 use_self = "allow"
 unneeded_field_pattern = "allow"
+empty_structs_with_brackets = "allow" # Anchor generates empty structs at many places, mostly for Bumps
 
 [workspace.lints.rust]
 rust_2018_idioms = { level = "allow", priority = 0 }
 unreachable_pub = { level = "warn", priority = -1 }
 unused_imports = { level = "warn", priority = -1 }
 unused_must_use = { level = "deny", priority = -1 }
+# Fix for Solana lint warning
+# Remove after https://github.com/solana-foundation/anchor/pull/3748 is released
+unexpected_cfgs = { level = "warn", check-cfg = [
+	'cfg(target_os, values("solana"))',
+], priority = -1 }
+
 
 [workspace.dependencies]
+anchor-lang = { version = "0.31.1", features = ["event-cpi"] }
+anchor-spl = "0.31.1"
 alloy-primitives = "0.7"
 alloy-sol-types = "0.7"
 anyhow = "1"
@@ -114,7 +123,7 @@ bitvec = "1.0.1"
 bnum = { version = "0.10", features = ["serde"] }
 borsh = { version = "1", features = ["derive"] }
 bs58 = "0.5.1"
-bytemuck = { version = "1", features = ["derive"] }
+bytemuck = { version = "1", features = ["derive", "min_const_generics"] }
 cosmwasm-schema = "2"
 cosmwasm-std = "1.5"
 ed25519-dalek = "2"
@@ -127,7 +136,7 @@ itertools = "0.12"
 k256 = { version = "0.13", features = ["ecdsa"] }
 libsecp256k1 = { version = "0.6", default-features = false }
 libsecp-rand = { package = "rand", version = "0.7" }
-mpl-token-metadata = "5.1.0"
+mpl-token-metadata = "5.1.1"
 num-derive = "0.4"
 num-traits = "0.2"
 rand = "0.8"
@@ -140,16 +149,18 @@ serde_json = "1"
 sha3 = "0.10"
 signature = "2"
 simd-json = "0.13"
-solana-client = "~2.1"
-solana-logger = "~2.1"
-solana-program = "~2.1"
-solana-program-test = "~2.1"
-solana-sdk = "~2.1"
-solana-rpc-client = "~2.1"
-solana-rpc-client-api = "~2.1"
-solana-test-validator = "~2.1"
-solana-transaction-status = "~2.1"
-solana-banks-interface = "~2.1"
+solana-cli-config = "~2.3"
+solana-client = "~2.3"
+solana-logger = "~2.3"
+solana-program = "~2.3"
+solana-program-test = "~2.3"
+solana-sdk = "~2.3"
+solana-sdk-ids = "~2.2"
+solana-rpc-client = "~2.3"
+solana-rpc-client-api = "~2.3"
+solana-test-validator = "~2.3"
+solana-transaction-status = "~2.3"
+solana-banks-interface = "~2.3"
 spl-associated-token-account = "6.0.0"
 spl-pod = "0.4.0"
 spl-token = "6.0.0"
@@ -172,13 +183,19 @@ keccak-const = "0.2.0"
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
+mollusk-svm = "0.5.1"
 
 # solana programs
 axelar-solana-its = { path = "programs/axelar-solana-its", default-features = false }
+axelar-solana-operators = { path = "programs/axelar-solana-operators", default-features = false }
 axelar-solana-gas-service = { path = "programs/axelar-solana-gas-service", default-features = false }
+axelar-solana-gas-service-v2 = { path = "programs/axelar-solana-gas-service-v2", default-features = false }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program", default-features = false }
+axelar-solana-memo-v2 = { path = "programs/axelar-solana-memo-v2", default-features = false }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall", default-features = false }
 axelar-solana-gateway = { path = "programs/axelar-solana-gateway", default-features = false }
+axelar-solana-gateway-v2 = { path = "programs/axelar-solana-gateway-v2", default-features = false }
+axelar-solana-governance-v2 = { path = "programs/axelar-solana-governance-v2", default-features = false }
 dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway", default-features = false }
 axelar-solana-governance = { path = "programs/axelar-solana-governance", default-features = false }
 axelar-solana-executable = { path = "programs/axelar-solana-executable", default-features = false }
@@ -187,8 +204,8 @@ axelar-solana-executable = { path = "programs/axelar-solana-executable", default
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures", default-features = false }
-event-utils = { path = "crates/event-utils" }
-event-macros = { path = "crates/event-macros" }
+axelar-solana-gateway-v2-test-fixtures = { path = "crates/axelar-solana-gateway-v2-test-fixtures", default-features = false }
+axelar-solana-governance-v2-test-fixtures = { path = "crates/axelar-solana-governance-v2-test-fixtures", default-features = false }
 event-cpi = { path = "helpers/event-cpi" }
 event-cpi-macros = { path = "helpers/event-cpi-macros" }
 anchor-discriminators = { path = "helpers/anchor-discriminators" }
@@ -200,6 +217,7 @@ governance-gmp = { path = "helpers/governance-gmp" }
 interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
 its-instruction-builder = { path = "helpers/its-instruction-builder", default-features = false }
 program-utils = { path = "helpers/program-utils", default-features = false }
+mollusk-test-utils = { path = "helpers/mollusk-test-utils", default-features = false }
 role-management = { path = "helpers/role-management" }
 relayer-discovery = { path = "helpers/relayer-discovery" }
 

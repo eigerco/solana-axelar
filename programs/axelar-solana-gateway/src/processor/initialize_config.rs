@@ -9,8 +9,8 @@ use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
 use solana_program::sysvar::Sysvar;
+use solana_sdk_ids::system_program;
 
 use super::Processor;
 use crate::error::GatewayError;

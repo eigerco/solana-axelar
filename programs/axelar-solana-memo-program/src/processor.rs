@@ -1,23 +1,20 @@
 //! Program state processor
 
-use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::executable::{
-    validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX,
+    validate_message, AxelarExecuteInstruction, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX,
 };
-use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
-use axelar_solana_its::executable::{
-    AxelarInterchainTokenExecuteInfo, MaybeAxelarInterchainTokenExecutablePayload,
-};
+use axelar_solana_its::executable::AxelarInterchainTokenExecuteInstruction;
 use borsh::{self, BorshDeserialize};
 use mpl_token_metadata::accounts::Metadata;
 use program_utils::{check_program_account, pda::ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
-use solana_program::{msg, system_program};
+use solana_sdk_ids::system_program;
 use std::str::from_utf8;
 
 use crate::assert_counter_pda_seeds;
@@ -32,27 +29,19 @@ pub fn process_instruction<'a>(
 ) -> ProgramResult {
     check_program_account(program_id, crate::check_id)?;
 
-    if let Some(message) =
-        axelar_solana_gateway::executable::parse_axelar_message(input).transpose()?
-    {
+    if let Ok(execute_data) = AxelarExecuteInstruction::try_from(input) {
         msg!("Instruction: AxelarExecute");
-        return process_message_from_axelar(program_id, accounts, &message);
+        return process_message_from_axelar(program_id, accounts, &execute_data);
     }
 
-    if let Some((execute_info, call_data)) = input
-        .try_get_axelar_interchain_token_executable_payload(accounts)
-        .transpose()?
-    {
+    if let Ok(execute_data) = AxelarInterchainTokenExecuteInstruction::try_from(input) {
         msg!("Instruction: AxelarInterchainTokenExecute");
-        return process_message_from_axelar_with_token(
-            program_id,
-            accounts,
-            &execute_info,
-            call_data,
-        );
+        let accounts = execute_data.validated_accounts(accounts)?;
+        return process_message_from_axelar_with_token(program_id, accounts, &execute_data);
     }
 
     msg!("Instruction: Native");
+
     let instruction = AxelarMemoInstruction::try_from_slice(input)?;
     process_native_ix(program_id, accounts, instruction)
 }
@@ -62,31 +51,26 @@ pub fn process_instruction<'a>(
 pub fn process_message_from_axelar_with_token<'a>(
     program_id: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
-    execute_info: &AxelarInterchainTokenExecuteInfo,
-    call_data: Vec<u8>,
+    execute_data: &AxelarInterchainTokenExecuteInstruction,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let _its_root_pda = next_account_info(accounts_iter)?;
-    let _message_payload_account = next_account_info(accounts_iter)?;
-    let _token_program = next_account_info(accounts_iter)?;
-    let _token_mint = next_account_info(accounts_iter)?;
-    let _ata_account = next_account_info(accounts_iter)?;
     let mpl_token_metadata_account = next_account_info(accounts_iter)?;
-    let instruction_accounts = accounts_iter.as_slice();
     let token_metadata = Metadata::from_bytes(&mpl_token_metadata_account.try_borrow_data()?)?;
 
     msg!("Processing memo with tokens:");
-    msg!("amount: {}", execute_info.amount);
+    msg!("amount: {}", execute_data.amount);
     msg!("symbol: {}", token_metadata.symbol);
     msg!("name: {}", token_metadata.name);
     msg!(
         "payload source address: {}",
-        hex::encode(&execute_info.source_address)
+        hex::encode(&execute_data.source_address)
     );
 
-    let instruction: AxelarMemoInstruction = borsh::from_slice(&call_data)?;
+    let payload = AxelarMessagePayload::decode(&execute_data.data)?;
+    let instruction: AxelarMemoInstruction =
+        borsh::from_slice(&payload.payload_without_accounts())?;
 
-    process_native_ix(program_id, instruction_accounts, instruction)
+    process_native_ix(program_id, accounts_iter.as_slice(), instruction)
 }
 
 /// Process a message submitted by the relayer which originates from the Axelar
@@ -94,20 +78,14 @@ pub fn process_message_from_axelar_with_token<'a>(
 pub fn process_message_from_axelar(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    message: &Message,
+    execute_data: &AxelarExecuteInstruction,
 ) -> ProgramResult {
-    validate_message(accounts, message)?;
-    let (protocol_accounts, accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
+    validate_message(accounts, execute_data)?;
+    let accounts = &accounts[PROGRAM_ACCOUNTS_START_INDEX..];
 
-    // Access the payload from the MessagePayload account.
-    // It should be considered safe otherwise `validate_message` would have reverted.
-    let message_payload_account = &protocol_accounts[2];
-    let account_data = message_payload_account.try_borrow_data()?;
-    let message_payload: ImmutMessagePayload<'_> = (**account_data).try_into()?;
-    let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;
-    let payload = axelar_payload.payload_without_accounts();
-
-    let memo = from_utf8(payload).map_err(|err| {
+    // Access the payload from the AxelarExecuteInstruction account.
+    // It should be considered safe otherwise `validated_message` would have reverted.
+    let memo = from_utf8(&execute_data.payload_without_accounts).map_err(|err| {
         msg!("Invalid UTF-8, from byte {}", err.valid_up_to());
         ProgramError::InvalidInstructionData
     })?;

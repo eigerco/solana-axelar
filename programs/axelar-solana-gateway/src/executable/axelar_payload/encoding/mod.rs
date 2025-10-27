@@ -3,6 +3,7 @@ mod borsh_encoding;
 
 use core::mem::size_of;
 
+use borsh::{BorshDeserialize, BorshSerialize};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 
@@ -71,8 +72,11 @@ impl<'payload> AxelarMessagePayload<'payload> {
 ///
 /// It is expected that this is the first byte of the payload
 #[repr(u8)]
-#[derive(PartialEq, Debug, Eq, Clone, Copy, FromPrimitive, ToPrimitive)]
+#[derive(
+    PartialEq, Debug, Eq, Clone, Copy, FromPrimitive, ToPrimitive, BorshSerialize, BorshDeserialize,
+)]
 #[non_exhaustive]
+#[borsh(use_discriminant = true)]
 pub enum EncodingScheme {
     /// Encoding of the payload using Borsh
     Borsh = 0,

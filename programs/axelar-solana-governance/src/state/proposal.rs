@@ -448,8 +448,7 @@ impl Pack for ExecutableProposal {
     }
 }
 
-#[account]
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 /// Represents the data required to execute a proposal.
 /// This struct is only used by the execute proposal instruction (See
 /// [`crate::instructions::send_execute_proposal`]).

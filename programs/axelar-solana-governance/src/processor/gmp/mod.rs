@@ -18,7 +18,6 @@
 
 use alloy_sol_types::SolType;
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use governance_gmp::GovernanceCommand::{
     ApproveOperatorProposal, CancelOperatorApproval, CancelTimeLockProposal,
     ScheduleTimeLockProposal,
@@ -98,6 +97,7 @@ impl ProcessGMPContext {
         gw_accounts: &'a [AccountInfo<'a>],
         gmp_accounts: &[AccountInfo<'_>],
         message: &Message,
+        payload: &[u8],
     ) -> Result<Self, ProgramError> {
         let root_pda = gmp_accounts
             .get(ROOT_PDA_ACCOUNT_INDEX)
@@ -113,14 +113,9 @@ impl ProcessGMPContext {
         ensure_authorized_gmp_command(&governance_config, message)?;
 
         let gw_accounts_iter = &mut gw_accounts.iter();
-        let _message_payload_payer = next_account_info(gw_accounts_iter)?;
         let _gateway_approved_message_pda = next_account_info(gw_accounts_iter)?;
-        let payload_account = next_account_info(gw_accounts_iter)?;
 
-        let payload_account_data = payload_account.try_borrow_data()?;
-        let message_payload: ImmutMessagePayload<'_> = (**payload_account_data).try_into()?;
-
-        let cmd_payload = payload_conversions::decode_payload(message_payload.raw_payload)?;
+        let cmd_payload = payload_conversions::decode_payload(payload)?;
 
         let target = payload_conversions::decode_payload_target(&cmd_payload.target)?;
 

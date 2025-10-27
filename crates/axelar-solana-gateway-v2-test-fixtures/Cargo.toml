@@ -1,0 +1,18 @@
+[package]
+name = "axelar-solana-gateway-v2-test-fixtures"
+version = "0.1.0"
+edition = "2021"
+description = "Test fixtures and utilities for axelar-solana-gateway-v2"
+
+[dependencies]
+anchor-lang.workspace = true
+axelar-solana-gateway-v2.workspace = true
+axelar-solana-encoding.workspace = true
+mollusk-svm.workspace = true
+solana-sdk.workspace = true
+libsecp256k1.workspace = true
+bincode.workspace = true
+rand.workspace = true
+
+[features]
+default = []

@@ -1,31 +1,23 @@
 //! Module that defines the struct used by contracts adhering to the `AxelarInterchainTokenExecutable` interface.
 
 use axelar_solana_gateway::executable::AxelarMessagePayload;
-use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use borsh::{BorshDeserialize, BorshSerialize};
-use interchain_token_transfer_gmp::GMPPayload;
-use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use crate::accounts::AxelarInterchainTokenExecutableAccounts;
 use crate::assert_valid_interchain_transfer_execute_pda;
 
-/// The index of the first account that is expected to be passed to the
-/// destination program. The prepended accounts are:
-///
-/// 0. [signer] The Interchain Token Service Root PDA.
-/// 1. [] The Message Payload PDA.
-/// 2. [] The token program (spl-token or spl-token-2022).
-/// 3. [writable] The token mint.
-/// 4. [writable] The Destination Program Associated Token Account.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 5;
+/// Axelar Interchain Token Executable command prefix
+pub(crate) const AXELAR_INTERCHAIN_TOKEN_EXECUTE: &[u8; 16] = b"axelar-its-exec_";
 
-/// This is the payload that the `executeWithInterchainToken` processor on the destinatoin program
+/// This is the payload that the `executeWithInterchainToken` processor on the destination program
 /// must expect
 #[derive(Debug, PartialEq, Eq, BorshDeserialize, BorshSerialize)]
 #[repr(C)]
-pub struct AxelarInterchainTokenExecuteInfo {
+pub struct AxelarInterchainTokenExecuteInstruction {
     /// The unique message id.
     pub command_id: [u8; 32],
 
@@ -35,6 +27,9 @@ pub struct AxelarInterchainTokenExecuteInfo {
     /// The source address of the token transfer.
     pub source_address: Vec<u8>,
 
+    /// The destination program
+    pub destination_address: Pubkey,
+
     /// The token ID.
     pub token_id: [u8; 32],
 
@@ -43,101 +38,100 @@ pub struct AxelarInterchainTokenExecuteInfo {
 
     /// Amount of tokens being transferred.
     pub amount: u64,
+
+    /// The execution payload
+    pub data: Vec<u8>,
 }
 
-/// Axelar Interchain Token Executable command prefix
-pub(crate) const AXELAR_INTERCHAIN_TOKEN_EXECUTE: &[u8; 16] = b"axelar-its-exec_";
+impl AxelarInterchainTokenExecuteInstruction {
+    pub fn validated_accounts<'a>(
+        &self,
+        accounts: &'a [AccountInfo<'a>],
+    ) -> Result<&'a [AccountInfo<'a>], ProgramError> {
+        let accounts = AxelarInterchainTokenExecutableAccounts::try_from(accounts)?;
 
-/// Utility trait to extract the `AxelarInterchainTokenExecuteInfo` and call data
-pub trait MaybeAxelarInterchainTokenExecutablePayload {
-    /// Try to extract the `AxelarInterchainTokenExecuteInfo` and associated call data from the given payload and accounts
+        if !accounts.interchain_transfer_execute.is_signer {
+            msg!(
+                "Signing PDA account must be a signer: {}",
+                accounts.interchain_transfer_execute.key
+            );
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        assert_valid_interchain_transfer_execute_pda(
+            accounts.interchain_transfer_execute,
+            &self.destination_address,
+        )?;
+
+        let inner_payload = AxelarMessagePayload::decode(self.data.as_ref())?;
+        if !inner_payload
+            .solana_accounts()
+            .eq(accounts.destination_program_accounts)
+        {
+            msg!("The list of accounts is different than expected");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        Ok(accounts.destination_program_accounts)
+    }
+}
+
+impl TryInto<Vec<u8>> for AxelarInterchainTokenExecuteInstruction {
+    type Error = ProgramError;
+
+    /// We prefix a byte slice with the literal contents of `AXELAR_INTERCHAIN_TOKEN_EXECUTE` as
+    /// discriminator followed by the borsh-serialized `AxelarInterchainTokenExecuteInstruction`.
+    ///
+    /// This two-step approach is needed because borsh demonstrated to exhaust a Solana program's
+    /// memory when trying to deserialize the alternative form (Tag, Message) for an absent tag.
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        serialize_instruction(&self)
+    }
+}
+
+impl TryInto<Vec<u8>> for &AxelarInterchainTokenExecuteInstruction {
+    type Error = ProgramError;
+
+    /// We prefix a byte slice with the literal contents of `AXELAR_INTERCHAIN_TOKEN_EXECUTE`
+    /// followed by the borsh-serialized `AxelarInterchainTokenExecuteInstruction`.
+    ///
+    /// This two-step approach is needed because borsh demonstrated to exhaust a Solana program's
+    /// memory when trying to deserialize the alternative form (Tag, Message) for an absent tag.
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        serialize_instruction(self)
+    }
+}
+
+impl TryFrom<&[u8]> for AxelarInterchainTokenExecuteInstruction {
+    type Error = ProgramError;
+
+    /// Tries to deserialize input into an `AxelarInterchainTokenExecuteInstruction`
     ///
     /// # Errors
     ///
-    /// - If the data is not coming from `InterchainTokenService`
-    /// - If the data cannot be decoded as a `AxelarInterchainTokenExecuteInfo`
-    /// - If list of accounts is different than expected
-    /// - If the message account data cannot be borrowed
-    /// - If the message account data cannot be decoded as a `GMPPayload`
-    fn try_get_axelar_interchain_token_executable_payload<'a>(
-        &self,
-        accounts: &'a [AccountInfo<'a>],
-    ) -> Option<Result<(AxelarInterchainTokenExecuteInfo, Vec<u8>), ProgramError>>;
-}
-
-impl MaybeAxelarInterchainTokenExecutablePayload for &[u8] {
-    fn try_get_axelar_interchain_token_executable_payload<'a>(
-        &self,
-        accounts: &'a [AccountInfo<'a>],
-    ) -> Option<Result<(AxelarInterchainTokenExecuteInfo, Vec<u8>), ProgramError>> {
-        if !self.starts_with(AXELAR_INTERCHAIN_TOKEN_EXECUTE) {
-            return None;
+    /// Returns [`ProgramError::InvalidInstructionData`] in case the buffer data doesn't start with
+    /// the [`AXELAR_INTERCHAIN_TOKEN_EXECUTE`] discriminator.
+    ///
+    /// Returns [`ProgramError::BorshIoError`] if deserialization fails.
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        if !value.starts_with(AXELAR_INTERCHAIN_TOKEN_EXECUTE) {
+            return Err(ProgramError::InvalidInstructionData);
         }
 
-        let payload_bytes = self.get(AXELAR_INTERCHAIN_TOKEN_EXECUTE.len()..)?;
-        let execute_info: AxelarInterchainTokenExecuteInfo = match borsh::from_slice(payload_bytes)
+        // Slicing: we already checked that slice's lower bound above.
+        borsh::from_slice(&value[AXELAR_INTERCHAIN_TOKEN_EXECUTE.len()..])
             .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))
-        {
-            Ok(data) => data,
-            Err(err) => return Some(Err(err)),
-        };
-
-        let call_data = match extract_interchain_token_execute_call_data(accounts) {
-            Ok(data) => data,
-            Err(err) => return Some(Err(err)),
-        };
-
-        Some(Ok((execute_info, call_data)))
     }
 }
 
-/// Validates accounts and extract extracts the call data associated with the [`AxelarInterchainTokenExecuteInfo`]
-fn extract_interchain_token_execute_call_data<'a>(
-    accounts: &'a [AccountInfo<'a>],
+fn serialize_instruction(
+    instruction: &AxelarInterchainTokenExecuteInstruction,
 ) -> Result<Vec<u8>, ProgramError> {
-    let (protocol_accounts, program_accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
-    let account_iter = &mut protocol_accounts.iter();
-    let signing_pda_account = next_account_info(account_iter)?;
-    let message_payload_account = next_account_info(account_iter)?;
-    let message_payload_account_data = message_payload_account.try_borrow_data()?;
-    let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
-
-    if !signing_pda_account.is_signer {
-        msg!(
-            "Signing PDA account must be a signer: {}",
-            signing_pda_account.key
-        );
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
-    else {
-        msg!("Unsupported GMP payload");
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
-    let GMPPayload::InterchainTransfer(transfer) =
-        GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?
-    else {
-        msg!("The type of the given ITS message doesn't support call data");
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
-    assert_valid_interchain_transfer_execute_pda(
-        signing_pda_account,
-        &Pubkey::new_from_array(
-            (transfer.destination_address.iter().as_slice())
-                .try_into()
-                .map_err(|_err| ProgramError::InvalidInstructionData)?,
-        ),
-    )?;
-
-    let inner_payload = AxelarMessagePayload::decode(transfer.data.as_ref())?;
-    if !inner_payload.solana_accounts().eq(program_accounts) {
-        msg!("The list of accounts is different than expected");
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    Ok(inner_payload.payload_without_accounts().to_vec())
+    // In our tests, randomly generated messages have, in average, 175 bytes, so 256
+    // should be sufficient to avoid reallocations.
+    let mut buffer = Vec::with_capacity(256);
+    buffer.extend_from_slice(AXELAR_INTERCHAIN_TOKEN_EXECUTE);
+    borsh::to_writer(&mut buffer, &instruction)
+        .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))?;
+    Ok(buffer)
 }

@@ -11,7 +11,7 @@ use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
 use test_context::test_context;
 
-use axelar_message_primitives::{DataPayload, EncodingScheme, SolanaAccountRepr};
+use axelar_solana_gateway::executable::{AxelarMessagePayload, EncodingScheme, SolanaAccountRepr};
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_its::state::token_manager::{TokenManager, Type as TokenManagerType};
 use axelar_solana_memo_program::state::Counter;
@@ -326,7 +326,7 @@ async fn test_call_contract_with_token(ctx: &mut ItsTestContext) -> anyhow::Resu
     let metadata = Bytes::from(
         [
             0_u32.to_le_bytes().as_slice(), // MetadataVersion.CONTRACT_CALL
-            &DataPayload::new(
+            &AxelarMessagePayload::new(
                 &borsh::to_vec(&memo_instruction).unwrap(),
                 &[
                     SolanaAccountRepr {

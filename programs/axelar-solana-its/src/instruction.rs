@@ -4,16 +4,18 @@
 use std::borrow::Cow;
 
 use anchor_discriminators_macros::InstructionDiscriminator;
-use axelar_message_primitives::DataPayload;
 use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use borsh::to_vec;
 use interchain_token_transfer_gmp::GMPPayload;
+#[allow(deprecated)]
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::{system_program, sysvar};
+use solana_program::sysvar;
+use solana_sdk_ids::system_program;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use typed_builder::TypedBuilder;
 
@@ -804,6 +806,9 @@ pub enum InterchainTokenServiceInstruction {
     Execute {
         /// The GMP metadata
         message: Message,
+
+        /// The ITS payload
+        payload: Vec<u8>,
     },
 }
 
@@ -833,9 +838,6 @@ pub struct ExecuteInstructionInputs {
 
     /// The PDA used to track the message status by the gateway program.
     pub(crate) incoming_message_pda: Pubkey,
-
-    /// The PDA used to store the message payload.
-    pub(crate) message_payload_pda: Pubkey,
 
     /// The Axelar GMP metadata.
     pub(crate) message: Message,
@@ -1990,12 +1992,10 @@ pub fn set_flow_limit(
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn execute(inputs: ExecuteInstructionInputs) -> Result<Instruction, ProgramError> {
-    let mut accounts = prefix_accounts(
-        &inputs.payer,
-        &inputs.incoming_message_pda,
-        &inputs.message_payload_pda,
-        &inputs.message,
-    );
+    let mut accounts =
+        prefix_accounts(&inputs.payer, &inputs.incoming_message_pda, &inputs.message);
+
+    let encoded_payload = inputs.payload.encode();
 
     let unwrapped_payload = match inputs.payload {
         GMPPayload::InterchainTransfer(_)
@@ -2015,6 +2015,7 @@ pub fn execute(inputs: ExecuteInstructionInputs) -> Result<Instruction, ProgramE
 
     let data = to_vec(&InterchainTokenServiceInstruction::Execute {
         message: inputs.message,
+        payload: encoded_payload,
     })?;
 
     Ok(Instruction {
@@ -2150,7 +2151,6 @@ pub fn accept_operatorship(
 fn prefix_accounts(
     payer: &Pubkey,
     gateway_incoming_message_pda: &Pubkey,
-    gateway_message_payload_pda: &Pubkey,
     message: &Message,
 ) -> Vec<AccountMeta> {
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
@@ -2166,7 +2166,6 @@ fn prefix_accounts(
     vec![
         AccountMeta::new(*payer, true),
         AccountMeta::new(*gateway_incoming_message_pda, false),
-        AccountMeta::new_readonly(*gateway_message_payload_pda, false),
         AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
@@ -2238,7 +2237,7 @@ fn derive_specific_its_accounts(
                     crate::find_interchain_transfer_execute_pda(&wallet);
                 specific_accounts.push(AccountMeta::new(its_transfer_execute_pda, false));
 
-                let execute_data = DataPayload::decode(data)
+                let execute_data = AxelarMessagePayload::decode(data)
                     .map_err(|_err| ProgramError::InvalidInstructionData)?;
                 specific_accounts.extend(execute_data.account_meta().iter().cloned());
             }

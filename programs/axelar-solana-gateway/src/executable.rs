@@ -2,12 +2,9 @@
 
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage};
-use crate::state::message_payload::ImmutMessagePayload;
-use crate::{
-    create_message_payload_pda, get_gateway_root_config_pda, get_validate_message_signing_pda,
-    BytemuckedPda,
-};
+use crate::{get_gateway_root_config_pda, get_validate_message_signing_pda, BytemuckedPda};
 use axelar_solana_encoding::types::messages::Message;
+use borsh::{BorshDeserialize, BorshSerialize};
 use core::str::FromStr;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -27,7 +24,14 @@ pub const AXELAR_EXECUTE: &[u8; 16] = b"axelar-execute__";
 
 /// The index of the first account that is expected to be passed to the
 /// destination program.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 7;
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 5;
+
+#[derive(Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+pub struct AxelarExecuteInstruction {
+    pub message: Message,
+    pub payload_without_accounts: Vec<u8>,
+    pub encoding_scheme: EncodingScheme,
+}
 
 /// Perform CPI call to the Axelar Gateway to ensure that the given message is
 /// approved.
@@ -37,23 +41,24 @@ pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 7;
 ///
 /// Expected accounts:
 /// 0. `gateway_incoming_message` - `GatewayApprovedMessage` PDA
-/// 1. `gateway_message_payload` - `MessagePayload` PDA
-/// 2. `signing_pda` - Signing PDA that's associated with the provided
+/// 1. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 3. `gateway_root_pda` - Gateway Root PDA
-/// 4. `gateway_event_authority` - Gateway event authority used to emit events
-/// 5. `gateway_program_id` - Gateway Program ID
+/// 2. `gateway_root_pda` - Gateway Root PDA
+/// 3. `gateway_event_authority` - Gateway event authority used to emit events
+/// 4. `gateway_program_id` - Gateway Program ID
 /// N. accounts required by the `DataPayload` constructor
 ///
 /// # Errors
 /// - if not enough accounts were provided
 /// - if the payload hashes do not match
 /// - if CPI call to the gateway failed
-pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> ProgramResult {
+pub fn validate_message(
+    accounts: &[AccountInfo<'_>],
+    instruction: &AxelarExecuteInstruction,
+) -> ProgramResult {
     let (relayer_prepended_accs, origin_chain_provided_accs) =
         accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
     let accounts_iter = &mut relayer_prepended_accs.iter();
-    let message_payload_payer = next_account_info(accounts_iter)?;
     let incoming_message_pda = next_account_info(accounts_iter)?;
 
     let incoming_message_payload_hash;
@@ -72,50 +77,27 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
         incoming_message.signing_pda_bump
     };
 
-    // Check: Message Payload account is owned by the Gateway
-    let message_payload_account = next_account_info(accounts_iter)?;
-    if message_payload_account.owner != &crate::ID {
-        return Err(ProgramError::InvalidAccountOwner);
-    }
+    let payload = AxelarMessagePayload::new(
+        &instruction.payload_without_accounts,
+        origin_chain_provided_accs,
+        instruction.encoding_scheme,
+    );
 
-    // Read the raw payload from the MessagePayload PDA account
-    let message_payload_account_data = message_payload_account.try_borrow_data()?;
-    let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
-    let message_payload_pda = create_message_payload_pda(
-        *incoming_message_pda.key,
-        *message_payload_payer.key,
-        *message_payload.bump,
-    )?;
-
-    if message_payload_pda != *message_payload_account.key {
+    // Check: Payload hash matches IncomingMessage's
+    let payload_hash = payload.hash()?.0;
+    if *payload_hash != incoming_message_payload_hash {
         return Err(ProgramError::InvalidAccountData);
     }
-
-    // Check: MessagePayload PDA is finalized
-    if !message_payload.committed() {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    // Check: MessagePayload's payload hash matches IncomingMessage's
-    if *message_payload.payload_hash != incoming_message_payload_hash {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    // Decode the raw payload
-    let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;
 
     // Check: parsed accounts matches the original chain provided accounts
-    if !axelar_payload
-        .solana_accounts()
-        .eq(origin_chain_provided_accs)
-    {
+    if !payload.solana_accounts().eq(origin_chain_provided_accs) {
         return Err(ProgramError::InvalidAccountData);
     }
 
     validate_message_internal(
         accounts,
-        message,
-        message_payload.payload_hash,
+        &instruction.message,
+        &payload_hash,
         signing_pda_bump,
     )
 }
@@ -130,72 +112,42 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
 ///
 /// Expected accounts:
 /// 0. `gateway_incoming_message` - `GatewayApprovedMessage` PDA
-/// 1. `gateway_message_payload` - `MessagePayload` PDA
-/// 2. `signing_pda` - Signing PDA that's associated with the provided
+/// 1. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 3. `gateway_root_pda` - Gateway Root PDA
-/// 4. `gateway_event_authority` - Gateway event authority used to emit events
-/// 5. `gateway_program_id` - Gateway Program ID
+/// 2. `gateway_root_pda` - Gateway Root PDA
+/// 3. `gateway_event_authority` - Gateway event authority used to emit events
+/// 4. `gateway_program_id` - Gateway Program ID
 /// N. accounts required by the inner instruction (part of the payload).
 ///
 /// # Errors
 /// - if not enough accounts were provided
 /// - if the payload hashes do not match
 /// - if CPI call to the gateway failed
-pub fn validate_with_gmp_metadata(
+pub fn validate_with_raw_payload(
     accounts: &[AccountInfo<'_>],
     message: &Message,
+    payload: &[u8],
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let message_payload_payer = next_account_info(accounts_iter)?;
     let incoming_message_pda = next_account_info(accounts_iter)?;
 
+    let incoming_message_payload_hash;
     let signing_pda_bump = {
         // scope to release the account after reading the data we want
         let incoming_message_data = incoming_message_pda.try_borrow_data()?;
         let incoming_message = IncomingMessage::read(&incoming_message_data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
+
+        incoming_message_payload_hash = incoming_message.payload_hash;
         incoming_message.signing_pda_bump
     };
 
-    // Check: Message Payload account is owned by the Gateway
-    let message_payload_account = next_account_info(accounts_iter)?;
-    if message_payload_account.owner != &crate::ID {
-        return Err(ProgramError::InvalidAccountOwner);
-    }
-
-    // Read the raw payload from the MessagePayload PDA account
-    let message_payload_account_data = message_payload_account.try_borrow_data()?;
-    let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
-
-    let message_payload_pda = create_message_payload_pda(
-        *incoming_message_pda.key,
-        *message_payload_payer.key,
-        *message_payload.bump,
-    )?;
-
-    if message_payload_pda != *message_payload_account.key {
+    let payload_hash = solana_program::keccak::hash(payload).to_bytes();
+    if payload_hash != incoming_message_payload_hash {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Check: MessagePayload PDA is finalized
-    if !message_payload.committed() {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    let axelar_raw_payload = message_payload.raw_payload;
-    let payload_hash = solana_program::keccak::hash(axelar_raw_payload).to_bytes();
-
-    if payload_hash != *message_payload.payload_hash {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    validate_message_internal(
-        accounts,
-        message,
-        message_payload.payload_hash,
-        signing_pda_bump,
-    )
+    validate_message_internal(accounts, message, &payload_hash, signing_pda_bump)
 }
 
 fn validate_message_internal(
@@ -205,9 +157,7 @@ fn validate_message_internal(
     signing_pda_derived_bump: u8,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
-    let _message_payload_payer = next_account_info(account_info_iter)?;
     let gateway_incoming_message = next_account_info(account_info_iter)?;
-    let _message_payload_pda = next_account_info(account_info_iter)?; // skip this one, we don't need it
     let signing_pda = next_account_info(account_info_iter)?;
     let gateway_root_pda = next_account_info(account_info_iter)?;
     let gateway_event_authority = next_account_info(account_info_iter)?;
@@ -253,10 +203,10 @@ fn validate_message_internal(
 ///
 /// It will prepend the accounts array with these predefined accounts
 /// 0. `gateway_incoming_message` - `GatewayApprovedMessage` PDA
-/// 1. `gateway_message_payload` - `MessagePayload` PDA
-/// 2. `signing_pda` - Signing PDA that's associated with the provided
+/// 1. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 3. `gateway_root_pda` - Gateway Root PDA
+/// 2. `gateway_root_pda` - Gateway Root PDA
+/// 3. `gateway_event_authority` - Gateway event authority used to emit events
 /// 4. `gateway_program_id` - Gateway Program ID
 /// N... - The accounts provided in the `axelar_message_payload`
 ///
@@ -265,40 +215,41 @@ fn validate_message_internal(
 /// - if the `axelar_message_payload` could not be decoded
 /// - if we cannot encode the `AxelarExecutablePayload`
 pub fn construct_axelar_executable_ix(
-    message_payload_payer: Pubkey, // Used to derive the message payload PDA
-    message: &Message,
+    message: Message,
     // The payload of the incoming message, contains encoded accounts and the actual payload
     axelar_message_payload: &[u8],
     // The PDA for the gateway approved message, this *must* be initialized
     // beforehand
     gateway_incoming_message: Pubkey,
-    gateway_message_payload: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let passed_in_accounts = AxelarMessagePayload::decode(axelar_message_payload)?.account_meta();
-
     let destination_address = Pubkey::from_str(&message.destination_address)
         .map_err(|_er| ProgramError::InvalidAccountData)?;
-
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
     let (signing_pda, _) = get_validate_message_signing_pda(destination_address, command_id);
-
     let gateway_root_pda = get_gateway_root_config_pda().0;
     let gateway_event_authority =
         Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::id()).0;
 
     // The expected accounts for the `ValidateMessage` ix
     let mut accounts = vec![
-        AccountMeta::new_readonly(message_payload_payer, false),
         AccountMeta::new(gateway_incoming_message, false),
-        AccountMeta::new_readonly(gateway_message_payload, false),
         AccountMeta::new_readonly(signing_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
         AccountMeta::new_readonly(crate::id(), false),
     ];
-    accounts.extend(passed_in_accounts);
 
-    let data = serialize_message(message)?;
+    let payload = AxelarMessagePayload::decode(axelar_message_payload)?;
+
+    accounts.extend(payload.account_meta());
+
+    let instruction = AxelarExecuteInstruction {
+        message,
+        payload_without_accounts: payload.payload_without_accounts().to_vec(),
+        encoding_scheme: payload.encoding_scheme(),
+    };
+
+    let data = serialize_instruction(&instruction)?;
 
     Ok(Instruction {
         program_id: destination_address,
@@ -307,41 +258,61 @@ pub fn construct_axelar_executable_ix(
     })
 }
 
-/// We prefix a byte slice with the literal contents of `AXELAR_EXECUTE` followed
-/// by the borsh-serialized Message.
-///
-/// This two-step approach is needed because borsh demonstrated to exhaust a Solana
-/// program's memory when trying to deserialize the alternative form (Tag, Message)
-/// for an absent tag.
-fn serialize_message(message: &Message) -> Result<Vec<u8>, ProgramError> {
+fn serialize_instruction(instruction: &AxelarExecuteInstruction) -> Result<Vec<u8>, ProgramError> {
     // In our tests, randomly generated messages have, in average, 175 bytes, so 256
     // should be sufficient to avoid reallocations.
     let mut buffer = Vec::with_capacity(256);
     buffer.extend_from_slice(AXELAR_EXECUTE);
-    borsh::to_writer(&mut buffer, &message)
+    borsh::to_writer(&mut buffer, &instruction)
         .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))?;
     Ok(buffer)
 }
 
-/// Tries to parse input into an Axelar's message.
-///
-/// # Errors
-/// Will return a `ProgramError::BorshIoError` if parsing fails.
-#[allow(clippy::indexing_slicing)]
-#[must_use]
-pub fn parse_axelar_message(input: &[u8]) -> Option<Result<Message, ProgramError>> {
-    // This pre-parsing check is required, otherwise borsh will exhaust the available
-    // memory trying to find a possibly missing `AXELAR_EXECUTE` prefix.
-    if !input.starts_with(AXELAR_EXECUTE) {
-        return None;
-    }
+impl TryInto<Vec<u8>> for AxelarExecuteInstruction {
+    type Error = ProgramError;
 
-    // Slicing: we already checked that slice's lower bound above.
-    match borsh::from_slice(&input[AXELAR_EXECUTE.len()..])
-        .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))
-    {
-        Ok(message) => Some(Ok(message)),
-        Err(err) => Some(Err(err)),
+    /// We prefix a byte slice with the literal contents of `AXELAR_EXECUTE` as
+    /// discriminator followed by the borsh-serialized `AxelarExecuteInstruction`.
+    ///
+    /// This two-step approach is needed because borsh demonstrated to exhaust a Solana program's
+    /// memory when trying to deserialize the alternative form (Tag, Message) for an absent tag.
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        serialize_instruction(&self)
+    }
+}
+
+impl TryInto<Vec<u8>> for &AxelarExecuteInstruction {
+    type Error = ProgramError;
+
+    /// We prefix a byte slice with the literal contents of `AXELAR_EXECUTE`
+    /// followed by the borsh-serialized `AxelarExecuteInstruction`.
+    ///
+    /// This two-step approach is needed because borsh demonstrated to exhaust a Solana program's
+    /// memory when trying to deserialize the alternative form (Tag, Message) for an absent tag.
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        serialize_instruction(self)
+    }
+}
+
+impl TryFrom<&[u8]> for AxelarExecuteInstruction {
+    type Error = ProgramError;
+
+    /// Tries to deserialize input into an `AxelarExecuteInstruction`
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError::InvalidInstructionData`] in case the buffer data doesn't start with
+    /// the [`AXELAR_EXECUTE`] discriminator.
+    ///
+    /// Returns [`ProgramError::BorshIoError`] if deserialization fails.
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        if !value.starts_with(AXELAR_EXECUTE) {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        // Slicing: we already checked that slice's lower bound above.
+        borsh::from_slice(&value[AXELAR_EXECUTE.len()..])
+            .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))
     }
 }
 
@@ -352,9 +323,14 @@ mod tests {
 
     #[test]
     fn test_instruction_serialization() {
-        let message = random_message();
-        let serialized = serialize_message(&message).unwrap();
-        let deserialized = parse_axelar_message(&serialized).unwrap().unwrap();
-        assert_eq!(message, deserialized);
+        let ix = AxelarExecuteInstruction {
+            message: random_message(),
+            payload_without_accounts: vec![0xDE, 0xAD, 0xBE, 0xEF],
+            encoding_scheme: EncodingScheme::Borsh,
+        };
+
+        let serialized: Vec<u8> = (&ix).try_into().unwrap();
+        let deserialized = AxelarExecuteInstruction::try_from(serialized.as_ref()).unwrap();
+        assert_eq!(ix, deserialized);
     }
 }

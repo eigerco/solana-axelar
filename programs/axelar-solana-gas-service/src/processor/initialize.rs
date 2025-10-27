@@ -3,7 +3,7 @@ use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
+use solana_sdk_ids::system_program;
 
 use crate::state::Config;
 use crate::{assert_valid_config_pda, get_config_pda, seed_prefixes};

@@ -254,22 +254,11 @@ pub(crate) async fn approve_ix_at_gateway(
         .await
         .unwrap();
 
-    let message_payload_pda = sol_integration
-        .upload_message_payload(&gmp_build.msg_meta, &gmp_build.msg_payload)
-        .await
-        .unwrap();
-
     // Action: set message status as executed by calling the destination program
     let (incoming_message_pda, ..) = axelar_solana_gateway::get_incoming_message_pda(&command_id(
         &gmp_build.msg_meta.cc_id.chain,
         &gmp_build.msg_meta.cc_id.id,
     ));
 
-    prepend_gateway_accounts_to_ix(
-        &mut gmp_build.ix,
-        sol_integration.fixture.payer.pubkey(),
-        incoming_message_pda,
-        message_payload_pda,
-        &gmp_build.msg_meta,
-    );
+    prepend_gateway_accounts_to_ix(&mut gmp_build.ix, incoming_message_pda, &gmp_build.msg_meta);
 }

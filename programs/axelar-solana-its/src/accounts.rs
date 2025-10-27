@@ -44,7 +44,6 @@ pub(crate) trait Validate {
 pub(crate) struct ExecuteAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) gateway_incoming_message: &'a AccountInfo<'a>,
-    pub(crate) gateway_message_payload: &'a AccountInfo<'a>,
     pub(crate) gateway_signing: &'a AccountInfo<'a>,
     pub(crate) gateway_root: &'a AccountInfo<'a>,
     pub(crate) gateway_event_authority: &'a AccountInfo<'a>,
@@ -63,9 +62,7 @@ pub(crate) struct ExecuteAccounts<'a> {
 impl<'a> ExecuteAccounts<'a> {
     pub(crate) fn gateway_validation_accounts(&self) -> Vec<AccountInfo<'a>> {
         vec![
-            self.payer.clone(),
             self.gateway_incoming_message.clone(),
-            self.gateway_message_payload.clone(),
             self.gateway_signing.clone(),
             self.gateway_root.clone(),
             self.gateway_event_authority.clone(),
@@ -104,7 +101,6 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for ExecuteAccounts<'a> {
         let converted = Self {
             payer: next_account_info(accounts_iter)?,
             gateway_incoming_message: next_account_info(accounts_iter)?,
-            gateway_message_payload: next_account_info(accounts_iter)?,
             gateway_signing: next_account_info(accounts_iter)?,
             gateway_root: next_account_info(accounts_iter)?,
             gateway_event_authority: next_account_info(accounts_iter)?,
@@ -462,7 +458,6 @@ pub(crate) struct GiveTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) system_program: &'a AccountInfo<'a>,
     pub(crate) its_root: &'a AccountInfo<'a>,
-    pub(crate) gateway_message_payload: &'a AccountInfo<'a>,
     pub(crate) token_manager: &'a AccountInfo<'a>,
     pub(crate) mint: &'a AccountInfo<'a>,
     pub(crate) token_manager_ata: &'a AccountInfo<'a>,
@@ -499,7 +494,6 @@ impl<'a> TryFrom<ExecuteAccounts<'a>> for GiveTokenAccounts<'a> {
             payer: value.payer,
             system_program: value.system_program,
             its_root: value.its_root,
-            gateway_message_payload: value.gateway_message_payload,
             token_manager: value.token_manager,
             mint: value.mint,
             token_manager_ata: value.token_manager_ata,
@@ -541,7 +535,6 @@ impl<'a> TryFrom<ExecuteAccounts<'a>> for GiveTokenAccounts<'a> {
 }
 
 pub(crate) struct AxelarInterchainTokenExecutableAccounts<'a> {
-    pub(crate) gateway_message_payload: &'a AccountInfo<'a>,
     pub(crate) token_program: &'a AccountInfo<'a>,
     pub(crate) mint: &'a AccountInfo<'a>,
     pub(crate) destination_program_ata: &'a AccountInfo<'a>,
@@ -555,12 +548,33 @@ impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
     }
 }
 
+impl<'a> TryFrom<&'a [AccountInfo<'a>]> for AxelarInterchainTokenExecutableAccounts<'a> {
+    type Error = ProgramError;
+
+    fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error>
+    where
+        Self: Sized + Validate,
+    {
+        let accounts_iter = &mut value.iter();
+        let converted = Self {
+            token_program: next_account_info(accounts_iter)?,
+            mint: next_account_info(accounts_iter)?,
+            destination_program_ata: next_account_info(accounts_iter)?,
+            interchain_transfer_execute: next_account_info(accounts_iter)?,
+            destination_program_accounts: accounts_iter.as_slice(),
+        };
+
+        converted.validate()?;
+
+        Ok(converted)
+    }
+}
+
 impl<'a> TryFrom<GiveTokenAccounts<'a>> for AxelarInterchainTokenExecutableAccounts<'a> {
     type Error = ProgramError;
 
     fn try_from(value: GiveTokenAccounts<'a>) -> Result<Self, Self::Error> {
         let converted = Self {
-            gateway_message_payload: value.gateway_message_payload,
             token_program: value.token_program,
             mint: value.mint,
             destination_program_ata: value.destination_ata,

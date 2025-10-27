@@ -2,6 +2,7 @@ use dummy_axelar_solana_event_cpi::{
     instruction::emit_event, processor::MemoSentEvent, ID as PROGRAM_ID,
 };
 use event_cpi_test_utils::assert_event_cpi;
+#[allow(deprecated)]
 use solana_program::{instruction::AccountMeta, pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{

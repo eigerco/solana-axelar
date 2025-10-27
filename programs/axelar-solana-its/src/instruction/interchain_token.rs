@@ -61,7 +61,7 @@ pub fn transfer_mintership(
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::id(), false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(sender, true),
         AccountMeta::new(sender_roles_pda, false),
@@ -106,7 +106,7 @@ pub fn propose_mintership(
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::id(), false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(proposer, true),
         AccountMeta::new_readonly(origin_roles_pda, false),
@@ -153,7 +153,7 @@ pub fn accept_mintership(
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::id(), false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(accepter, true),
         AccountMeta::new(accepter_roles_pda, false),

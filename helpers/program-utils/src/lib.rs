@@ -8,7 +8,8 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_program, sysvar};
+use solana_program::{msg, sysvar};
+use solana_sdk_ids::system_program;
 
 pub mod pda;
 /// mini helper to log from native Rust or to the program log
@@ -186,6 +187,37 @@ pub fn transfer_lamports(
         .checked_add(amount_of_lamports)
         .ok_or(ProgramError::InsufficientFunds)?;
     Ok(())
+}
+
+/// Macro for transferring lamports between accounts that implement the Lamports trait
+///
+/// # Requirements
+///
+/// 1. The `from` account must be owned by the executing program.
+/// 2. Both accounts must be marked `mut`.
+/// 3. The total lamports **before** the transaction must equal to total lamports **after**
+///    the transaction.
+/// 4. `lamports` field of both account infos should not currently be borrowed.
+///
+/// # Examples
+/// ```
+/// transfer_lamports_anchor!(
+///  ctx.accounts.from_account,
+///  ctx.accounts.to_account,
+///  amount
+/// );
+/// ```
+#[macro_export]
+macro_rules! transfer_lamports_anchor {
+    ($from:expr, $to:expr, $amount:expr) => {{
+        if $from.get_lamports() < $amount {
+            return Err(anchor_lang::error::Error::from(
+                anchor_lang::solana_program::program_error::ProgramError::InsufficientFunds,
+            ));
+        }
+        $from.sub_lamports($amount)?;
+        $to.add_lamports($amount)?;
+    }};
 }
 
 /// Checks if the key is from system account

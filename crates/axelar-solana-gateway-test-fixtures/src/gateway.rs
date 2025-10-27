@@ -428,16 +428,12 @@ impl SolanaAxelarIntegrationMetadata {
         raw_payload: &[u8],
         event_to_assert_on_execute: Option<T>,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
-        let message_payload_pda = self.upload_message_payload(&message, raw_payload).await?;
-
         let (incoming_message_pda, _bump) =
             get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
         let ix = axelar_solana_gateway::executable::construct_axelar_executable_ix(
-            self.payer.pubkey(),
-            &message,
+            message,
             raw_payload,
             incoming_message_pda,
-            message_payload_pda,
         )
         .unwrap();
         if let Some(event_to_assert) = event_to_assert_on_execute {
@@ -456,9 +452,6 @@ impl SolanaAxelarIntegrationMetadata {
             assert_event_cpi(&event_to_assert, &inner_ixs);
         }
         let execute_results = self.send_tx(&[ix]).await;
-
-        // Close message payload and reclaim lamports
-        self.close_message_payload(&message).await?;
 
         execute_results
     }
@@ -499,114 +492,6 @@ impl SolanaAxelarIntegrationMetadata {
             .get_account(&incoming_message_pda, &axelar_solana_gateway::id())
             .await;
         *IncomingMessage::read(incoming_message_pda_acc.data()).unwrap()
-    }
-
-    /// Upload a message payload to the PDA account
-    pub async fn upload_message_payload(
-        &mut self,
-        message: &Message,
-        raw_payload: &[u8],
-    ) -> Result<Pubkey, BanksTransactionResultWithMetadata> {
-        let msg_command_id = message_to_command_id(message);
-
-        self.initialize_message_payload(msg_command_id, raw_payload)
-            .await?;
-        self.write_message_payload(msg_command_id, raw_payload)
-            .await?;
-        self.commit_message_payload(msg_command_id).await?;
-
-        let (incoming_message_pda, _) = get_incoming_message_pda(&msg_command_id);
-        let (message_payload_account, _bump) = axelar_solana_gateway::find_message_payload_pda(
-            incoming_message_pda,
-            self.fixture.payer.pubkey(),
-        );
-
-        Ok(message_payload_account)
-    }
-
-    async fn initialize_message_payload(
-        &mut self,
-        command_id: [u8; 32],
-        raw_payload: &[u8],
-    ) -> Result<(), BanksTransactionResultWithMetadata> {
-        let ix = axelar_solana_gateway::instructions::initialize_message_payload(
-            self.gateway_root_pda,
-            self.payer.pubkey(),
-            command_id,
-            raw_payload
-                .len()
-                .try_into()
-                .expect("Unexpected u64 overflow in buffer size"),
-        )
-        .unwrap();
-
-        let tx = self.send_tx(&[ix]).await?;
-        assert!(
-            tx.result.is_ok(),
-            "failed to initialize message payload account"
-        );
-        Ok(())
-    }
-
-    async fn write_message_payload(
-        &mut self,
-        command_id: [u8; 32],
-        raw_payload: &[u8],
-    ) -> Result<(), BanksTransactionResultWithMetadata> {
-        let chunk_size = 800; // mostly safe, relatively high value
-
-        for ChunkWithOffset { bytes, offset } in chunks_with_offset(raw_payload, chunk_size) {
-            let ix = axelar_solana_gateway::instructions::write_message_payload(
-                self.gateway_root_pda,
-                self.payer.pubkey(),
-                command_id,
-                bytes,
-                offset.try_into().unwrap(),
-            )
-            .unwrap();
-
-            // Must process chunks sequentially as `send_tx` requires &mut self.
-            self.send_tx(&[ix])
-                .await?
-                .result
-                .expect("tx for writing the message payload has reverted");
-        }
-
-        Ok(())
-    }
-
-    async fn commit_message_payload(
-        &mut self,
-        command_id: [u8; 32],
-    ) -> Result<(), BanksTransactionResultWithMetadata> {
-        let ix = axelar_solana_gateway::instructions::commit_message_payload(
-            self.gateway_root_pda,
-            self.payer.pubkey(),
-            command_id,
-        )
-        .unwrap();
-        let tx = self.send_tx(&[ix]).await?;
-        assert!(
-            tx.result.is_ok(),
-            "failed to commit message payload account"
-        );
-        Ok(())
-    }
-
-    async fn close_message_payload(
-        &mut self,
-        message: &Message,
-    ) -> Result<(), BanksTransactionResultWithMetadata> {
-        let msg_command_id = message_to_command_id(message);
-        let ix = axelar_solana_gateway::instructions::close_message_payload(
-            self.gateway_root_pda,
-            self.payer.pubkey(),
-            msg_command_id,
-        )
-        .unwrap();
-        let tx = self.send_tx(&[ix]).await?;
-        assert!(tx.result.is_ok(), "failed to close message payload account");
-        Ok(())
     }
 }
 
@@ -846,78 +731,4 @@ pub fn random_string(len: usize) -> String {
         .take(len)
         .map(char::from)
         .collect()
-}
-/// Helper fn to produce a command id from a message.
-fn message_to_command_id(message: &Message) -> [u8; 32] {
-    command_id(&message.cc_id.chain, &message.cc_id.id)
-}
-
-/// Represents a chunk of data with its offset in the original data slice.
-#[cfg_attr(test, derive(Debug, Clone, Eq, PartialEq))]
-struct ChunkWithOffset<'a> {
-    /// The actual chunk of data
-    bytes: &'a [u8],
-    /// Offset position in the original data
-    offset: usize,
-}
-
-/// Creates an iterator that yields fixed-size chunks with their offsets.
-fn chunks_with_offset(
-    data: &[u8],
-    chunk_size: usize,
-) -> impl Iterator<Item = ChunkWithOffset<'_>> + '_ {
-    data.chunks(chunk_size)
-        .enumerate()
-        .map(move |(index, chunk)| ChunkWithOffset {
-            bytes: chunk,
-            offset: index.saturating_mul(chunk_size),
-        })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_chunks_with_offset() {
-        let data = b"12345678";
-        let chunks: Vec<_> = chunks_with_offset(data, 3).collect();
-
-        assert_eq!(
-            chunks,
-            vec![
-                ChunkWithOffset {
-                    bytes: b"123",
-                    offset: 0
-                },
-                ChunkWithOffset {
-                    bytes: b"456",
-                    offset: 3
-                },
-                ChunkWithOffset {
-                    bytes: b"78",
-                    offset: 6
-                },
-            ]
-        );
-    }
-
-    #[test]
-    fn test_empty_input() {
-        let data = b"";
-        assert!(chunks_with_offset(data, 3).next().is_none());
-    }
-
-    #[test]
-    fn test_chunk_size_larger_than_input() {
-        let data = b"123";
-        let chunks: Vec<_> = chunks_with_offset(data, 5).collect();
-        assert_eq!(
-            chunks,
-            vec![ChunkWithOffset {
-                bytes: b"123",
-                offset: 0
-            },]
-        );
-    }
 }

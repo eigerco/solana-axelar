@@ -5,6 +5,7 @@ use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+#[allow(deprecated)]
 use solana_program::{bpf_loader_upgradeable, msg};
 
 use crate::seed_prefixes;
@@ -419,6 +420,7 @@ mod tests {
 
     use bitflags::bitflags;
     use core::ops::Not;
+    #[allow(deprecated)]
     use solana_program::{
         bpf_loader_upgradeable::{self, UpgradeableLoaderState},
         pubkey::Pubkey,

@@ -12,6 +12,7 @@ use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+#[allow(deprecated)]
 use solana_program::system_instruction;
 
 pub(crate) fn process_pay_native_for_contract_call(

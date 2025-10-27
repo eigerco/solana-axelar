@@ -1,0 +1,16 @@
+[toolchain]
+package_manager = "npm"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+axelar_solana_gas_service_v2 = "69wy2gqpFZowKEAvjMva8Gtsqaxx4eNw2VQ9eHytYXLe"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"

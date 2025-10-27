@@ -4,11 +4,11 @@
 
 use anchor_discriminators_macros::InstructionDiscriminator;
 use solana_program::program_error::ProgramError;
-use solana_program::system_program;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
 };
+use solana_sdk_ids::system_program;
 
 /// Top-level instructions supported by the Axelar Solana Gas Service program.
 #[repr(u8)]

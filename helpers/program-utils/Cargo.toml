@@ -15,13 +15,18 @@ borsh.workspace = true
 bytemuck.workspace = true
 mpl-token-metadata.workspace = true
 solana-program.workspace = true
-spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
+solana-sdk-ids.workspace = true
+spl-associated-token-account = { workspace = true, features = [
+	"no-entrypoint",
+] }
 
 [dev-dependencies]
 solana-sdk.workspace = true
 solana-program-test.workspace = true
 axelar-solana-gateway-test-fixtures = { workspace = true, default-features = false }
-dummy-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"], default-features = false }
+dummy-axelar-solana-gateway = { workspace = true, features = [
+	"no-entrypoint",
+], default-features = false }
 
 [features]
 devnet-amplifier = ["axelar-solana-gateway-test-fixtures/devnet-amplifier"]

@@ -1,9 +1,8 @@
 //! Program instructions processor.
 
 use axelar_solana_gateway::executable::{
-    validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX,
+    validate_message, AxelarExecuteInstruction, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX,
 };
-use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use borsh::BorshDeserialize;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
@@ -34,23 +33,15 @@ impl Processor {
     ) -> ProgramResult {
         check_program_account(*program_id)?;
 
-        if let Some(message) =
-            axelar_solana_gateway::executable::parse_axelar_message(instruction_data).transpose()?
-        {
+        if let Ok(execute_data) = AxelarExecuteInstruction::try_from(instruction_data) {
             msg!("Instruction: AxelarExecute");
-            validate_message(accounts, &message)?;
+            validate_message(accounts, &execute_data)?;
 
-            let (protocol_accounts, target_programs_accounts) =
-                accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
-            let message_payload_account = protocol_accounts
-                .get(2)
-                .ok_or(ProgramError::NotEnoughAccountKeys)?;
-            let account_data = message_payload_account.try_borrow_data()?;
-            let message_payload: ImmutMessagePayload<'_> = (**account_data).try_into()?;
-            let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;
-            let payload = axelar_payload.payload_without_accounts();
-            let multicall_payload =
-                MultiCallPayload::decode(payload, axelar_payload.encoding_scheme())?;
+            let target_programs_accounts = &accounts[PROGRAM_ACCOUNTS_START_INDEX..];
+            let multicall_payload = MultiCallPayload::decode(
+                &execute_data.payload_without_accounts,
+                execute_data.encoding_scheme,
+            )?;
 
             return process_multicall(target_programs_accounts, multicall_payload);
         }

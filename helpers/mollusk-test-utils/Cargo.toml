@@ -1,0 +1,17 @@
+[package]
+name = "mollusk-test-utils"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+anchor-lang.workspace = true
+solana-sdk.workspace = true
+solana-sdk-ids.workspace = true
+mollusk-svm.workspace = true
+bincode.workspace = true

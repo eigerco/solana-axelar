@@ -223,13 +223,13 @@ mod tests {
 
     #[test]
     fn solana_account_repr_account_info_conversions() {
-        for (is_singer, is_writer) in &[(true, true), (true, false), (false, true), (false, false)]
+        for (is_signer, is_writer) in &[(true, true), (true, false), (false, true), (false, false)]
         {
             let key = solana_program::pubkey::Pubkey::new_unique();
             let mut lamports = 100;
             let account = solana_program::account_info::AccountInfo::new(
                 &key,
-                *is_singer,
+                *is_signer,
                 *is_writer,
                 &mut lamports,
                 &mut [],
@@ -238,7 +238,7 @@ mod tests {
                 0,
             );
             let repr = SolanaAccountRepr::from(&account);
-            assert_eq!(repr.is_signer, *is_singer, "Signer flag is gone!");
+            assert_eq!(repr.is_signer, *is_signer, "Signer flag is gone!");
             assert_eq!(repr.is_writable, *is_writer, "Writable flag is gone!");
             assert_eq!(
                 repr.pubkey.to_vec()[..],

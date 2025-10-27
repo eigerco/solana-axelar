@@ -1,0 +1,51 @@
+[package]
+name = "axelar-solana-governance-v2"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "axelar_solana_governance_v2"
+
+[features]
+default = ["devnet-amplifier"]
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+devnet-amplifier = [
+	"axelar-solana-governance/devnet-amplifier",
+]
+stagenet = [
+	"axelar-solana-governance/stagenet",
+]
+testnet = [
+	"axelar-solana-governance/testnet",
+]
+mainnet = [
+	"axelar-solana-governance/mainnet",
+]
+
+[dependencies]
+alloy-sol-types.workspace = true
+governance-gmp.workspace = true
+axelar-solana-encoding.workspace = true
+axelar-solana-gateway-v2 = { workspace = true, features = ["no-entrypoint", "cpi"], default-features = false }
+anchor-lang.workspace = true
+bytemuck.workspace = true
+program-utils.workspace = true
+
+[dev-dependencies]
+axelar-solana-gateway.workspace = true
+axelar-solana-governance = { workspace = true, features = ["no-entrypoint"], default-features = false }
+libsecp256k1.workspace = true
+bincode.workspace = true
+axelar-solana-memo-v2 = { workspace = true, features = ["no-entrypoint", "cpi"], default-features = false }
+solana-sdk.workspace = true
+axelar-solana-gateway-v2-test-fixtures.workspace = true
+axelar-solana-governance-v2-test-fixtures.workspace = true
+mollusk-svm.workspace = true
+hex.workspace = true

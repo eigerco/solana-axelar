@@ -53,7 +53,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
     pub(super) fn decode_abi_encoding(
         data: &'payload [u8],
     ) -> Result<(&'payload [u8], Vec<SolanaAccountRepr>), PayloadError> {
-        let (payload, accounts) = extract_payload_silce_and_solana_accounts(data)?;
+        let (payload, accounts) = extract_payload_slice_and_solana_accounts(data)?;
 
         // Verify our implementation matches alloy's copying/owned decode
         #[cfg(debug_assertions)]
@@ -89,7 +89,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
 ///   - A slice of the original payload bytes (zero-copy)
 ///   - A vector of decoded Solana account metadata (heap-allocated)
 #[inline]
-fn extract_payload_silce_and_solana_accounts(
+fn extract_payload_slice_and_solana_accounts(
     data: &[u8],
 ) -> Result<(&[u8], Vec<SolanaAccountRepr>), PayloadError> {
     let mut decoder = Decoder::new(data, true);

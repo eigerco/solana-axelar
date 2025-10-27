@@ -7,7 +7,7 @@
 //! 2. Native program instructions: These are the instructions that are executed
 //!    by other Solana addresses.
 
-use axelar_solana_gateway::executable::validate_with_gmp_metadata;
+use axelar_solana_gateway::executable::validate_with_raw_payload;
 use event_cpi_macros::event_cpi_handler;
 use gmp::ProcessGMPContext;
 use solana_program::account_info::AccountInfo;
@@ -70,19 +70,20 @@ impl Processor {
                 update_config::process(accounts, governance_config)
             }
             // GMP instructions
-            GovernanceInstruction::ProcessGmp { message } => {
+            GovernanceInstruction::ProcessGmp { message, payload } => {
                 let (gateway_accounts, gmp_accounts) = accounts
                     .iter()
                     .as_slice()
                     .split_at(axelar_solana_gateway::executable::PROGRAM_ACCOUNTS_START_INDEX);
 
-                validate_with_gmp_metadata(gateway_accounts, &message)?;
+                validate_with_raw_payload(gateway_accounts, &message, &payload)?;
 
                 let gmp_ctx = ProcessGMPContext::new_from_processor_context(
                     program_id,
                     gateway_accounts,
                     gmp_accounts,
                     &message,
+                    &payload,
                 )?;
 
                 gmp::process(program_id, gmp_ctx, gmp_accounts)

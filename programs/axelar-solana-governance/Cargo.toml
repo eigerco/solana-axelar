@@ -45,6 +45,7 @@ anchor-discriminators-macros.workspace = true
 event-cpi-macros.workspace = true
 event-cpi.workspace = true
 solana-program.workspace = true
+solana-sdk-ids.workspace = true
 program-utils = { workspace = true, default-features = false }
 governance-gmp.workspace = true
 borsh.workspace = true

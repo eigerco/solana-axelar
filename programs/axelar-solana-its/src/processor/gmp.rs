@@ -1,7 +1,6 @@
 //! Program state processor
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_gateway::executable::validate_with_gmp_metadata;
-use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
+use axelar_solana_gateway::executable::validate_with_raw_payload;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::{self, Itertools};
 use program_utils::pda::BorshPda;
@@ -24,8 +23,12 @@ use crate::{
     assert_its_not_paused, assert_valid_its_root_pda, check_program_account, ITS_HUB_CHAIN_NAME,
 };
 
-pub(crate) fn process_execute(accounts: ExecuteAccounts, message: Message) -> ProgramResult {
-    validate_with_gmp_metadata(&accounts.gateway_validation_accounts(), &message)?;
+pub(crate) fn process_execute(
+    accounts: ExecuteAccounts,
+    message: Message,
+    payload: &[u8],
+) -> ProgramResult {
+    validate_with_raw_payload(&accounts.gateway_validation_accounts(), &message, payload)?;
 
     let its_root_config = InterchainTokenService::load(accounts.its_root)?;
     assert_valid_its_root_pda(accounts.its_root, its_root_config.bump)?;
@@ -36,11 +39,8 @@ pub(crate) fn process_execute(accounts: ExecuteAccounts, message: Message) -> Pr
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let payload_account_data = accounts.gateway_message_payload.try_borrow_data()?;
-    let message_payload: ImmutMessagePayload<'_> = (**payload_account_data).try_into()?;
-
-    let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
+    let GMPPayload::ReceiveFromHub(inner) =
+        GMPPayload::decode(payload).map_err(|_err| ProgramError::InvalidInstructionData)?
     else {
         msg!("Unsupported GMP payload");
         return Err(ProgramError::InvalidInstructionData);
@@ -58,7 +58,7 @@ pub(crate) fn process_execute(accounts: ExecuteAccounts, message: Message) -> Pr
 
     match payload {
         GMPPayload::InterchainTransfer(transfer) => {
-            process_inbound_transfer(accounts.try_into()?, message, &transfer, inner.source_chain)
+            process_inbound_transfer(accounts.try_into()?, message, transfer, inner.source_chain)
         }
         GMPPayload::DeployInterchainToken(deploy) => interchain_token::process_inbound_deploy(
             accounts.try_into()?,

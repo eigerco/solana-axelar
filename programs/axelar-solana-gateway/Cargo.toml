@@ -15,20 +15,20 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 test-sbf = []
 devnet-amplifier = [
-    "axelar-solana-gateway-test-fixtures/devnet-amplifier",
-    "program-utils/devnet-amplifier",
+	"axelar-solana-gateway-test-fixtures/devnet-amplifier",
+	"program-utils/devnet-amplifier",
 ]
 stagenet = [
-    "axelar-solana-gateway-test-fixtures/stagenet",
-    "program-utils/stagenet",
+	"axelar-solana-gateway-test-fixtures/stagenet",
+	"program-utils/stagenet",
 ]
 testnet = [
-    "axelar-solana-gateway-test-fixtures/testnet",
-    "program-utils/testnet",
+	"axelar-solana-gateway-test-fixtures/testnet",
+	"program-utils/testnet",
 ]
 mainnet = [
-    "axelar-solana-gateway-test-fixtures/mainnet",
-    "program-utils/mainnet",
+	"axelar-solana-gateway-test-fixtures/mainnet",
+	"program-utils/mainnet",
 ]
 default = ["devnet-amplifier"]
 
@@ -50,6 +50,7 @@ num-traits.workspace = true
 program-utils.workspace = true
 role-management.workspace = true
 solana-program.workspace = true
+solana-sdk-ids.workspace = true
 thiserror.workspace = true
 alloy-sol-types.workspace = true
 event-cpi.workspace = true

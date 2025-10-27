@@ -15,6 +15,7 @@ use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
+#[allow(deprecated)]
 use solana_program::{msg, system_instruction};
 
 use crate::instructions::DummyGatewayInstruction;

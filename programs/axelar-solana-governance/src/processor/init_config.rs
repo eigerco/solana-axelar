@@ -7,7 +7,7 @@ use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
+use solana_sdk_ids::system_program;
 
 use crate::seed_prefixes;
 use crate::state::{validate_config, GovernanceConfig};
