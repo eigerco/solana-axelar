@@ -108,8 +108,13 @@ fn estimate_size(execute_data: &ExecuteData) -> usize {
             }
         })
         .saturating_add(
-            size_of::<SigningVerifierSetInfo>()
-                .saturating_mul(execute_data.signing_verifier_set_leaves.len()),
+            execute_data
+                .signing_verifier_set_leaves
+                .iter()
+                .map(|info| {
+                    size_of::<SigningVerifierSetInfo>().saturating_add(info.merkle_proof.len())
+                })
+                .sum::<usize>(),
         )
 }
 
