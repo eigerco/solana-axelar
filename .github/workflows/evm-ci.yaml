@@ -20,7 +20,7 @@ jobs:
     name: Foundry project
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # foundry uses submodules for dependencies
           submodules: recursive
