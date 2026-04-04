@@ -15,6 +15,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - uses: crate-ci/typos@v1.36.2
+      - uses: crate-ci/typos@v1.45.0
         with:
           files: .
