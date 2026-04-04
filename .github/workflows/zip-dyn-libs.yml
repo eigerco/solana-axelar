@@ -15,7 +15,7 @@ jobs:
     runs-on: self-hosted
     name: Build and Release Dynamic Libraries
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
           fetch-depth: 0
